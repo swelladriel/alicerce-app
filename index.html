@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Alicerce">
+<meta name="theme-color" content="#0b0f14">
+<!-- PWA: adicionar manifest.json e ícones quando publicar online -->
+<!-- <link rel="manifest" href="manifest.json"> -->
+<!-- <link rel="apple-touch-icon" href="apple-touch-icon.png"> -->
+<!-- <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"> -->
+<!-- <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"> -->
+<title>Alicerce — App Corretor</title>
+<style>
+:root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:12px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;overflow-x:hidden;}
+
+/* LOGIN */
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;}
+.login-screen.hidden{display:none;}
+.login-logo{font-size:1.8rem;font-weight:900;color:#fff;letter-spacing:2px;margin-bottom:4px;}
+.login-sub{font-size:.72rem;color:var(--textL);margin-bottom:30px;letter-spacing:.5px;}
+.login-select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px 16px;color:var(--text);font-size:.9rem;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;margin-bottom:16px;}
+.login-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.9rem;font-weight:800;cursor:pointer;letter-spacing:.5px;transition:opacity .2s;}
+.login-btn:disabled{opacity:.4;cursor:default;}
+.login-btn:active{opacity:.8;}
+
+/* APP SHELL */
+.app-shell{display:none;flex-direction:column;min-height:100vh;}
+.app-shell.active{display:flex;}
+
+/* HEADER */
+.app-header{background:var(--card);padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+.app-header-top{display:flex;justify-content:space-between;align-items:center;}
+.app-user{font-size:.95rem;font-weight:800;color:#fff;}
+.app-equipe{font-size:.65rem;color:var(--textL);margin-top:2px;}
+.app-logout{background:none;border:1px solid var(--border);color:var(--textL);padding:4px 10px;border-radius:6px;font-size:.68rem;cursor:pointer;}
+
+/* TABS */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40;}
+.tab{flex:1;text-align:center;padding:12px 8px;font-size:.72rem;font-weight:600;color:var(--textL);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* CONTENT */
+.app-content{flex:1;padding:16px;overflow-y:auto;}
+.app-page{display:none;animation:fadeIn .2s ease;}
+.app-page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+/* KPIs MOBILE */
+.m-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.m-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:12px 8px;text-align:center;}
+.m-kpi .v{font-size:1.4rem;font-weight:900;color:#fff;}
+.m-kpi .l{font-size:.6rem;color:var(--textL);text-transform:uppercase;margin-top:2px;}
+.m-kpi.green{border-bottom:3px solid var(--success);}
+.m-kpi.yellow{border-bottom:3px solid var(--warning);}
+.m-kpi.blue{border-bottom:3px solid var(--info);}
+
+/* CLIENT CARDS MOBILE */
+.m-client{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;margin-bottom:10px;}
+.m-client-name{font-size:.88rem;font-weight:800;color:#fff;margin-bottom:4px;}
+.m-client-cpf{font-size:.68rem;color:var(--textL);margin-bottom:6px;}
+.m-client-renda{font-size:.78rem;color:var(--accent);margin-bottom:8px;}
+.m-client-bottom{display:flex;justify-content:space-between;align-items:center;}
+.tag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:700;text-transform:uppercase;}
+.tag-aprovado{background:rgba(0,230,118,.12);color:var(--success);border:1px solid rgba(0,230,118,.25);}
+.tag-pendente{background:rgba(255,167,38,.1);color:var(--warning);border:1px solid rgba(255,167,38,.2);}
+.tag-bacen{background:rgba(66,165,245,.1);color:var(--info);border:1px solid rgba(66,165,245,.2);}
+.tag-divida{background:rgba(239,83,80,.1);color:var(--danger);border:1px solid rgba(239,83,80,.2);}
+.tag-comprou{background:rgba(100,255,218,.12);color:var(--accent);border:1px solid rgba(100,255,218,.25);}
+.tag-rating{background:rgba(171,71,188,.1);color:var(--purple);border:1px solid rgba(171,71,188,.2);}
+.tag-outro{background:rgba(255,255,255,.05);color:var(--textL);border:1px solid rgba(255,255,255,.1);}
+
+/* FILTRO MOBILE */
+.m-filter{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.m-filter::-webkit-scrollbar{display:none;}
+.m-filter-btn{flex:0 0 auto;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-align:center;font-size:.68rem;color:var(--textL);cursor:pointer;font-weight:600;white-space:nowrap;}
+.m-filter-btn.active{background:rgba(100,255,218,.08);border-color:var(--accent);color:var(--accent);}
+
+/* CHECK-IN */
+.checkin-box{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:20px;text-align:center;margin-bottom:16px;}
+.checkin-time{font-size:2.5rem;font-weight:900;color:#fff;margin-bottom:4px;}
+.checkin-date{font-size:.78rem;color:var(--textL);margin-bottom:20px;}
+.checkin-btn{width:100%;padding:16px;border:none;border-radius:var(--rad);font-size:1rem;font-weight:800;cursor:pointer;transition:all .15s;letter-spacing:.5px;}
+.checkin-btn.disponivel{background:var(--accent);color:#000;}
+.checkin-btn.feito{background:var(--card2);color:var(--success);border:1px solid var(--success);}
+.checkin-btn:active{transform:scale(.98);}
+.checkin-status{margin-top:14px;font-size:.78rem;color:var(--success);font-weight:600;}
+.checkin-historico{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-top:12px;}
+.checkin-hist-title{font-size:.75rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.checkin-hist-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.78rem;}
+.checkin-hist-item:last-child{border-bottom:none;}
+
+/* 945 GRAVAÇÃO */
+.rec-box{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:20px;margin-bottom:14px;}
+.rec-title{font-size:.85rem;font-weight:800;color:#fff;margin-bottom:4px;}
+.rec-sub{font-size:.7rem;color:var(--textL);margin-bottom:16px;}
+.rec-btn{width:100%;padding:16px;border:none;border-radius:var(--rad);font-size:1rem;font-weight:800;cursor:pointer;transition:all .15s;letter-spacing:.5px;}
+.rec-btn.gravar{background:var(--danger);color:#fff;}
+.rec-btn.gravar::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff;margin-right:8px;animation:pulse 1.2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.rec-btn.parar{background:var(--card2);color:var(--danger);border:2px solid var(--danger);}
+.rec-btn.iniciar{background:var(--accent);color:#000;}
+.rec-btn:active{transform:scale(.98);}
+.rec-status{text-align:center;margin-top:10px;font-size:.78rem;color:var(--textL);}
+.rec-timer{font-size:1.8rem;font-weight:900;color:#fff;text-align:center;margin:12px 0;}
+.rec-transcricao{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:14px;}
+.rec-trans-title{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.rec-trans-text{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;min-height:100px;font-size:.82rem;color:var(--text);line-height:1.5;white-space:pre-wrap;}
+.rec-trans-text[contenteditable]{outline:none;}
+.rec-trans-text[contenteditable]:focus{border-color:var(--accent);}
+.rec-enviar{width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.9rem;font-weight:800;cursor:pointer;margin-top:10px;}
+.rec-enviar:disabled{opacity:.4;cursor:default;}
+.rec-enviar:active{opacity:.8;}
+.rec-historico{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-top:14px;}
+.rec-hist-title{font-size:.75rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.rec-hist-item{background:var(--card2);border:1px solid rgba(255,255,255,.04);border-radius:8px;padding:10px;margin-bottom:8px;}
+.rec-hist-date{font-size:.65rem;color:var(--textL);margin-bottom:4px;}
+.rec-hist-text{font-size:.78rem;color:var(--text);line-height:1.4;}
+.rec-sent-msg{text-align:center;padding:20px;color:var(--success);font-size:.85rem;font-weight:700;display:none;}
+
+/* EMPREENDIMENTOS DENTRO DO CARD */
+.m-client-emps{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.m-client-emps-title{font-size:.62rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.m-emp-mini{background:rgba(100,255,218,.04);border:1px solid rgba(100,255,218,.1);border-radius:6px;padding:6px 8px;margin-bottom:4px;font-size:.68rem;}
+.m-emp-mini-name{color:#fff;font-weight:700;}
+.m-emp-mini-info{color:var(--textL);margin-top:2px;}
+.m-emp-mini-valor{color:var(--accent);font-weight:700;}
+.m-emp-more{font-size:.62rem;color:var(--textL);text-align:center;padding:4px;}
+
+/* MODAL CLIENTE */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:200;justify-content:center;align-items:flex-end;padding:0;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:10px auto;}
+.modal-sheet-header{padding:12px 20px 8px;display:flex;justify-content:space-between;align-items:center;}
+.modal-sheet-header h3{font-size:1rem;font-weight:800;color:#fff;}
+.modal-sheet-close{background:none;border:none;color:var(--textL);font-size:1.5rem;cursor:pointer;padding:4px;}
+.modal-sheet-body{padding:0 20px 24px;}
+.modal-info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.8rem;}
+.modal-info-label{color:var(--textL);}
+.modal-info-value{color:#fff;font-weight:600;text-align:right;max-width:60%;}
+.modal-section-title{font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;padding-top:8px;border-top:1px solid var(--border);}
+.modal-input-group{margin-bottom:12px;}
+.modal-input-label{font-size:.68rem;color:var(--textL);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;}
+.modal-input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.82rem;outline:none;}
+.modal-input:focus{border-color:var(--accent);}
+textarea.modal-input{resize:vertical;min-height:60px;}
+.modal-save-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.85rem;font-weight:800;cursor:pointer;margin-top:12px;letter-spacing:.5px;}
+.modal-save-btn:active{opacity:.8;}
+.modal-save-msg{text-align:center;font-size:.75rem;color:var(--success);margin-top:8px;display:none;}
+.modal-emp-section{margin-top:16px;padding-top:12px;border-top:1px solid var(--border);}
+.modal-emp-title{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.modal-emp-card{background:var(--card2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px;margin-bottom:6px;border-left:3px solid var(--accent);}
+.modal-emp-name{font-size:.8rem;font-weight:700;color:#fff;}
+.modal-emp-details{font-size:.7rem;color:var(--textL);margin-top:2px;}
+.modal-emp-valor{font-size:.82rem;font-weight:800;color:var(--accent);margin-top:3px;}
+.modal-emp-none{text-align:center;padding:16px;color:var(--textL);font-size:.78rem;}
+
+/* EMPTY */
+.m-empty{text-align:center;padding:30px;color:var(--textL);font-size:.82rem;}
+
+/* LOADING */
+.loading{text-align:center;padding:30px;color:var(--textL);font-size:.82rem;}
+.loading::before{content:'';display:block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-logo">ALICERCE</div>
+  <div class="login-sub">App do Corretor</div>
+  <select class="login-select" id="login-corretor" onchange="checkLogin()">
+    <option value="">Selecione seu nome</option>
+  </select>
+  <input type="password" class="login-select" id="login-senha" placeholder="Digite sua senha" oninput="checkLogin()" style="margin-top:-8px;">
+  <div id="login-erro" style="color:var(--danger);font-size:.75rem;text-align:center;margin-bottom:10px;display:none;">Senha incorreta</div>
+  <button class="login-btn" id="login-btn" disabled onclick="fazerLogin()">ENTRAR</button>
+  <div class="loading" id="login-loading" style="margin-top:20px;">Carregando corretores...</div>
+</div>
+
+<!-- APP -->
+<div class="app-shell" id="app-shell">
+  <div class="app-header">
+    <div class="app-header-top">
+      <div>
+        <div class="app-user" id="app-user-nome"></div>
+        <div class="app-equipe" id="app-user-equipe"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="atualizarTudo()" id="btn-atualizar" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:.68rem;font-weight:700;cursor:pointer;">Atualizar</button>
+        <button class="app-logout" onclick="fazerLogout()">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="app-tabs"></div>
+
+  <div class="app-content">
+
+    <!-- TAB: DEMANDAS / URGENCIAS -->
+    <div class="app-page active" id="tab-demandas">
+      <div class="m-kpis" id="dem-kpis"></div>
+      <div id="dem-list"><div class="loading">Carregando demandas...</div></div>
+    </div>
+
+    <!-- TAB: MINHA EQUIPE (só coordenador/gerente) -->
+    <div class="app-page" id="tab-equipe">
+      <div class="m-kpis" id="eq-kpis"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <select class="filter-input" id="eq-corretor" onchange="renderEquipe()" style="flex:1;min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.78rem;">
+          <option value="">Todos os corretores</option>
+        </select>
+        <select class="filter-input" id="eq-status" onchange="renderEquipe()" style="flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.78rem;">
+          <option value="">Todos os status</option>
+          <option value="aprovado">Aprovados</option>
+          <option value="pendente">Pendentes</option>
+          <option value="bacen">BACEN</option>
+          <option value="divida">Dívida</option>
+          <option value="comprou">Compraram</option>
+        </select>
+      </div>
+      <div id="eq-clientes-list"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- TAB: MEUS CLIENTES -->
+    <div class="app-page" id="tab-pipeline">
+      <div class="m-kpis" id="m-kpis"></div>
+      <div class="m-filter" id="m-filter"></div>
+      <div id="m-clientes-list"><div class="loading">Carregando clientes...</div></div>
+    </div>
+
+    <!-- TAB: CHECK-IN -->
+    <div class="app-page" id="tab-checkin">
+      <div class="checkin-box">
+        <div class="checkin-time" id="checkin-relogio">--:--</div>
+        <div class="checkin-date" id="checkin-data"></div>
+        <button class="checkin-btn disponivel" id="checkin-btn" onclick="fazerCheckin()">REGISTRAR CHEGADA</button>
+        <div class="checkin-status" id="checkin-status"></div>
+      </div>
+      <div class="checkin-historico">
+        <div class="checkin-hist-title">Histórico da semana</div>
+        <div id="checkin-historico-list"></div>
+      </div>
+    </div>
+
+    <!-- TAB: 945 GRAVAÇÃO -->
+    <div class="app-page" id="tab-945">
+      <!-- Estado: pronto pra gravar -->
+      <div id="rec-inicio">
+        <div class="rec-box">
+          <div class="rec-title">945 Individual</div>
+          <div class="rec-sub">Grave seu relatório diário: o que fez, plano do dia, dificuldades e clientes.</div>
+          <div class="rec-timer" id="rec-timer">00:00</div>
+          <button class="rec-btn iniciar" id="rec-btn" onclick="toggleGravacao()">GRAVAR 945</button>
+          <div class="rec-status" id="rec-status"></div>
+        </div>
+      </div>
+
+      <!-- Estado: transcrição pronta pra revisar -->
+      <div id="rec-revisao" style="display:none;">
+        <div class="rec-transcricao">
+          <div class="rec-trans-title">Revise sua transcrição</div>
+          <div class="rec-trans-text" id="rec-texto" contenteditable="true"></div>
+        </div>
+        <button class="rec-enviar" id="rec-enviar" onclick="enviar945()">ENVIAR 945</button>
+        <button onclick="cancelar945()" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--textL);border-radius:var(--rad);padding:12px;font-size:.8rem;cursor:pointer;margin-top:8px;">Cancelar e gravar novamente</button>
+        <div class="rec-sent-msg" id="rec-sent-msg">945 enviado com sucesso!</div>
+      </div>
+
+      <!-- Histórico -->
+      <div class="rec-historico" id="rec-historico">
+        <div class="rec-hist-title">Últimos registros 945</div>
+        <div id="rec-hist-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="modal-cliente" onclick="if(event.target===this)fecharModalCliente()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-sheet-header">
+      <h3 id="mc-nome">Cliente</h3>
+      <button class="modal-sheet-close" onclick="fecharModalCliente()">&times;</button>
+    </div>
+    <div class="modal-sheet-body">
+      <div id="mc-info"></div>
+      <div class="modal-section-title">Informações do Corretor</div>
+      <div class="modal-input-group">
+        <div class="modal-input-label">Telefone do cliente</div>
+        <input type="tel" class="modal-input" id="mc-telefone" placeholder="(21) 99999-9999">
+      </div>
+      <div class="modal-input-group">
+        <div class="modal-input-label">Email do cliente</div>
+        <input type="email" class="modal-input" id="mc-email" placeholder="cliente@email.com">
+      </div>
+      <div class="modal-input-group">
+        <div class="modal-input-label">Observações</div>
+        <textarea class="modal-input" id="mc-obs" placeholder="Anotações sobre o cliente..."></textarea>
+      </div>
+      <button class="modal-save-btn" onclick="salvarInfoCliente()">SALVAR INFORMAÇÕES</button>
+      <div class="modal-save-msg" id="mc-save-msg">Salvo com sucesso!</div>
+      <div id="mc-empreendimentos"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
+
+let CORRETORES = [];
+let CLIENTES = [];
+let EMPREENDIMENTOS = [];
+let DEMANDAS = [];
+let USUARIO = null;
+let MEUS_CLIENTES = [];
+let FILTRO_ATIVO = '';
+let CLIENTE_MODAL = null;
+
+// ============================================
+// INIT - Carregar corretores pro login
+// ============================================
+async function init() {
+  try {
+    const res = await fetch(API_URL + '?acao=corretores');
+    CORRETORES = await res.json();
+
+    const sel = document.getElementById('login-corretor');
+    const ativos = CORRETORES.filter(c => c.STATUS === 'Ativo');
+    ativos.sort((a, b) => a.NOME.localeCompare(b.NOME));
+    ativos.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.NOME;
+      o.textContent = `${c.NOME} — Eq. ${c.EQUIPE}`;
+      sel.appendChild(o);
+    });
+
+    document.getElementById('login-loading').style.display = 'none';
+
+    // Verificar se já tem login salvo
+    const salvo = localStorage.getItem('alicerce-app-user');
+    const senhaS = localStorage.getItem('alicerce-app-pass');
+    if (salvo && senhaS) {
+      sel.value = salvo;
+      document.getElementById('login-senha').value = senhaS;
+      checkLogin();
+      fazerLogin();
+    }
+  } catch(e) {
+    document.getElementById('login-loading').innerHTML = 'Erro ao carregar.<br><button onclick="location.reload()" style="margin-top:10px;background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 20px;font-size:.85rem;font-weight:700;cursor:pointer;">Tentar novamente</button>';
+  }
+
+  // Timeout: se não carregou em 15s, mostra botão de retry
+  setTimeout(() => {
+    if (CORRETORES.length === 0) {
+      document.getElementById('login-loading').innerHTML = 'Conexão lenta ou sem internet.<br><button onclick="location.reload()" style="margin-top:10px;background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 20px;font-size:.85rem;font-weight:700;cursor:pointer;">Tentar novamente</button>';
+    }
+  }, 15000);
+}
+
+function checkLogin() {
+  const nome = document.getElementById('login-corretor').value;
+  const senha = document.getElementById('login-senha').value;
+  document.getElementById('login-btn').disabled = !(nome && senha);
+  document.getElementById('login-erro').style.display = 'none';
+}
+
+async function fazerLogin() {
+  const nome = document.getElementById('login-corretor').value;
+  const senha = document.getElementById('login-senha').value;
+  if (!nome || !senha) return;
+
+  USUARIO = CORRETORES.find(c => c.NOME === nome);
+  if (!USUARIO) return;
+
+  // Validar senha
+  const senhaCorreta = String(USUARIO.SENHA || '').trim();
+  if (senha !== senhaCorreta) {
+    document.getElementById('login-erro').style.display = 'block';
+    return;
+  }
+
+  localStorage.setItem('alicerce-app-user', nome);
+  localStorage.setItem('alicerce-app-pass', senha);
+
+  document.getElementById('app-user-nome').textContent = USUARIO.NOME;
+  document.getElementById('app-user-equipe').textContent = `${USUARIO.CARGO} — Equipe ${USUARIO.EQUIPE}`;
+
+  const isMaster = USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente';
+  const isGerente = USUARIO.CARGO === 'Gerente';
+
+  // Montar tabs dinamicamente conforme cargo
+  let tabsHtml = '';
+  if (isGerente) {
+    tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Urgências</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-equipe', event)">Minha Equipe</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
+  } else if (isMaster) {
+    tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Demandas</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-equipe', event)">Minha Equipe</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
+  } else {
+    tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Demandas</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
+  }
+  tabsHtml += `<div class="tab" onclick="showTab('tab-checkin', event)">Check-in</div>`;
+  tabsHtml += `<div class="tab" onclick="showTab('tab-945', event)">945</div>`;
+  document.getElementById('app-tabs').innerHTML = tabsHtml;
+
+  // Garantir que a primeira aba está ativa
+  document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-demandas').classList.add('active');
+
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-shell').classList.add('active');
+
+  // Ajustar posição das tabs com base na altura real do header
+  setTimeout(() => {
+    const headerH = document.querySelector('.app-header').offsetHeight;
+    document.getElementById('app-tabs').style.top = headerH + 'px';
+  }, 50);
+
+  await carregarMeusClientes();
+  if (isMaster) carregarEquipe();
+  carregarDemandas();
+  iniciarRelogio();
+  carregarCheckins();
+  carregarHistorico945();
+}
+
+async function atualizarTudo() {
+  const btn = document.getElementById('btn-atualizar');
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    await carregarMeusClientes();
+    await carregarDemandas();
+    const isMaster = USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente';
+    if (isMaster) carregarEquipe();
+    btn.textContent = 'Atualizado!';
+    setTimeout(() => { btn.textContent = 'Atualizar'; btn.disabled = false; }, 1500);
+  } catch(e) {
+    btn.textContent = 'Erro';
+    setTimeout(() => { btn.textContent = 'Atualizar'; btn.disabled = false; }, 1500);
+  }
+}
+
+function fazerLogout() {
+  localStorage.removeItem('alicerce-app-user');
+  localStorage.removeItem('alicerce-app-pass');
+  USUARIO = null;
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app-shell').classList.remove('active');
+  document.getElementById('login-corretor').value = '';
+  document.getElementById('login-senha').value = '';
+  document.getElementById('login-erro').style.display = 'none';
+  checkLogin();
+}
+
+// ============================================
+// TABS
+// ============================================
+function showTab(id, e) {
+  document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (e && e.currentTarget) e.currentTarget.classList.add('active');
+}
+
+// ============================================
+// PIPELINE - MEUS CLIENTES
+// ============================================
+async function carregarMeusClientes() {
+  const [resCli, resEmp] = await Promise.all([
+    fetch(API_URL + '?acao=clientes'),
+    fetch(API_URL + '?acao=empreendimentos')
+  ]);
+  CLIENTES = await resCli.json();
+  EMPREENDIMENTOS = await resEmp.json();
+
+  const nomeUpper = USUARIO.NOME.toUpperCase();
+  const nomeCompleto = (USUARIO['NOME COMPLETO'] || '').toUpperCase();
+
+  MEUS_CLIENTES = CLIENTES.filter(c => {
+    if (!c.CORRETOR) return false;
+    const corrUpper = c.CORRETOR.toUpperCase();
+    return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
+  });
+
+  renderMeusClientes();
+}
+
+function getEmpreendimentosCompativeis(renda) {
+  if (!renda || !EMPREENDIMENTOS.length) return [];
+  const r = Number(renda);
+  let teto = 500000;
+  if (r <= 2500) teto = 215000;
+  else if (r <= 6000) teto = 300000;
+  return EMPREENDIMENTOS.filter(e => {
+    const v = parseFloat(e.VALOR || e['VALOR'] || 0);
+    return v > 0 && v <= teto;
+  }).sort((a, b) => parseFloat(a.VALOR || 0) - parseFloat(b.VALOR || 0));
+}
+
+function classStatus(s) {
+  if (!s) return { grupo: 'pendente', tag: 'tag-pendente', label: 'PENDENTE' };
+  const su = s.toUpperCase();
+  if (su.includes('COMPROU')) return { grupo: 'comprou', tag: 'tag-comprou', label: s };
+  if (su.includes('APROVAD')) return { grupo: 'aprovado', tag: 'tag-aprovado', label: s };
+  if (su.includes('BACEN')) return { grupo: 'bacen', tag: 'tag-bacen', label: s };
+  if (su.includes('DÍVIDA') || su.includes('DIVIDA') || su.includes('PROTESTO')) return { grupo: 'divida', tag: 'tag-divida', label: s };
+  if (su.includes('RATING') || su.includes('RENDA') || su.includes('CONDICION')) return { grupo: 'rating', tag: 'tag-rating', label: s };
+  if (su === 'PENDENTE' || su === '') return { grupo: 'pendente', tag: 'tag-pendente', label: 'PENDENTE' };
+  return { grupo: 'outro', tag: 'tag-outro', label: s };
+}
+
+function renderMeusClientes() {
+  const lista = FILTRO_ATIVO ? MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === FILTRO_ATIVO) : MEUS_CLIENTES;
+
+  const total = MEUS_CLIENTES.length;
+  const aprovados = MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === 'aprovado').length;
+  const pendentes = MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === 'pendente').length;
+
+  // KPIs
+  document.getElementById('m-kpis').innerHTML = `
+    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Total</div></div>
+    <div class="m-kpi green"><div class="v">${aprovados}</div><div class="l">Aprovados</div></div>
+    <div class="m-kpi yellow"><div class="v">${pendentes}</div><div class="l">Pendentes</div></div>
+  `;
+
+  // Filtros
+  const grupos = ['', 'aprovado', 'pendente', 'bacen', 'divida', 'comprou'];
+  const labels = ['Todos', 'Aprovados', 'Pendentes', 'BACEN', 'Dívida', 'Compraram'];
+  document.getElementById('m-filter').innerHTML = grupos.map((g, i) =>
+    `<div class="m-filter-btn ${FILTRO_ATIVO === g ? 'active' : ''}" onclick="setFiltro('${g}')">${labels[i]}</div>`
+  ).join('');
+
+  // Lista
+  if (lista.length === 0) {
+    document.getElementById('m-clientes-list').innerHTML = '<div class="m-empty">Nenhum cliente encontrado.</div>';
+    return;
+  }
+
+  let html = '';
+  lista.forEach((c, idx) => {
+    const st = classStatus(c.STATUS);
+    const renda = c.RENDA ? `R$ ${Number(c.RENDA).toLocaleString('pt-BR')}` : '';
+    const isAprovado = st.grupo === 'aprovado';
+    const emps = isAprovado && c.RENDA ? getEmpreendimentosCompativeis(c.RENDA) : [];
+    const infos = getInfoLocal(c.CPF);
+
+    html += `<div class="m-client" onclick='abrirModalCliente(${idx})' style="cursor:pointer;">
+      <div class="m-client-name">${c.CLIENTE || '-'}</div>
+      <div class="m-client-cpf">${c.CPF || 'Sem CPF'}</div>
+      ${renda ? `<div class="m-client-renda">${renda}</div>` : ''}
+      ${infos.telefone ? `<div style="font-size:.68rem;color:var(--textL);margin-bottom:4px;">Tel: ${infos.telefone}</div>` : ''}
+      <div class="m-client-bottom">
+        <span class="tag ${st.tag}">${st.label}</span>
+        ${c.FAIXA ? `<span style="font-size:.62rem;color:var(--textL);">${c.FAIXA}</span>` : ''}
+      </div>`;
+
+    // Empreendimentos dentro do card pra aprovados
+    if (isAprovado && emps.length > 0) {
+      html += `<div class="m-client-emps">
+        <div class="m-client-emps-title">Empreendimentos compatíveis (${emps.length})</div>`;
+      emps.slice(0, 3).forEach(e => {
+        const nome = e.NOME || e['EMPREENDIMENTO'] || '-';
+        const bairro = e.BAIRRO || e['bairro'] || '';
+        const valor = parseFloat(e.VALOR || 0);
+        const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '';
+        html += `<div class="m-emp-mini">
+          <div class="m-emp-mini-name">${nome}</div>
+          <div class="m-emp-mini-info">${bairro}${valorFmt ? ' — ' : ''}<span class="m-emp-mini-valor">${valorFmt}</span></div>
+        </div>`;
+      });
+      if (emps.length > 3) html += `<div class="m-emp-more">+ ${emps.length - 3} empreendimentos — toque pra ver todos</div>`;
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  });
+  document.getElementById('m-clientes-list').innerHTML = html;
+}
+
+function setFiltro(grupo) {
+  FILTRO_ATIVO = grupo;
+  renderMeusClientes();
+}
+
+// ============================================
+// DEMANDAS / URGÊNCIAS
+// ============================================
+let DEMANDAS_FILTRADAS = [];
+let DEM_FILTRO_PRIOR = '';
+let DEM_FILTRO_STATUS = '';
+
+async function carregarDemandas() {
+  const res = await fetch(API_URL + '?acao=demandas');
+  DEMANDAS = await res.json();
+  renderDemandas();
+
+  // Monitorar virada de meia-noite: quando o dia muda, limpa os cards automaticamente
+  iniciarMonitorMeiaNoite();
+}
+
+let _monitorMeiaNoite = null;
+function iniciarMonitorMeiaNoite() {
+  if (_monitorMeiaNoite) return; // já está rodando
+  const diaAtual = new Date().toISOString().split('T')[0];
+  _monitorMeiaNoite = setInterval(() => {
+    const agora = new Date().toISOString().split('T')[0];
+    if (agora !== diaAtual) {
+      // Virou o dia — limpar cards e recarregar
+      renderDemandas();
+      location.reload(); // recarrega tudo pra garantir dia limpo
+    }
+  }, 30000); // checa a cada 30 segundos
+}
+
+function getMinhasDemandas() {
+  const isGerente = USUARIO.CARGO === 'Gerente';
+  const isCoordenador = USUARIO.CARGO === 'Coordenador';
+  const equipe = USUARIO.EQUIPE;
+  const nomeUpper = USUARIO.NOME.toUpperCase();
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Filtrar só demandas de HOJE (cards zeram à meia-noite)
+  const demandasHoje = DEMANDAS.filter(d => {
+    const dtRaw = d.DATA;
+    const dt = dtRaw instanceof Date ? dtRaw.toISOString().substring(0, 10) : String(dtRaw || '').substring(0, 10);
+    return dt === hoje;
+  });
+
+  if (isGerente) return [...demandasHoje];
+  if (isCoordenador) {
+    const membros = CORRETORES.filter(c => c.EQUIPE === equipe && c.STATUS === 'Ativo');
+    const nomesMembros = membros.map(c => c.NOME.toUpperCase());
+    return demandasHoje.filter(d => {
+      const resp = (d.RESPONSAVEL || '').toUpperCase();
+      return nomesMembros.some(n => resp.includes(n) || n.includes(resp));
+    });
+  }
+  return demandasHoje.filter(d => {
+    const resp = (d.RESPONSAVEL || '').toUpperCase();
+    return resp.includes(nomeUpper) || nomeUpper.includes(resp);
+  });
+}
+
+function setDemFiltro(tipo, valor) {
+  if (tipo === 'prior') DEM_FILTRO_PRIOR = DEM_FILTRO_PRIOR === valor ? '' : valor;
+  if (tipo === 'status') DEM_FILTRO_STATUS = DEM_FILTRO_STATUS === valor ? '' : valor;
+  renderDemandas();
+}
+
+function renderDemandas() {
+  const isGerente = USUARIO.CARGO === 'Gerente';
+  const isCoordenador = USUARIO.CARGO === 'Coordenador';
+  const todas = getMinhasDemandas();
+
+  // Contadores pra botões
+  const cAlta = todas.filter(d => d.PRIORIDADE === 'Alta').length;
+  const cMedia = todas.filter(d => d.PRIORIDADE === 'Media' || d.PRIORIDADE === 'Média').length;
+  const cBaixa = todas.filter(d => d.PRIORIDADE === 'Baixa').length;
+  const cPendente = todas.filter(d => !(d.STATUS || '').toLowerCase().includes('conclu')).length;
+  const cConcluida = todas.filter(d => (d.STATUS || '').toLowerCase().includes('conclu')).length;
+
+  // Aplicar filtros
+  let lista = [...todas];
+  if (DEM_FILTRO_PRIOR) {
+    lista = lista.filter(d => {
+      const p = (d.PRIORIDADE || '').toLowerCase();
+      const f = DEM_FILTRO_PRIOR.toLowerCase();
+      return p === f || (f === 'media' && p === 'média') || (f === 'média' && p === 'media');
+    });
+  }
+  if (DEM_FILTRO_STATUS === 'pendente') {
+    lista = lista.filter(d => !(d.STATUS || '').toLowerCase().includes('conclu'));
+  } else if (DEM_FILTRO_STATUS === 'concluida') {
+    lista = lista.filter(d => (d.STATUS || '').toLowerCase().includes('conclu'));
+  }
+
+  // Ordenar
+  const priorOrdem = { 'Alta': 1, 'Media': 2, 'Média': 2, 'Baixa': 3 };
+  lista.sort((a, b) => {
+    const stA = (a.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    const stB = (b.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    if (stA !== stB) return stA - stB;
+    return (priorOrdem[a.PRIORIDADE] || 9) - (priorOrdem[b.PRIORIDADE] || 9);
+  });
+
+  // KPIs
+  document.getElementById('dem-kpis').innerHTML = `
+    <div class="m-kpi blue"><div class="v">${todas.length}</div><div class="l">Total</div></div>
+    <div class="m-kpi" style="border-bottom:3px solid var(--danger);"><div class="v">${cAlta}</div><div class="l">Alta</div></div>
+    <div class="m-kpi yellow"><div class="v">${cPendente}</div><div class="l">Pendentes</div></div>
+  `;
+
+  // Filtros com contadores
+  let filterHtml = `<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+    <div class="m-filter-btn ${DEM_FILTRO_PRIOR===''?'active':''}" onclick="setDemFiltro('prior','')">Todas</div>
+    <div class="m-filter-btn ${DEM_FILTRO_PRIOR==='Alta'?'active':''}" onclick="setDemFiltro('prior','Alta')" style="${DEM_FILTRO_PRIOR==='Alta'?'border-color:var(--danger);color:var(--danger);background:rgba(239,83,80,.08);':''}">Alta (${cAlta})</div>
+    <div class="m-filter-btn ${DEM_FILTRO_PRIOR==='Media'?'active':''}" onclick="setDemFiltro('prior','Media')" style="${DEM_FILTRO_PRIOR==='Media'?'border-color:var(--warning);color:var(--warning);background:rgba(255,167,38,.08);':''}">Média (${cMedia})</div>
+    <div class="m-filter-btn ${DEM_FILTRO_PRIOR==='Baixa'?'active':''}" onclick="setDemFiltro('prior','Baixa')" style="${DEM_FILTRO_PRIOR==='Baixa'?'border-color:var(--info);color:var(--info);background:rgba(66,165,245,.08);':''}">Baixa (${cBaixa})</div>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:14px;">
+    <div class="m-filter-btn ${DEM_FILTRO_STATUS===''?'active':''}" onclick="setDemFiltro('status','')">Todos</div>
+    <div class="m-filter-btn ${DEM_FILTRO_STATUS==='pendente'?'active':''}" onclick="setDemFiltro('status','pendente')">Pendentes (${cPendente})</div>
+    <div class="m-filter-btn ${DEM_FILTRO_STATUS==='concluida'?'active':''}" onclick="setDemFiltro('status','concluida')">Concluídas (${cConcluida})</div>
+  </div>`;
+
+  if (lista.length === 0) {
+    document.getElementById('dem-list').innerHTML = filterHtml + '<div class="m-empty">Nenhuma demanda encontrada.</div>';
+    return;
+  }
+
+  let html = filterHtml;
+  lista.forEach(d => {
+    const prior = (d.PRIORIDADE || 'media').toLowerCase();
+    const isConcluida = (d.STATUS || '').toLowerCase().includes('conclu');
+    const borderColor = prior === 'alta' ? 'var(--danger)' : prior === 'baixa' ? 'var(--info)' : 'var(--warning)';
+    const priorTag = prior === 'alta' ? 'tag-divida' : prior === 'baixa' ? 'tag-bacen' : 'tag-pendente';
+    const statusTag = isConcluida ? 'tag-aprovado' : 'tag-pendente';
+    const statusLabel = isConcluida ? 'CONCLUÍDA' : 'PENDENTE';
+    const opacity = isConcluida ? 'opacity:.6;' : '';
+    const showResp = isCoordenador || isGerente;
+
+    // Botão concluir — só aparece se pendente e se é o responsável, coordenador ou gerente
+    const podeConc = !isConcluida && (isGerente || isCoordenador || (d.RESPONSAVEL || '').toUpperCase().includes(USUARIO.NOME.toUpperCase()));
+    const demResp = (d.RESPONSAVEL || '').replace(/'/g, "\\'");
+    const demDesc = (d.DESCRICAO || '').replace(/'/g, "\\'");
+    const demData = String(d.DATA || '').substring(0, 10);
+
+    html += `<div class="m-client" style="border-left:4px solid ${borderColor};${opacity}">
+      ${showResp ? `<div style="font-size:.72rem;font-weight:800;color:var(--accent);margin-bottom:4px;">${d.RESPONSAVEL || '-'}</div>` : ''}
+      <div style="font-size:.82rem;color:#fff;line-height:1.4;margin-bottom:8px;">${d.DESCRICAO || '-'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <span class="tag ${priorTag}">${d.PRIORIDADE || 'Média'}</span>
+        <span class="tag ${statusTag}">${statusLabel}</span>
+        ${d.TIPO ? `<span class="tag tag-outro">${d.TIPO}</span>` : ''}
+      </div>
+      ${d.CLIENTE ? `<div style="font-size:.68rem;color:var(--gold);margin-top:6px;">Clientes: ${d.CLIENTE}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        ${demData ? `<div style="font-size:.62rem;color:var(--textL);">${fmtData(demData)}</div>` : '<div></div>'}
+        ${podeConc ? `<button onclick="concluirDemandaPorConteudo('${demResp}','${demDesc}','${demData}')" style="background:var(--success);color:#000;border:none;border-radius:6px;padding:5px 12px;font-size:.68rem;font-weight:700;cursor:pointer;">Concluir</button>` : ''}
+        ${isConcluida ? `<span style="font-size:.65rem;color:var(--success);font-weight:600;">Concluída</span>` : ''}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('dem-list').innerHTML = html;
+}
+
+function fmtData(d) {
+  if (!d) return '';
+  const s = String(d).substring(0, 10);
+  if (!s.includes('-')) return s;
+  const [a, m, dia] = s.split('-');
+  return `${dia}/${m}`;
+}
+
+async function concluirDemandaPorConteudo(resp, desc, data) {
+  if (!confirm(`Concluir esta demanda?\n\n"${desc}"`)) return;
+
+  const params = new URLSearchParams({
+    acao: 'concluir',
+    resp: resp,
+    desc: desc,
+    data: data,
+    por: USUARIO.NOME
+  });
+
+  try {
+    const r = await fetch(API_URL + '?' + params.toString());
+    const res = await r.json();
+
+    if (res.sucesso) {
+      // Atualizar localmente
+      const d = DEMANDAS.find(dm =>
+        (dm.RESPONSAVEL || '') === resp &&
+        (dm.DESCRICAO || '') === desc &&
+        String(dm.DATA || '').substring(0, 10) === data
+      );
+      if (d) d.STATUS = 'Concluida';
+      renderDemandas();
+    } else {
+      alert('Não foi possível concluir: ' + (res.erro || 'Erro desconhecido'));
+    }
+  } catch(e) {
+    alert('Erro de conexão. Verifique sua internet e tente novamente.');
+  }
+}
+
+// ============================================
+// MINHA EQUIPE (coordenador/gerente)
+// ============================================
+let CLIENTES_EQUIPE = [];
+let CLIENTES_EQUIPE_RENDER = [];
+const eqAbertos = {};
+
+function carregarEquipe() {
+  const equipe = USUARIO.EQUIPE;
+  const isGerente = USUARIO.CARGO === 'Gerente';
+
+  const membros = isGerente
+    ? CORRETORES.filter(c => c.STATUS === 'Ativo')
+    : CORRETORES.filter(c => c.EQUIPE === equipe && c.STATUS === 'Ativo');
+
+  const nomesMembros = membros.map(c => c.NOME.toUpperCase());
+  const nomesCompletos = membros.map(c => (c['NOME COMPLETO'] || '').toUpperCase());
+
+  CLIENTES_EQUIPE = CLIENTES.filter(c => {
+    if (!c.CORRETOR || c.CORRETOR === 'NÃO IDENTIFICADO') return false;
+    const corrUpper = c.CORRETOR.toUpperCase();
+    return nomesMembros.some(n => corrUpper.includes(n) || n.includes(corrUpper)) ||
+           nomesCompletos.some(n => n && (corrUpper.includes(n) || n.includes(corrUpper)));
+  });
+
+  const sel = document.getElementById('eq-corretor');
+  sel.innerHTML = '<option value="">Todos os corretores</option>';
+  const corrsEquipe = [...new Set(CLIENTES_EQUIPE.map(c => c.CORRETOR))].sort();
+  corrsEquipe.forEach(n => {
+    const o = document.createElement('option');
+    o.value = n;
+    o.textContent = n;
+    sel.appendChild(o);
+  });
+
+  renderEquipe();
+}
+
+function toggleCorretor(corr) {
+  eqAbertos[corr] = !eqAbertos[corr];
+  renderEquipe();
+}
+
+function renderEquipe() {
+  const filtroCorr = document.getElementById('eq-corretor').value;
+  const filtroSt = document.getElementById('eq-status').value;
+
+  let lista = [...CLIENTES_EQUIPE];
+  if (filtroCorr) lista = lista.filter(c => c.CORRETOR === filtroCorr);
+  if (filtroSt) lista = lista.filter(c => classStatus(c.STATUS).grupo === filtroSt);
+  CLIENTES_EQUIPE_RENDER = lista;
+
+  const total = CLIENTES_EQUIPE.length;
+  const aprovados = CLIENTES_EQUIPE.filter(c => classStatus(c.STATUS).grupo === 'aprovado').length;
+  const pendentes = CLIENTES_EQUIPE.filter(c => classStatus(c.STATUS).grupo === 'pendente').length;
+
+  document.getElementById('eq-kpis').innerHTML = `
+    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Total Equipe</div></div>
+    <div class="m-kpi green"><div class="v">${aprovados}</div><div class="l">Aprovados</div></div>
+    <div class="m-kpi yellow"><div class="v">${pendentes}</div><div class="l">Pendentes</div></div>
+  `;
+
+  if (lista.length === 0) {
+    document.getElementById('eq-clientes-list').innerHTML = '<div class="m-empty">Nenhum cliente encontrado.</div>';
+    return;
+  }
+
+  // Agrupar por corretor
+  const porCorretor = {};
+  lista.forEach(c => {
+    const corr = c.CORRETOR || 'Sem corretor';
+    if (!porCorretor[corr]) porCorretor[corr] = [];
+    porCorretor[corr].push(c);
+  });
+
+  let html = '';
+  Object.entries(porCorretor).forEach(([corr, clientes]) => {
+    const aprovCorr = clientes.filter(c => classStatus(c.STATUS).grupo === 'aprovado').length;
+    const pendCorr = clientes.filter(c => classStatus(c.STATUS).grupo === 'pendente').length;
+    const aberto = eqAbertos[corr] || false;
+    const seta = aberto ? '▼' : '▶';
+
+    // Indicador visual
+    let indicador = '';
+    if (aprovCorr > 0) indicador += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:4px;" title="${aprovCorr} aprovados"></span>`;
+    if (pendCorr > clientes.length * 0.5) indicador += `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-right:4px;" title="Muitos pendentes"></span>`;
+
+    html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);margin-bottom:10px;overflow:hidden;">
+      <div onclick="toggleCorretor('${corr}')" style="display:flex;justify-content:space-between;align-items:center;padding:14px;cursor:pointer;user-select:none;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:.7rem;color:var(--textL);">${seta}</span>
+          <div>
+            <div style="font-size:.88rem;font-weight:800;color:#fff;">${indicador}${corr}</div>
+            <div style="font-size:.65rem;color:var(--textL);margin-top:2px;">${clientes.length} clientes | <span style="color:var(--success);">${aprovCorr} aprovados</span> | <span style="color:var(--warning);">${pendCorr} pendentes</span></div>
+          </div>
+        </div>
+        <div style="font-size:.7rem;color:var(--textL);">${clientes.length}</div>
+      </div>`;
+
+    if (aberto) {
+      html += `<div style="padding:0 12px 12px;">`;
+      clientes.forEach(c => {
+        const st = classStatus(c.STATUS);
+        const renda = c.RENDA ? `R$ ${Number(c.RENDA).toLocaleString('pt-BR')}` : '';
+        const idxRender = CLIENTES_EQUIPE_RENDER.indexOf(c);
+        html += `<div class="m-client" style="margin-bottom:6px;padding:10px;" onclick="abrirModalCliente_eq(${idxRender})">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div class="m-client-name" style="font-size:.8rem;">${c.CLIENTE || '-'}</div>
+              <div class="m-client-cpf">${c.CPF || ''}</div>
+            </div>
+            <span class="tag ${st.tag}">${st.label}</span>
+          </div>
+          ${renda ? `<div class="m-client-renda" style="margin-top:4px;">${renda}</div>` : ''}
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  });
+
+  document.getElementById('eq-clientes-list').innerHTML = html;
+}
+
+function abrirModalCliente_eq(idx) {
+  const c = CLIENTES_EQUIPE_RENDER[idx];
+  if (!c) return;
+  CLIENTE_MODAL = c;
+  document.getElementById('mc-nome').textContent = c.CLIENTE || 'Cliente';
+  const st = classStatus(c.STATUS);
+  const renda = c.RENDA ? `R$ ${Number(c.RENDA).toLocaleString('pt-BR')}` : 'Não informada';
+  let info = '';
+  info += `<div class="modal-info-row"><span class="modal-info-label">Corretor</span><span class="modal-info-value" style="color:var(--accent);">${c.CORRETOR || '-'}</span></div>`;
+  info += `<div class="modal-info-row"><span class="modal-info-label">CPF</span><span class="modal-info-value">${c.CPF || '-'}</span></div>`;
+  info += `<div class="modal-info-row"><span class="modal-info-label">Status</span><span class="modal-info-value"><span class="tag ${st.tag}">${st.label}</span></span></div>`;
+  info += `<div class="modal-info-row"><span class="modal-info-label">Renda</span><span class="modal-info-value" style="color:var(--accent);">${renda}</span></div>`;
+  if (c.FAIXA) info += `<div class="modal-info-row"><span class="modal-info-label">Faixa</span><span class="modal-info-value">${c.FAIXA}</span></div>`;
+  if (c['TETO IMÓVEL']) info += `<div class="modal-info-row"><span class="modal-info-label">Teto</span><span class="modal-info-value">R$ ${Number(c['TETO IMÓVEL']).toLocaleString('pt-BR')}</span></div>`;
+  document.getElementById('mc-info').innerHTML = info;
+  const infos = getInfoLocal(c.CPF);
+  document.getElementById('mc-telefone').value = infos.telefone || '';
+  document.getElementById('mc-email').value = infos.email || '';
+  document.getElementById('mc-obs').value = infos.obs || '';
+  document.getElementById('mc-save-msg').style.display = 'none';
+  // Empreendimentos
+  let empHtml = '';
+  if (c.RENDA) {
+    const emps = getEmpreendimentosCompativeis(c.RENDA);
+    if (emps.length > 0) {
+      empHtml += `<div class="modal-emp-section"><div class="modal-emp-title">Empreendimentos Compatíveis (${emps.length})</div>`;
+      emps.forEach(e => {
+        const nome = e.NOME || e['EMPREENDIMENTO'] || '-';
+        const construtora = e.CONSTRUTORA || e['construtora'] || '';
+        const bairro = e.BAIRRO || e['bairro'] || '';
+        const regiao = e.REGIAO || e['REGIÃO'] || '';
+        const valor = parseFloat(e.VALOR || 0);
+        const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '-';
+        empHtml += `<div class="modal-emp-card">
+          <div class="modal-emp-name">${nome}</div>
+          <div class="modal-emp-details">${construtora}${bairro ? ' | '+bairro : ''}${regiao ? ' ('+regiao+')' : ''}</div>
+          <div class="modal-emp-valor">${valorFmt}</div>
+        </div>`;
+      });
+      empHtml += `</div>`;
+    } else {
+      empHtml += `<div class="modal-emp-section"><div class="modal-emp-none">Nenhum empreendimento compatível.</div></div>`;
+    }
+  }
+  document.getElementById('mc-empreendimentos').innerHTML = empHtml;
+  document.getElementById('modal-cliente').classList.add('open');
+}
+
+// ============================================
+// INFO LOCAL (telefone, email, obs por CPF)
+// ============================================
+function getInfoLocal(cpf) {
+  if (!cpf) return {};
+  return JSON.parse(localStorage.getItem('alicerce-info-' + cpf) || '{}');
+}
+
+function saveInfoLocal(cpf, dados) {
+  if (!cpf) return;
+  localStorage.setItem('alicerce-info-' + cpf, JSON.stringify(dados));
+}
+
+// ============================================
+// MODAL CLIENTE
+// ============================================
+function abrirModalCliente(idx) {
+  const lista = FILTRO_ATIVO ? MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === FILTRO_ATIVO) : MEUS_CLIENTES;
+  const c = lista[idx];
+  if (!c) return;
+  CLIENTE_MODAL = c;
+
+  document.getElementById('mc-nome').textContent = c.CLIENTE || 'Cliente';
+
+  const st = classStatus(c.STATUS);
+  const renda = c.RENDA ? `R$ ${Number(c.RENDA).toLocaleString('pt-BR')}` : 'Não informada';
+
+  let info = '';
+  info += `<div class="modal-info-row"><span class="modal-info-label">CPF</span><span class="modal-info-value">${c.CPF || '-'}</span></div>`;
+  info += `<div class="modal-info-row"><span class="modal-info-label">Status</span><span class="modal-info-value"><span class="tag ${st.tag}">${st.label}</span></span></div>`;
+  info += `<div class="modal-info-row"><span class="modal-info-label">Renda</span><span class="modal-info-value" style="color:var(--accent);">${renda}</span></div>`;
+  if (c.FAIXA) info += `<div class="modal-info-row"><span class="modal-info-label">Faixa</span><span class="modal-info-value">${c.FAIXA}</span></div>`;
+  if (c['TETO IMÓVEL']) info += `<div class="modal-info-row"><span class="modal-info-label">Teto</span><span class="modal-info-value">R$ ${Number(c['TETO IMÓVEL']).toLocaleString('pt-BR')}</span></div>`;
+  if (c['REGIÃO']) info += `<div class="modal-info-row"><span class="modal-info-label">Região</span><span class="modal-info-value">${c['REGIÃO']}</span></div>`;
+  document.getElementById('mc-info').innerHTML = info;
+
+  // Preencher campos salvos
+  const infos = getInfoLocal(c.CPF);
+  document.getElementById('mc-telefone').value = infos.telefone || '';
+  document.getElementById('mc-email').value = infos.email || '';
+  document.getElementById('mc-obs').value = infos.obs || '';
+  document.getElementById('mc-save-msg').style.display = 'none';
+
+  // Empreendimentos
+  let empHtml = '';
+  if (c.RENDA) {
+    const emps = getEmpreendimentosCompativeis(c.RENDA);
+    if (emps.length > 0) {
+      empHtml += `<div class="modal-emp-section"><div class="modal-emp-title">Empreendimentos Compatíveis (${emps.length})</div>`;
+      emps.forEach(e => {
+        const nome = e.NOME || e['EMPREENDIMENTO'] || '-';
+        const construtora = e.CONSTRUTORA || e['construtora'] || '';
+        const bairro = e.BAIRRO || e['bairro'] || '';
+        const regiao = e.REGIAO || e['REGIÃO'] || e['regiao'] || '';
+        const valor = parseFloat(e.VALOR || 0);
+        const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '-';
+        const entrega = e.ENTREGA || e['entrega'] || '';
+        empHtml += `<div class="modal-emp-card">
+          <div class="modal-emp-name">${nome}</div>
+          <div class="modal-emp-details">${construtora}${bairro ? ' | ' + bairro : ''}${regiao ? ' (' + regiao + ')' : ''}${entrega ? ' | Entrega: ' + entrega : ''}</div>
+          <div class="modal-emp-valor">${valorFmt}</div>
+        </div>`;
+      });
+      empHtml += `</div>`;
+    } else {
+      empHtml += `<div class="modal-emp-section"><div class="modal-emp-none">Nenhum empreendimento compatível com esta renda.</div></div>`;
+    }
+  } else {
+    empHtml += `<div class="modal-emp-section"><div class="modal-emp-none">Renda não informada — não é possível calcular empreendimentos.</div></div>`;
+  }
+  document.getElementById('mc-empreendimentos').innerHTML = empHtml;
+
+  document.getElementById('modal-cliente').classList.add('open');
+}
+
+function fecharModalCliente() {
+  document.getElementById('modal-cliente').classList.remove('open');
+  CLIENTE_MODAL = null;
+}
+
+function salvarInfoCliente() {
+  if (!CLIENTE_MODAL || !CLIENTE_MODAL.CPF) return;
+
+  const dados = {
+    telefone: document.getElementById('mc-telefone').value.trim(),
+    email: document.getElementById('mc-email').value.trim(),
+    obs: document.getElementById('mc-obs').value.trim()
+  };
+
+  saveInfoLocal(CLIENTE_MODAL.CPF, dados);
+
+  document.getElementById('mc-save-msg').style.display = 'block';
+  setTimeout(() => { document.getElementById('mc-save-msg').style.display = 'none'; }, 2000);
+
+  // Re-render pra mostrar telefone no card
+  renderMeusClientes();
+}
+
+// Fechar modal com ESC
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModalCliente(); });
+
+// ============================================
+// CHECK-IN COM GEOLOCALIZAÇÃO + GEOFENCE
+// ============================================
+// Locais autorizados para check-in
+const LOCAIS = [
+  { nome: 'Escritório Recreio', lat: -23.0178593, lng: -43.5109178 },
+  { nome: 'Estande Novolar', lat: -22.9325, lng: -43.3580 },
+];
+const RAIO_METROS = 100; // Cerca virtual de 100m
+
+function calcularDistancia(lat1, lng1, lat2, lng2) {
+  const R = 6371000; // Raio da Terra em metros
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function iniciarRelogio() {
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('checkin-relogio').textContent = `${h}:${m}`;
+
+    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    document.getElementById('checkin-data').textContent = `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+  }
+  tick();
+  setInterval(tick, 30000);
+
+  // Verificar se já fez check-in hoje
+  const hoje = new Date().toISOString().split('T')[0];
+  const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
+  const jaFez = checkins.find(c => c.data === hoje);
+  if (jaFez) {
+    document.getElementById('checkin-btn').className = 'checkin-btn feito';
+    document.getElementById('checkin-btn').textContent = 'PRESENÇA REGISTRADA';
+    const localTag = jaFez.noEscritorio ? `📍 ${jaFez.nomeLocal || jaFez.local || 'No local'}` : '⚠️ Fora do local';
+    const distTxt = jaFez.distancia ? ` (${Math.round(jaFez.distancia)}m)` : '';
+    document.getElementById('checkin-status').textContent = `Check-in às ${jaFez.hora} — ${localTag}${distTxt}`;
+  }
+}
+
+function fazerCheckin() {
+  const hoje = new Date().toISOString().split('T')[0];
+  const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
+  if (checkins.find(c => c.data === hoje)) return;
+
+  const btn = document.getElementById('checkin-btn');
+  btn.textContent = 'OBTENDO LOCALIZAÇÃO...';
+  btn.disabled = true;
+
+  if (!navigator.geolocation) {
+    registrarCheckin(null, null);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      registrarCheckin(pos.coords.latitude, pos.coords.longitude);
+    },
+    (err) => {
+      // Se negar localização, registra mas marca como "sem GPS"
+      registrarCheckin(null, null);
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+function registrarCheckin(lat, lng) {
+  const hoje = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const hora = `${h}:${m}`;
+
+  let distancia = null;
+  let noLocal = false;
+  let localTexto = 'GPS negado';
+  let nomeLocal = '';
+
+  if (lat !== null && lng !== null) {
+    // Verificar cada local autorizado
+    let menorDist = Infinity;
+    LOCAIS.forEach(local => {
+      const dist = calcularDistancia(lat, lng, local.lat, local.lng);
+      if (dist < menorDist) {
+        menorDist = dist;
+        nomeLocal = local.nome;
+      }
+      if (dist <= RAIO_METROS) {
+        noLocal = true;
+        nomeLocal = local.nome;
+        distancia = dist;
+      }
+    });
+    if (!noLocal) {
+      distancia = menorDist;
+      localTexto = 'FORA DO LOCAL';
+    } else {
+      localTexto = nomeLocal;
+    }
+  }
+
+  const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
+  checkins.push({
+    data: hoje,
+    hora: hora,
+    corretor: USUARIO.NOME,
+    lat: lat,
+    lng: lng,
+    distancia: distancia,
+    noEscritorio: noLocal,
+    local: localTexto,
+    nomeLocal: nomeLocal
+  });
+  localStorage.setItem('alicerce-checkins-' + USUARIO.NOME, JSON.stringify(checkins));
+
+  const btn = document.getElementById('checkin-btn');
+  btn.className = 'checkin-btn feito';
+  btn.textContent = 'PRESENÇA REGISTRADA';
+  btn.disabled = false;
+
+  const localTag = noLocal ? `📍 ${nomeLocal}` : (lat === null ? '⚠️ GPS negado' : '⚠️ Fora do local');
+  const distTxt = distancia !== null ? ` (${Math.round(distancia)}m)` : '';
+  document.getElementById('checkin-status').textContent = `Check-in às ${hora} — ${localTag}${distTxt}`;
+
+  carregarCheckins();
+
+  // Salvar na planilha via GET (evita CORS com Apps Script)
+  const obsText = `Check-in via App | ${localTexto}${distancia !== null ? ' | ' + Math.round(distancia) + 'm' : ''}${lat ? ' | GPS: ' + lat.toFixed(6) + ',' + lng.toFixed(6) : ''}`;
+  const presenca = noLocal ? 'presente' : (lat === null ? 'sem-gps' : 'fora');
+  const checkinParams = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      'DATA': hoje,
+      'CORRETOR': USUARIO.NOME,
+      'EQUIPE': USUARIO.EQUIPE,
+      'TIPO': 'checkin',
+      'PRESENCA': presenca,
+      'O QUE FEZ': '',
+      'PLANO DO DIA': '',
+      'DIFICULDADE': '',
+      'CLIENTES': '',
+      'HORA': hora,
+      'OBSERVACOES': obsText
+    })
+  });
+  fetch(API_URL + '?' + checkinParams.toString()).catch(() => {});
+}
+
+function carregarCheckins() {
+  const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
+  const ultimos = checkins.slice(-7).reverse();
+
+  if (ultimos.length === 0) {
+    document.getElementById('checkin-historico-list').innerHTML = '<div class="m-empty" style="padding:10px;">Nenhum check-in registrado.</div>';
+    return;
+  }
+
+  const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  let html = '';
+  ultimos.forEach(c => {
+    const dt = new Date(c.data + 'T12:00:00');
+    const dia = dias[dt.getDay()];
+    const dataFmt = `${dt.getDate()}/${String(dt.getMonth() + 1).padStart(2, '0')}`;
+    const localIcon = c.noEscritorio ? '📍' : (c.lat === null || c.lat === undefined ? '⚠️' : '⚠️');
+    const localColor = c.noEscritorio ? 'var(--success)' : (c.lat === null || c.lat === undefined ? 'var(--textL)' : 'var(--danger)');
+    const localTxt = c.noEscritorio ? 'Escritório' : (c.local || '?');
+    const distTxt = c.distancia !== null && c.distancia !== undefined ? ` (${Math.round(c.distancia)}m)` : '';
+    html += `<div class="checkin-hist-item">
+      <span>${dia}, ${dataFmt}</span>
+      <span style="font-size:.72rem;color:${localColor};">${localIcon} ${localTxt}${distTxt}</span>
+      <span style="color:var(--success);font-weight:700;">${c.hora}</span>
+    </div>`;
+  });
+  document.getElementById('checkin-historico-list').innerHTML = html;
+}
+
+// ============================================
+// 945 - GRAVAÇÃO E TRANSCRIÇÃO
+// ============================================
+let gravando = false;
+let recognition = null;
+let recTimer = null;
+let recSegundos = 0;
+let transcricaoTexto = '';
+
+function toggleGravacao() {
+  if (gravando) {
+    pararGravacao();
+  } else {
+    iniciarGravacao();
+  }
+}
+
+function iniciarGravacao() {
+  // Verificar suporte
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Seu navegador não suporta gravação de voz. Use o Chrome.');
+    return;
+  }
+
+  transcricaoTexto = '';
+  let partesFinal = [];
+
+  function iniciarSessao() {
+    const rec = new SpeechRecognition();
+    rec.lang = 'pt-BR';
+    rec.continuous = false;    // UMA frase por sessão — mais confiável no mobile
+    rec.interimResults = false; // Só resultado final
+
+    rec.onresult = (event) => {
+      const texto = event.results[0][0].transcript.trim();
+      if (!texto) return;
+
+      // Deduplicação agressiva: verificar se o texto já existe ou se as palavras repetem
+      const palavrasNovas = texto.toLowerCase().split(/\s+/);
+      let duplicado = false;
+
+      if (partesFinal.length > 0) {
+        const ultimaFrase = partesFinal[partesFinal.length - 1].toLowerCase();
+        // Frase idêntica
+        if (ultimaFrase === texto.toLowerCase()) duplicado = true;
+        // Frase contida na anterior ou vice-versa
+        if (ultimaFrase.includes(texto.toLowerCase()) || texto.toLowerCase().includes(ultimaFrase)) duplicado = true;
+        // Primeiras palavras da nova são iguais às últimas da anterior
+        const palavrasAntes = ultimaFrase.split(/\s+/);
+        const overlap = Math.min(4, palavrasAntes.length, palavrasNovas.length);
+        for (let n = overlap; n >= 2; n--) {
+          if (palavrasAntes.slice(-n).join(' ') === palavrasNovas.slice(0, n).join(' ')) {
+            // Overlap parcial: adicionar só a parte nova
+            const parteNova = palavrasNovas.slice(n).join(' ');
+            if (parteNova) partesFinal.push(parteNova);
+            duplicado = true;
+            break;
+          }
+        }
+      }
+
+      if (!duplicado) partesFinal.push(texto);
+
+      transcricaoTexto = partesFinal.join(' ');
+      document.getElementById('rec-status').textContent = transcricaoTexto.length > 50 ? '...' + transcricaoTexto.slice(-50) : transcricaoTexto;
+    };
+
+    rec.onerror = (event) => {
+      if (event.error === 'no-speech' || event.error === 'aborted') {
+        // Silêncio ou cancelamento — reiniciar normalmente
+      } else {
+        console.log('Erro reconhecimento:', event.error);
+      }
+    };
+
+    rec.onend = () => {
+      if (gravando) {
+        // Esperar 300ms pra limpar o buffer de áudio antes de reiniciar
+        setTimeout(() => {
+          if (gravando) iniciarSessao();
+        }, 300);
+      }
+    };
+
+    recognition = rec;
+    rec.start();
+  }
+
+  iniciarSessao();
+  gravando = true;
+  recSegundos = 0;
+
+  const btn = document.getElementById('rec-btn');
+  btn.className = 'rec-btn gravar';
+  btn.textContent = 'PARAR GRAVAÇÃO';
+  document.getElementById('rec-status').textContent = 'Ouvindo...';
+
+  // Timer
+  recTimer = setInterval(() => {
+    recSegundos++;
+    const min = String(Math.floor(recSegundos / 60)).padStart(2, '0');
+    const sec = String(recSegundos % 60).padStart(2, '0');
+    document.getElementById('rec-timer').textContent = `${min}:${sec}`;
+  }, 1000);
+}
+
+function pararGravacao() {
+  gravando = false;
+  if (recognition) {
+    recognition.stop();
+    recognition = null;
+  }
+  if (recTimer) {
+    clearInterval(recTimer);
+    recTimer = null;
+  }
+
+  const btn = document.getElementById('rec-btn');
+  btn.className = 'rec-btn iniciar';
+  btn.textContent = 'GRAVAR 945';
+  document.getElementById('rec-status').textContent = '';
+
+  if (transcricaoTexto.trim().length > 0) {
+    // Mostrar tela de revisão
+    document.getElementById('rec-inicio').style.display = 'none';
+    document.getElementById('rec-revisao').style.display = 'block';
+    document.getElementById('rec-texto').textContent = transcricaoTexto.trim();
+    document.getElementById('rec-sent-msg').style.display = 'none';
+  } else {
+    alert('Nenhuma fala detectada. Tente novamente.');
+    document.getElementById('rec-timer').textContent = '00:00';
+  }
+}
+
+function cancelar945() {
+  document.getElementById('rec-inicio').style.display = 'block';
+  document.getElementById('rec-revisao').style.display = 'none';
+  document.getElementById('rec-timer').textContent = '00:00';
+  transcricaoTexto = '';
+}
+
+async function enviar945() {
+  const texto = document.getElementById('rec-texto').textContent.trim();
+  if (!texto) { alert('Transcrição vazia.'); return; }
+
+  const btn = document.getElementById('rec-enviar');
+  btn.disabled = true;
+  btn.textContent = 'ENVIANDO...';
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const hora = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+  // Salvar local ANTES de enviar (nunca perde a transcrição)
+  const hist = JSON.parse(localStorage.getItem('alicerce-945-' + USUARIO.NOME) || '[]');
+  hist.push({ data: hoje, hora: hora, texto: texto });
+  localStorage.setItem('alicerce-945-' + USUARIO.NOME, JSON.stringify(hist));
+
+  // Dados do registro
+  const registroData = {
+    'DATA': hoje,
+    'CORRETOR': USUARIO.NOME,
+    'EQUIPE': USUARIO.EQUIPE,
+    'TIPO': '945-individual',
+    'PRESENCA': 'presente',
+    'O QUE FEZ': '',
+    'PLANO DO DIA': '',
+    'DIFICULDADE': '',
+    'CLIENTES': '',
+    'HORA': hora,
+    'OBSERVACOES': texto
+  };
+
+  let sucesso = false;
+
+  // TENTATIVA 1: POST normal (pode falhar por redirect do Apps Script)
+  try {
+    btn.textContent = 'ENVIANDO...';
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'adicionar_registro', registros: [registroData] }),
+      redirect: 'follow'
+    });
+    try {
+      const res = await resp.json();
+      if (res.sucesso) sucesso = true;
+    } catch(jsonErr) {
+      // Resposta veio mas não é JSON (redirect do Google) — dado provavelmente foi salvo
+      if (resp.ok || resp.redirected || resp.status === 200) sucesso = true;
+    }
+  } catch(e) { /* falhou, tenta próximo método */ }
+
+  // TENTATIVA 2: POST no-cors (envia sem ler resposta — funciona em qualquer navegador)
+  if (!sucesso) {
+    try {
+      btn.textContent = 'TENTATIVA 2/3...';
+      await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ acao: 'adicionar_registro', registros: [registroData] })
+      });
+      // Se chegou aqui sem erro, o request foi enviado (não conseguimos ler resposta, mas foi)
+      sucesso = true;
+    } catch(e) { /* falhou, tenta GET */ }
+  }
+
+  // TENTATIVA 3: GET (fallback — funciona sempre, mas trunca texto longo)
+  if (!sucesso) {
+    try {
+      btn.textContent = 'TENTATIVA 3/3...';
+      const textoTruncado = texto.length > 1500 ? texto.substring(0, 1500) + '...(cortado)' : texto;
+      const params = new URLSearchParams({
+        acao: 'checkin',
+        registro: JSON.stringify({...registroData, OBSERVACOES: textoTruncado})
+      });
+      const resp = await fetch(API_URL + '?' + params.toString());
+      const res = await resp.json();
+      if (res.sucesso) sucesso = true;
+    } catch(e) { /* todas as tentativas falharam */ }
+  }
+
+  if (sucesso) {
+    btn.textContent = 'PROCESSANDO...';
+
+    // Disparar processamento das demandas automaticamente
+    try {
+      await fetch(API_URL + '?acao=processar945');
+    } catch(e) {} // Se falhar, o trigger diário pega depois
+
+    btn.textContent = 'ENVIADO!';
+    document.getElementById('rec-sent-msg').style.display = 'block';
+
+    // Atualizar demandas localmente pra aparecer na hora
+    carregarDemandas();
+
+    setTimeout(() => {
+      document.getElementById('rec-inicio').style.display = 'block';
+      document.getElementById('rec-revisao').style.display = 'none';
+      document.getElementById('rec-timer').textContent = '00:00';
+      btn.disabled = false;
+      btn.textContent = 'ENVIAR 945';
+      transcricaoTexto = '';
+      carregarHistorico945();
+    }, 2000);
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'ENVIAR 945';
+    alert('Não foi possível enviar agora, mas sua gravação foi salva no celular. Tente novamente em alguns minutos.');
+  }
+}
+
+function carregarHistorico945() {
+  const hist = JSON.parse(localStorage.getItem('alicerce-945-' + USUARIO.NOME) || '[]');
+  const ultimos = hist.slice(-5).reverse();
+
+  if (ultimos.length === 0) {
+    document.getElementById('rec-hist-list').innerHTML = '<div class="m-empty" style="padding:10px;">Nenhum registro 945 ainda.</div>';
+    return;
+  }
+
+  let html = '';
+  ultimos.forEach(h => {
+    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const dt = new Date(h.data + 'T12:00:00');
+    const dia = dias[dt.getDay()];
+    const dataFmt = `${dt.getDate()}/${String(dt.getMonth() + 1).padStart(2, '0')}`;
+    const textoResumo = h.texto.length > 120 ? h.texto.substring(0, 120) + '...' : h.texto;
+    html += `<div class="rec-hist-item">
+      <div class="rec-hist-date">${dia}, ${dataFmt} às ${h.hora}</div>
+      <div class="rec-hist-text">${textoResumo}</div>
+    </div>`;
+  });
+  document.getElementById('rec-hist-list').innerHTML = html;
+}
+
+// ============================================
+// INIT
+// ============================================
+init();
+</script>
+
+</body>
+</html>
