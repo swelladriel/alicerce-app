@@ -248,6 +248,12 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div id="m-clientes-list"><div class="loading">Carregando clientes...</div></div>
     </div>
 
+    <!-- TAB: MINHAS VENDAS -->
+    <div class="app-page" id="tab-vendas">
+      <div class="m-kpis" id="vd-kpis"></div>
+      <div id="vd-lista"><div class="loading">Carregando vendas...</div></div>
+    </div>
+
     <!-- TAB: CHECK-IN -->
     <div class="app-page" id="tab-checkin">
       <div class="checkin-box">
@@ -320,6 +326,8 @@ let CORRETORES = [];
 let CLIENTES = [];
 let EMPREENDIMENTOS = [];
 let DEMANDAS = [];
+let VENDAS = [];
+let MINHAS_VENDAS = [];
 let USUARIO = null;
 let MEUS_CLIENTES = [];
 let FILTRO_ATIVO = '';
@@ -411,6 +419,7 @@ async function fazerLogin() {
     tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Demandas</div>`;
     tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
   }
+  tabsHtml += `<div class="tab" onclick="showTab('tab-vendas', event)">Vendas</div>`;
   tabsHtml += `<div class="tab" onclick="showTab('tab-checkin', event)">Check-in</div>`;
   tabsHtml += `<div class="tab" onclick="showTab('tab-945', event)">945</div>`;
   document.getElementById('app-tabs').innerHTML = tabsHtml;
@@ -506,6 +515,7 @@ async function carregarTudo() {
   CLIENTES = dados.clientes || [];
   EMPREENDIMENTOS = dados.empreendimentos || [];
   DEMANDAS = dados.demandas || [];
+  VENDAS = dados.vendas || [];
 
   // Filtrar meus clientes
   const nomeUpper = USUARIO.NOME.toUpperCase();
@@ -516,8 +526,16 @@ async function carregarTudo() {
     return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
   });
 
+  // Filtrar minhas vendas
+  MINHAS_VENDAS = VENDAS.filter(v => {
+    if (!v.CORRETOR) return false;
+    const corrUpper = v.CORRETOR.toUpperCase();
+    return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
+  });
+
   renderMeusClientes();
   renderDemandas();
+  renderMinhasVendas();
   iniciarMonitorMeiaNoite();
   salvarCache(); // salvar dados pra modo offline
 }
@@ -1088,6 +1106,61 @@ function salvarInfoCliente() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModalCliente(); });
 
 // ============================================
+// MINHAS VENDAS
+// ============================================
+function renderMinhasVendas() {
+  const total = MINHAS_VENDAS.length;
+  const vgv = MINHAS_VENDAS.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const repassados = MINHAS_VENDAS.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
+
+  document.getElementById('vd-kpis').innerHTML = `
+    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Vendas</div></div>
+    <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV Total</div></div>
+    <div class="m-kpi green"><div class="v">${repassados}</div><div class="l">Repassados</div></div>
+  `;
+
+  if (total === 0) {
+    document.getElementById('vd-lista').innerHTML = '<div class="m-empty">Nenhuma venda registrada.</div>';
+    return;
+  }
+
+  // Ordenar por data mais recente
+  const lista = [...MINHAS_VENDAS].sort((a, b) => {
+    const da = String(a.DATA_VENDA || a.MES_COMERCIAL || '').substring(0, 10);
+    const db = String(b.DATA_VENDA || b.MES_COMERCIAL || '').substring(0, 10);
+    return db.localeCompare(da);
+  });
+
+  let html = '';
+  lista.forEach(v => {
+    const valor = parseFloat(v.VGV) || 0;
+    const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '-';
+    const status = v.STATUS_VENDA || '-';
+    const stTag = status.includes('Repassado') ? 'tag-aprovado' : status.includes('Aguardando') ? 'tag-pendente' : status.includes('Distrato') ? 'tag-divida' : status.includes('CONSORCIO') ? 'tag-bacen' : 'tag-outro';
+    const dataVenda = v.DATA_VENDA ? String(v.DATA_VENDA).substring(0, 10).split('-').reverse().slice(0, 2).join('/') : '';
+    const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const mesFmt = String(v.MES_COMERCIAL || '').substring(0, 7);
+    let mesTxt = '';
+    if (mesFmt.includes('-')) {
+      const [ano, mes] = mesFmt.split('-');
+      mesTxt = nomesMes[parseInt(mes)] + '/' + ano;
+    }
+
+    html += `<div class="m-client">
+      <div class="m-client-name">${v.CLIENTE || '-'}</div>
+      <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">${v.EMPREENDIMENTO || '-'} — ${v.CONSTRUTORA || ''}</div>
+      <div class="m-client-renda">${valorFmt}</div>
+      <div class="m-client-bottom">
+        <span class="tag ${stTag}">${status}</span>
+        <span style="font-size:.62rem;color:var(--textL);">${dataVenda || mesTxt}</span>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('vd-lista').innerHTML = html;
+}
+
+// ============================================
 // CHECK-IN COM GEOLOCALIZAÇÃO + GEOFENCE
 // ============================================
 // Locais autorizados para check-in
@@ -1493,6 +1566,7 @@ function salvarCache() {
       clientes: CLIENTES,
       empreendimentos: EMPREENDIMENTOS,
       demandas: DEMANDAS,
+      vendas: VENDAS,
       salvoEm: new Date().toISOString()
     }));
   } catch(e) {} // localStorage cheio, ignora
@@ -1506,6 +1580,7 @@ function carregarDoCache() {
     CLIENTES = cache.clientes || [];
     EMPREENDIMENTOS = cache.empreendimentos || [];
     DEMANDAS = cache.demandas || [];
+    VENDAS = cache.vendas || [];
 
     const nomeUpper = USUARIO.NOME.toUpperCase();
     const nomeCompleto = (USUARIO['NOME COMPLETO'] || '').toUpperCase();
@@ -1514,9 +1589,15 @@ function carregarDoCache() {
       const corrUpper = c.CORRETOR.toUpperCase();
       return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
     });
+    MINHAS_VENDAS = VENDAS.filter(v => {
+      if (!v.CORRETOR) return false;
+      const corrUpper = v.CORRETOR.toUpperCase();
+      return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
+    });
 
     renderMeusClientes();
     renderDemandas();
+    renderMinhasVendas();
     return true;
   } catch(e) { return false; }
 }

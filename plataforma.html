@@ -211,6 +211,9 @@ tr:hover{background:rgba(100,255,218,.02);}
   <div class="nav-item" onclick="showPage('pg-urgencias')">
     <span class="icon">🔥</span>Urgências do Dia
   </div>
+  <div class="nav-item" onclick="showPage('pg-vendas')">
+    <span class="icon">💰</span>Vendas
+  </div>
   <div class="nav-item" onclick="showPage('pg-corretores')">
     <span class="icon">🏢</span>Corretores
   </div>
@@ -362,6 +365,64 @@ tr:hover{background:rgba(100,255,218,.02);}
     <div class="urg-grid" id="urg-grid">
       <div class="loading">Carregando...</div>
     </div>
+  </div>
+
+  <!-- PAGE: VENDAS -->
+  <div class="page" id="pg-vendas">
+    <div class="topbar">
+      <div>
+        <h2>Vendas</h2>
+        <span class="topbar-info">Planilha de vendas da equipe — mês comercial</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-vendas"></div>
+    <div class="filters">
+      <select class="filter-input" id="vd-mes" onchange="renderVendas()">
+        <option value="">Todos os meses</option>
+      </select>
+      <select class="filter-input" id="vd-corretor" onchange="renderVendas()">
+        <option value="">Todos os corretores</option>
+      </select>
+      <select class="filter-input" id="vd-status" onchange="renderVendas()">
+        <option value="">Todos os status</option>
+        <option value="Repassado na CEF">Repassado na CEF</option>
+        <option value="Aguardando Assinatura Caixa">Aguardando Assinatura</option>
+        <option value="Distrato Realizado">Distrato</option>
+        <option value="CONSORCIO">Consórcio</option>
+      </select>
+      <select class="filter-input" id="vd-equipe" onchange="renderVendas()">
+        <option value="">Todas as equipes</option>
+        <option value="Glauco">Eq. Glauco</option>
+        <option value="Edivan">Eq. Edivan</option>
+        <option value="Adriel">Eq. Adriel</option>
+      </select>
+    </div>
+
+    <!-- RANKING DE VENDAS POR CORRETOR -->
+    <div id="vd-ranking" style="margin-bottom:24px;"></div>
+
+    <!-- TABELA DE VENDAS -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Data Venda</th>
+            <th>Cliente</th>
+            <th>Empreendimento</th>
+            <th>Construtora</th>
+            <th>VGV</th>
+            <th>Corretor</th>
+            <th>Coordenador</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tb-vendas">
+          <tr><td colspan="9" class="loading">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:.7rem;color:var(--textL);" id="count-vendas"></div>
   </div>
 
   <!-- PAGE: CORRETORES -->
@@ -553,6 +614,7 @@ let CORRETORES = [];
 let EMPREENDIMENTOS = [];
 let DEMANDAS = [];
 let REGISTROS = [];
+let VENDAS = [];
 let CORRETORES_MAP = {}; // nome -> equipe
 
 // ============================================
@@ -579,17 +641,18 @@ function toggleSidebar() {
 // ============================================
 async function carregarDados() {
   try {
-    // Carregar tudo em paralelo (5x mais rápido)
-    const [resCorr, resCli, resEmp, resDem, resReg] = await Promise.all([
+    // Carregar tudo em paralelo
+    const [resCorr, resCli, resEmp, resDem, resReg, resVend] = await Promise.all([
       fetch(API_URL + '?acao=corretores'),
       fetch(API_URL + '?acao=clientes'),
       fetch(API_URL + '?acao=empreendimentos'),
       fetch(API_URL + '?acao=demandas'),
-      fetch(API_URL + '?acao=registros')
+      fetch(API_URL + '?acao=registros'),
+      fetch(API_URL + '?acao=vendas')
     ]);
 
-    [CORRETORES, CLIENTES, EMPREENDIMENTOS, DEMANDAS, REGISTROS] = await Promise.all([
-      resCorr.json(), resCli.json(), resEmp.json(), resDem.json(), resReg.json()
+    [CORRETORES, CLIENTES, EMPREENDIMENTOS, DEMANDAS, REGISTROS, VENDAS] = await Promise.all([
+      resCorr.json(), resCli.json(), resEmp.json(), resDem.json(), resReg.json(), resVend.json()
     ]);
 
     CORRETORES.forEach(c => { CORRETORES_MAP[c.NOME] = c.EQUIPE; });
@@ -603,6 +666,7 @@ async function carregarDados() {
     renderHistorico945();
     renderRanking();
     renderHistDemandas();
+    renderVendas();
     preencherFiltros();
   } catch(e) {
     document.getElementById('tb-clientes').innerHTML = '<tr><td colspan="6" style="color:var(--danger);text-align:center;padding:20px;">Erro ao carregar dados. Verifique a conexão.</td></tr>';
@@ -1397,6 +1461,140 @@ function renderHistDemandas() {
 
   document.getElementById('tb-hist-dem').innerHTML = html;
   document.getElementById('count-hist-dem').textContent = `Exibindo ${lista.length} de ${DEMANDAS.length} demandas | ${concluidas} concluídas (${taxa}%)`;
+}
+
+// ============================================
+// RANKING DE PRESENÇA
+// ============================================
+// RENDER: VENDAS
+// ============================================
+function renderVendas() {
+  const filtroMes = document.getElementById('vd-mes').value;
+  const filtroCorr = document.getElementById('vd-corretor').value;
+  const filtroSt = document.getElementById('vd-status').value;
+  const filtroEq = document.getElementById('vd-equipe').value;
+
+  // Preencher filtros (uma vez)
+  const selMes = document.getElementById('vd-mes');
+  if (selMes.options.length <= 1) {
+    const meses = [...new Set(VENDAS.map(v => String(v.MES_COMERCIAL || '').substring(0, 7)).filter(m => m && m !== 'None'))].sort();
+    const nomesMes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    meses.forEach(m => {
+      const [ano, mes] = m.split('-');
+      const o = document.createElement('option');
+      o.value = m;
+      o.textContent = `${nomesMes[parseInt(mes)]}/${ano}`;
+      selMes.appendChild(o);
+    });
+  }
+  const selCorr = document.getElementById('vd-corretor');
+  if (selCorr.options.length <= 1) {
+    const corrs = [...new Set(VENDAS.map(v => v.CORRETOR).filter(c => c))].sort();
+    corrs.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; selCorr.appendChild(o); });
+  }
+
+  // Filtrar
+  let lista = [...VENDAS];
+  if (filtroMes) lista = lista.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === filtroMes);
+  if (filtroCorr) lista = lista.filter(v => v.CORRETOR === filtroCorr);
+  if (filtroSt) lista = lista.filter(v => (v.STATUS_VENDA || '').includes(filtroSt));
+  if (filtroEq) lista = lista.filter(v => equipeDoCorretor(v.CORRETOR) === filtroEq);
+
+  // KPIs
+  const total = lista.length;
+  const vgvTotal = lista.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const repassados = lista.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
+  const aguardando = lista.filter(v => (v.STATUS_VENDA || '').includes('Aguardando')).length;
+  const distratos = lista.filter(v => (v.STATUS_VENDA || '').includes('Distrato')).length;
+  const consorcios = lista.filter(v => (v.STATUS_VENDA || '').includes('CONSORCIO')).length;
+
+  document.getElementById('kpi-vendas').innerHTML = `
+    <div class="kpi blue"><div class="v">${total}</div><div class="l">Total Vendas</div></div>
+    <div class="kpi green"><div class="v">R$ ${(vgvTotal/1000000).toFixed(1)}M</div><div class="l">VGV Total</div></div>
+    <div class="kpi green"><div class="v">${repassados}</div><div class="l">Repassados</div></div>
+    <div class="kpi yellow"><div class="v">${aguardando}</div><div class="l">Aguardando</div></div>
+    <div class="kpi red"><div class="v">${distratos}</div><div class="l">Distratos</div></div>
+    <div class="kpi purple"><div class="v">${consorcios}</div><div class="l">Consórcios</div></div>
+  `;
+
+  // RANKING POR CORRETOR
+  const porCorretor = {};
+  lista.forEach(v => {
+    const nome = v.CORRETOR || 'Sem corretor';
+    if (!porCorretor[nome]) porCorretor[nome] = { vendas: 0, vgv: 0, repassados: 0, distratos: 0 };
+    porCorretor[nome].vendas++;
+    porCorretor[nome].vgv += parseFloat(v.VGV) || 0;
+    if ((v.STATUS_VENDA || '').includes('Repassado')) porCorretor[nome].repassados++;
+    if ((v.STATUS_VENDA || '').includes('Distrato')) porCorretor[nome].distratos++;
+  });
+
+  const rankCorr = Object.entries(porCorretor).map(([nome, d]) => ({ nome, ...d })).sort((a, b) => b.vendas - a.vendas);
+
+  let rankHtml = '<div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Ranking de Vendas por Corretor</div>';
+  rankHtml += '<div class="corr-grid">';
+  rankCorr.forEach((c, i) => {
+    const eq = equipeDoCorretor(c.nome);
+    const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+    rankHtml += `<div class="corr-card">
+      <div class="corr-card-header">
+        <span class="corr-card-name">${medalha} ${c.nome}</span>
+        ${eqTagHTML(eq)}
+      </div>
+      <div class="corr-card-stat">
+        <div class="corr-stat"><div class="csv">${c.vendas}</div><div class="csl">Vendas</div></div>
+        <div class="corr-stat"><div class="csv" style="color:var(--accent);">R$ ${(c.vgv/1000).toFixed(0)}k</div><div class="csl">VGV</div></div>
+        <div class="corr-stat"><div class="csv" style="color:var(--success);">${c.repassados}</div><div class="csl">Repassados</div></div>
+        <div class="corr-stat"><div class="csv" style="color:var(--danger);">${c.distratos}</div><div class="csl">Distratos</div></div>
+      </div>
+    </div>`;
+  });
+  rankHtml += '</div>';
+  document.getElementById('vd-ranking').innerHTML = rankHtml;
+
+  // TABELA
+  // Ordenar por data mais recente
+  lista.sort((a, b) => {
+    const da = String(a.DATA_VENDA || a.MES_COMERCIAL || '').substring(0, 10);
+    const db = String(b.DATA_VENDA || b.MES_COMERCIAL || '').substring(0, 10);
+    return db.localeCompare(da);
+  });
+
+  let html = '';
+  if (lista.length === 0) {
+    html = '<tr><td colspan="9" style="text-align:center;color:var(--textL);padding:20px;">Nenhuma venda encontrada.</td></tr>';
+  }
+
+  lista.forEach(v => {
+    const mesFmt = String(v.MES_COMERCIAL || '').substring(0, 7);
+    const dataFmt = v.DATA_VENDA ? String(v.DATA_VENDA).substring(0, 10).split('-').reverse().slice(0, 2).join('/') : '-';
+    const vgv = parseFloat(v.VGV) || 0;
+    const vgvFmt = vgv ? `R$ ${vgv.toLocaleString('pt-BR')}` : '-';
+    const eq = equipeDoCorretor(v.CORRETOR);
+    const status = v.STATUS_VENDA || '-';
+    const stColor = status.includes('Repassado') ? 'tag-aprovado' : status.includes('Aguardando') ? 'tag-pendente' : status.includes('Distrato') ? 'tag-divida' : status.includes('CONSORCIO') ? 'tag-bacen' : 'tag-outro';
+
+    const nomesMes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    let mesTxt = mesFmt;
+    if (mesFmt.includes('-')) {
+      const [ano, mes] = mesFmt.split('-');
+      mesTxt = `${nomesMes[parseInt(mes)]}/${ano}`;
+    }
+
+    html += `<tr>
+      <td style="font-size:.72rem;white-space:nowrap;">${mesTxt}</td>
+      <td style="font-size:.72rem;white-space:nowrap;">${dataFmt}</td>
+      <td class="cliente-name" style="max-width:200px;">${v.CLIENTE || '-'}</td>
+      <td style="font-size:.75rem;">${v.EMPREENDIMENTO || '-'}</td>
+      <td style="font-size:.72rem;color:var(--textL);">${v.CONSTRUTORA || '-'}</td>
+      <td style="font-weight:700;color:var(--accent);white-space:nowrap;">${vgvFmt}</td>
+      <td><span class="corretor-name">${v.CORRETOR || '-'}</span> ${eqTagHTML(eq)}</td>
+      <td style="font-size:.72rem;">${v.COORDENADOR || '-'}</td>
+      <td><span class="tag ${stColor}">${status}</span></td>
+    </tr>`;
+  });
+
+  document.getElementById('tb-vendas').innerHTML = html;
+  document.getElementById('count-vendas').textContent = `${lista.length} vendas | VGV: R$ ${vgvTotal.toLocaleString('pt-BR')}`;
 }
 
 // ============================================
