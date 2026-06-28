@@ -99,6 +99,24 @@ tr:hover{background:rgba(100,255,218,.02);}
 .page.active{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
+/* RELATÓRIO IA */
+.md-content{font-size:.85rem;line-height:1.7;color:var(--text);}
+.md-content h1{font-size:1.3rem;font-weight:800;color:#fff;margin:20px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.md-content h2{font-size:1.05rem;font-weight:700;color:var(--accent);margin:18px 0 8px;}
+.md-content h3{font-size:.9rem;font-weight:700;color:#fff;margin:14px 0 6px;}
+.md-content p{margin:8px 0;}
+.md-content ul,.md-content ol{margin:8px 0 8px 20px;}
+.md-content li{margin:4px 0;}
+.md-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.78rem;}
+.md-content th{background:var(--card2);padding:8px 12px;text-align:left;font-weight:600;color:var(--textL);border:1px solid var(--border);}
+.md-content td{padding:8px 12px;border:1px solid rgba(255,255,255,.06);}
+.md-content strong{color:#fff;}
+.md-content code{background:var(--card2);padding:2px 6px;border-radius:4px;font-size:.8rem;}
+.md-content blockquote{border-left:3px solid var(--accent);padding:8px 14px;margin:10px 0;background:rgba(100,255,218,.04);color:var(--textL);}
+.md-content hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.relatorio-info{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:.72rem;color:var(--textL);}
+.relatorio-info span{background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:6px;}
+
 /* LOADING */
 .loading{text-align:center;padding:40px;color:var(--textL);font-size:.85rem;}
 .loading::before{content:'';display:block;width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
@@ -208,6 +226,10 @@ tr:hover{background:rgba(100,255,218,.02);}
   <div class="nav-section">Produtividade</div>
   <div class="nav-item" onclick="showPage('pg-hist-demandas')">
     <span class="icon">📋</span>Histórico Demandas
+  </div>
+  <div class="nav-section">Inteligência IA</div>
+  <div class="nav-item" onclick="showPage('pg-relatorio-ia')">
+    <span class="icon">🤖</span>Relatório Diário IA
   </div>
 </div>
 
@@ -490,6 +512,21 @@ tr:hover{background:rgba(100,255,218,.02);}
       </select>
     </div>
     <div id="ranking-list"></div>
+  </div>
+
+  <!-- PAGE: RELATÓRIO DIÁRIO IA -->
+  <div class="page" id="pg-relatorio-ia">
+    <div class="topbar">
+      <div>
+        <h2>Relatório Diário IA</h2>
+        <span class="topbar-info">Análise inteligente gerada automaticamente às 11h por IA</span>
+      </div>
+      <button onclick="carregarRelatorioIA()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:.78rem;font-weight:700;cursor:pointer;">Atualizar</button>
+    </div>
+    <div id="relatorio-ia-status" style="margin-bottom:16px;"></div>
+    <div id="relatorio-ia-content" style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;">
+      <div class="loading">Carregando relatório...</div>
+    </div>
   </div>
 
 </div>
@@ -1459,9 +1496,95 @@ function renderRanking() {
 }
 
 // ============================================
+// RELATÓRIO DIÁRIO IA
+// ============================================
+const RELATORIO_URL = 'https://raw.githubusercontent.com/swelladriel/alicerce-app/main/relatorio-diario.md';
+
+async function carregarRelatorioIA() {
+  const container = document.getElementById('relatorio-ia-content');
+  const status = document.getElementById('relatorio-ia-status');
+  container.innerHTML = '<div class="loading">Carregando relatório...</div>';
+
+  try {
+    // Adicionar timestamp pra evitar cache do navegador
+    const resp = await fetch(RELATORIO_URL + '?t=' + Date.now());
+
+    if (resp.status === 404) {
+      container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--textL);">
+        <div style="font-size:2rem;margin-bottom:12px;">📋</div>
+        <div style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:6px;">Nenhum relatório disponível ainda</div>
+        <div style="font-size:.78rem;">O primeiro relatório será gerado amanhã às 11h automaticamente.</div>
+      </div>`;
+      status.innerHTML = '';
+      return;
+    }
+
+    const md = await resp.text();
+
+    // Converter Markdown pra HTML simples
+    let html = md
+      // Tabelas
+      .replace(/\|(.+)\|\n\|[-| :]+\|\n/g, (match, header) => {
+        const cols = header.split('|').map(c => c.trim()).filter(c => c);
+        return '<table><thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>\n';
+      })
+      .replace(/\|(.+)\|/g, (match, row) => {
+        const cols = row.split('|').map(c => c.trim()).filter(c => c);
+        return '<tr>' + cols.map(c => '<td>' + c + '</td>').join('') + '</tr>';
+      })
+      // Fechar tabelas (antes de headers ou linhas vazias após rows)
+      .replace(/(<\/tr>\n?)(\n(?:<div|<h|<p|\n))/g, '$1</tbody></table>$2')
+      // Headers
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      // Bold e italic
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // Listas
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+      // Blockquotes
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      // Linhas horizontais
+      .replace(/^---$/gm, '<hr>')
+      // Code
+      .replace(/`(.+?)`/g, '<code>$1</code>')
+      // Parágrafos (linhas que não são tags)
+      .replace(/^(?!<[hultbod]|<li|<hr|<block)(.+)$/gm, '<p>$1</p>')
+      // Agrupar <li> em <ul>
+      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+      // Limpar tabelas abertas
+      .replace(/<\/tr>\n?$/gm, '</tr>');
+
+    // Fechar tabelas que ficaram abertas
+    if (html.includes('<tbody>') && !html.includes('</tbody>')) {
+      html += '</tbody></table>';
+    }
+
+    container.innerHTML = '<div class="md-content">' + html + '</div>';
+
+    // Extrair data do relatório do conteúdo
+    const dataMatch = md.match(/(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/);
+    status.innerHTML = `<div class="relatorio-info">
+      <span>📅 ${dataMatch ? dataMatch[1] : 'Data não identificada'}</span>
+      <span>🤖 Gerado por IA às 11h</span>
+      <span>🔄 Atualizado: ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
+    </div>`;
+
+  } catch(e) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);">
+      <div style="font-size:.9rem;font-weight:600;">Erro ao carregar relatório</div>
+      <div style="font-size:.78rem;color:var(--textL);margin-top:6px;">Verifique sua conexão e tente novamente.</div>
+    </div>`;
+  }
+}
+
+// ============================================
 // INIT
 // ============================================
 carregarDados();
+carregarRelatorioIA();
 </script>
 
 </body>
