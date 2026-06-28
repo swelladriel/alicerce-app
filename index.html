@@ -248,10 +248,18 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div id="m-clientes-list"><div class="loading">Carregando clientes...</div></div>
     </div>
 
-    <!-- TAB: MINHAS VENDAS -->
+    <!-- TAB: VENDAS DO MÊS -->
     <div class="app-page" id="tab-vendas">
       <div class="m-kpis" id="vd-kpis"></div>
+      <div id="vd-comissao" style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:14px;text-align:center;"></div>
       <div id="vd-lista"><div class="loading">Carregando vendas...</div></div>
+    </div>
+
+    <!-- TAB: HISTÓRICO DE VENDAS -->
+    <div class="app-page" id="tab-historico">
+      <div class="m-kpis" id="hist-kpis"></div>
+      <div id="hist-filtro" style="margin-bottom:14px;"></div>
+      <div id="hist-lista"><div class="loading">Carregando...</div></div>
     </div>
 
     <!-- TAB: CHECK-IN -->
@@ -420,6 +428,7 @@ async function fazerLogin() {
     tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
   }
   tabsHtml += `<div class="tab" onclick="showTab('tab-vendas', event)">Vendas</div>`;
+  tabsHtml += `<div class="tab" onclick="showTab('tab-historico', event)">Histórico</div>`;
   tabsHtml += `<div class="tab" onclick="showTab('tab-checkin', event)">Check-in</div>`;
   tabsHtml += `<div class="tab" onclick="showTab('tab-945', event)">945</div>`;
   document.getElementById('app-tabs').innerHTML = tabsHtml;
@@ -1106,58 +1115,136 @@ function salvarInfoCliente() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModalCliente(); });
 
 // ============================================
-// MINHAS VENDAS
+// MINHAS VENDAS (MÊS ATUAL + COMISSÃO)
 // ============================================
+function calcComissao(vgv) {
+  const bruta = vgv * 0.017;
+  return bruta * 0.86; // desconta 14%
+}
+
+function getMesComercialAtual() {
+  const agora = new Date();
+  return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function renderVendaCard(v) {
+  const valor = parseFloat(v.VGV) || 0;
+  const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '-';
+  const comissao = valor ? calcComissao(valor) : 0;
+  const comFmt = comissao ? `R$ ${comissao.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '';
+  const status = v.STATUS_VENDA || '-';
+  const stTag = status.includes('Repassado') ? 'tag-aprovado' : status.includes('Aguardando') ? 'tag-pendente' : status.includes('Distrato') ? 'tag-divida' : status.includes('CONSORCIO') ? 'tag-bacen' : 'tag-outro';
+  const dataVenda = v.DATA_VENDA ? String(v.DATA_VENDA).substring(0, 10).split('-').reverse().slice(0, 2).join('/') : '';
+  const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mesFmt = String(v.MES_COMERCIAL || '').substring(0, 7);
+  let mesTxt = '';
+  if (mesFmt.includes('-')) {
+    const [ano, mes] = mesFmt.split('-');
+    mesTxt = nomesMes[parseInt(mes)] + '/' + ano;
+  }
+
+  return `<div class="m-client">
+    <div class="m-client-name">${v.CLIENTE || '-'}</div>
+    <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">${v.EMPREENDIMENTO || '-'} — ${v.CONSTRUTORA || ''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div class="m-client-renda">${valorFmt}</div>
+      ${comFmt ? `<div style="font-size:.75rem;font-weight:800;color:var(--gold);">${comFmt}</div>` : ''}
+    </div>
+    <div class="m-client-bottom">
+      <span class="tag ${stTag}">${status}</span>
+      <span style="font-size:.62rem;color:var(--textL);">${dataVenda || mesTxt}</span>
+    </div>
+  </div>`;
+}
+
 function renderMinhasVendas() {
-  const total = MINHAS_VENDAS.length;
-  const vgv = MINHAS_VENDAS.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
-  const repassados = MINHAS_VENDAS.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
+  const mesAtual = getMesComercialAtual();
+  const vendasMes = MINHAS_VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual);
+
+  const total = vendasMes.length;
+  const vgv = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const repassados = vendasMes.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
+  const comissaoTotal = vendasMes.reduce((s, v) => s + calcComissao(parseFloat(v.VGV) || 0), 0);
 
   document.getElementById('vd-kpis').innerHTML = `
-    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Vendas</div></div>
-    <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV Total</div></div>
+    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Vendas no Mês</div></div>
+    <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV do Mês</div></div>
     <div class="m-kpi green"><div class="v">${repassados}</div><div class="l">Repassados</div></div>
   `;
 
+  // Card de comissão
+  const comFmt = comissaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('vd-comissao').innerHTML = `
+    <div style="font-size:.65rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Comissão Estimada do Mês</div>
+    <div style="font-size:1.8rem;font-weight:900;color:var(--gold);">R$ ${comFmt}</div>
+    <div style="font-size:.6rem;color:var(--textL);margin-top:4px;">VGV × 1.7% − 14%</div>
+  `;
+
   if (total === 0) {
-    document.getElementById('vd-lista').innerHTML = '<div class="m-empty">Nenhuma venda registrada.</div>';
+    document.getElementById('vd-lista').innerHTML = '<div class="m-empty">Nenhuma venda este mês.</div>';
     return;
   }
 
-  // Ordenar por data mais recente
-  const lista = [...MINHAS_VENDAS].sort((a, b) => {
+  const lista = [...vendasMes].sort((a, b) => {
+    const da = String(a.DATA_VENDA || '').substring(0, 10);
+    const db = String(b.DATA_VENDA || '').substring(0, 10);
+    return db.localeCompare(da);
+  });
+
+  document.getElementById('vd-lista').innerHTML = lista.map(v => renderVendaCard(v)).join('');
+
+  // Renderizar histórico também
+  renderHistoricoVendas();
+}
+
+// ============================================
+// HISTÓRICO DE VENDAS (ANO TODO)
+// ============================================
+let HIST_FILTRO_MES = '';
+
+function renderHistoricoVendas() {
+  const lista = HIST_FILTRO_MES
+    ? MINHAS_VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === HIST_FILTRO_MES)
+    : [...MINHAS_VENDAS];
+
+  const total = lista.length;
+  const vgv = lista.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const repassados = lista.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
+  const distratos = lista.filter(v => (v.STATUS_VENDA || '').includes('Distrato')).length;
+  const comissaoTotal = lista.reduce((s, v) => s + calcComissao(parseFloat(v.VGV) || 0), 0);
+  const comFmt = comissaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  document.getElementById('hist-kpis').innerHTML = `
+    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Total Vendas</div></div>
+    <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV Total</div></div>
+    <div class="m-kpi" style="border-bottom:3px solid var(--gold);"><div class="v" style="color:var(--gold);">R$ ${(comissaoTotal/1000).toFixed(1)}k</div><div class="l">Comissão Total</div></div>
+  `;
+
+  // Filtro por mês
+  const meses = [...new Set(MINHAS_VENDAS.map(v => String(v.MES_COMERCIAL || '').substring(0, 7)).filter(m => m))].sort().reverse();
+  const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  let filtroHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;">';
+  filtroHtml += `<div class="m-filter-btn ${HIST_FILTRO_MES === '' ? 'active' : ''}" onclick="HIST_FILTRO_MES='';renderHistoricoVendas()">Todos</div>`;
+  meses.forEach(m => {
+    const [ano, mes] = m.split('-');
+    const label = nomesMes[parseInt(mes)] + '/' + ano;
+    filtroHtml += `<div class="m-filter-btn ${HIST_FILTRO_MES === m ? 'active' : ''}" onclick="HIST_FILTRO_MES='${m}';renderHistoricoVendas()">${label}</div>`;
+  });
+  filtroHtml += '</div>';
+  document.getElementById('hist-filtro').innerHTML = filtroHtml;
+
+  if (total === 0) {
+    document.getElementById('hist-lista').innerHTML = '<div class="m-empty">Nenhuma venda encontrada.</div>';
+    return;
+  }
+
+  const ordenada = [...lista].sort((a, b) => {
     const da = String(a.DATA_VENDA || a.MES_COMERCIAL || '').substring(0, 10);
     const db = String(b.DATA_VENDA || b.MES_COMERCIAL || '').substring(0, 10);
     return db.localeCompare(da);
   });
 
-  let html = '';
-  lista.forEach(v => {
-    const valor = parseFloat(v.VGV) || 0;
-    const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '-';
-    const status = v.STATUS_VENDA || '-';
-    const stTag = status.includes('Repassado') ? 'tag-aprovado' : status.includes('Aguardando') ? 'tag-pendente' : status.includes('Distrato') ? 'tag-divida' : status.includes('CONSORCIO') ? 'tag-bacen' : 'tag-outro';
-    const dataVenda = v.DATA_VENDA ? String(v.DATA_VENDA).substring(0, 10).split('-').reverse().slice(0, 2).join('/') : '';
-    const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    const mesFmt = String(v.MES_COMERCIAL || '').substring(0, 7);
-    let mesTxt = '';
-    if (mesFmt.includes('-')) {
-      const [ano, mes] = mesFmt.split('-');
-      mesTxt = nomesMes[parseInt(mes)] + '/' + ano;
-    }
-
-    html += `<div class="m-client">
-      <div class="m-client-name">${v.CLIENTE || '-'}</div>
-      <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">${v.EMPREENDIMENTO || '-'} — ${v.CONSTRUTORA || ''}</div>
-      <div class="m-client-renda">${valorFmt}</div>
-      <div class="m-client-bottom">
-        <span class="tag ${stTag}">${status}</span>
-        <span style="font-size:.62rem;color:var(--textL);">${dataVenda || mesTxt}</span>
-      </div>
-    </div>`;
-  });
-
-  document.getElementById('vd-lista').innerHTML = html;
+  document.getElementById('hist-lista').innerHTML = ordenada.map(v => renderVendaCard(v)).join('');
 }
 
 // ============================================
