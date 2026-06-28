@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plataforma Alicerce 3.0 — Swell Consultoria</title>
+<style>
+:root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:10px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:240px;background:linear-gradient(180deg,#0d1117,#0b0f14);position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;z-index:100;}
+.sidebar-brand{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:12px;}
+.sidebar-brand h1{font-size:.95rem;font-weight:800;color:#fff;letter-spacing:1px;}
+.sidebar-brand p{font-size:.62rem;color:var(--textL);margin-top:2px;letter-spacing:.5px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:var(--textL);cursor:pointer;font-size:.82rem;border-left:3px solid transparent;transition:all .15s;}
+.nav-item:hover{background:rgba(255,255,255,.03);color:#fff;}
+.nav-item.active{background:rgba(100,255,218,.06);color:#fff;border-left-color:var(--accent);}
+.nav-item .icon{width:18px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--accent);color:#000;padding:1px 7px;border-radius:10px;font-size:.6rem;font-weight:700;}
+.nav-section{padding:10px 20px 5px;font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.2);font-weight:700;}
+
+/* MAIN */
+.main{margin-left:240px;padding:24px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.topbar h2{font-size:1.15rem;font-weight:600;color:#fff;}
+.topbar-info{font-size:.72rem;color:var(--textL);}
+.demo-tag{background:var(--gold);color:#000;padding:3px 10px;border-radius:12px;font-size:.65rem;font-weight:800;letter-spacing:.5px;}
+
+/* CARDS KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:18px;text-align:center;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;}
+.kpi.green::after{background:var(--success);}
+.kpi.red::after{background:var(--danger);}
+.kpi.blue::after{background:var(--info);}
+.kpi.yellow::after{background:var(--gold);}
+.kpi.purple::after{background:var(--purple);}
+.kpi .v{font-size:2rem;font-weight:800;color:#fff;}
+.kpi .l{font-size:.68rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+
+/* FILTROS */
+.filters{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+.filter-input{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:.78rem;outline:none;transition:border .2s;}
+.filter-input:focus{border-color:var(--accent);}
+.filter-input::placeholder{color:var(--textL);}
+select.filter-input{cursor:pointer;}
+
+/* TABELA */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+thead{background:var(--card2);}
+th{padding:12px 14px;text-align:left;font-weight:600;color:var(--textL);text-transform:uppercase;font-size:.68rem;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);}
+tr:hover{background:rgba(100,255,218,.02);}
+.corretor-name{font-weight:700;color:#fff;}
+.cliente-name{font-weight:600;}
+
+/* TAGS STATUS */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+.tag-aprovado{background:rgba(0,230,118,.12);color:var(--success);border:1px solid rgba(0,230,118,.25);}
+.tag-pendente{background:rgba(255,167,38,.1);color:var(--warning);border:1px solid rgba(255,167,38,.2);}
+.tag-bacen{background:rgba(66,165,245,.1);color:var(--info);border:1px solid rgba(66,165,245,.2);}
+.tag-divida{background:rgba(239,83,80,.1);color:var(--danger);border:1px solid rgba(239,83,80,.2);}
+.tag-comprou{background:rgba(100,255,218,.12);color:var(--accent);border:1px solid rgba(100,255,218,.25);}
+.tag-rating{background:rgba(171,71,188,.1);color:var(--purple);border:1px solid rgba(171,71,188,.2);}
+.tag-outro{background:rgba(255,255,255,.05);color:var(--textL);border:1px solid rgba(255,255,255,.1);}
+
+/* EQUIPE TAGS */
+.eq-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:.6rem;font-weight:600;}
+.eq-glauco{background:rgba(92,156,255,.12);color:#5c9cff;}
+.eq-edivan{background:rgba(0,230,118,.1);color:#00e676;}
+.eq-adriel{background:rgba(255,215,0,.1);color:#ffd700;}
+
+/* PIPELINE */
+.pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+.pipeline-col{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;}
+.pipeline-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.pipeline-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.pipeline-count{font-size:.7rem;color:var(--textL);background:var(--card2);padding:2px 8px;border-radius:10px;}
+.pipeline-card{background:var(--card2);border:1px solid rgba(255,255,255,.05);border-radius:6px;padding:10px;margin-bottom:8px;font-size:.75rem;}
+.pipeline-card .pc-name{font-weight:700;color:#fff;margin-bottom:3px;}
+.pipeline-card .pc-corretor{color:var(--textL);font-size:.68rem;}
+.pipeline-card .pc-renda{color:var(--accent);font-size:.7rem;margin-top:3px;}
+
+/* CORRETORES GRID */
+.corr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;}
+.corr-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;}
+.corr-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.corr-card-name{font-size:.95rem;font-weight:800;color:#fff;}
+.corr-card-stat{display:flex;gap:14px;margin-top:8px;}
+.corr-stat{text-align:center;}
+.corr-stat .csv{font-size:1.2rem;font-weight:800;color:#fff;}
+.corr-stat .csl{font-size:.6rem;color:var(--textL);text-transform:uppercase;}
+
+/* PAGES */
+.page{display:none;animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--textL);font-size:.85rem;}
+.loading::before{content:'';display:block;width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TRELLO BOARD */
+.trello-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.trello-board{display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;align-items:flex-start;}
+.trello-col{min-width:260px;max-width:280px;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);flex-shrink:0;}
+.trello-col-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);border-radius:var(--rad) var(--rad) 0 0;z-index:2;}
+.trello-col-name{font-size:.85rem;font-weight:800;color:#fff;}
+.trello-col-count{font-size:.65rem;color:var(--textL);background:var(--card2);padding:2px 8px;border-radius:10px;}
+.trello-col-body{padding:8px;max-height:70vh;overflow-y:auto;}
+.trello-card{background:var(--card2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.trello-card:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.trello-card-name{font-size:.78rem;font-weight:700;color:#fff;margin-bottom:4px;}
+.trello-card-cpf{font-size:.65rem;color:var(--textL);margin-bottom:6px;}
+.trello-card-renda{font-size:.7rem;color:var(--accent);margin-bottom:6px;}
+.trello-card-bottom{display:flex;justify-content:space-between;align-items:center;}
+
+/* MODAL EMPREENDIMENTOS */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;justify-content:center;align-items:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:12px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;animation:fadeIn .2s ease;}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-header h3{font-size:1rem;font-weight:700;color:#fff;}
+.modal-close{background:none;border:none;color:var(--textL);font-size:1.3rem;cursor:pointer;}
+.modal-close:hover{color:#fff;}
+.modal-body{padding:20px;}
+.modal-cliente-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.modal-info-item{font-size:.75rem;}
+.modal-info-label{color:var(--textL);font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;}
+.modal-info-value{color:#fff;font-weight:600;margin-top:2px;}
+.emp-title{font-size:.82rem;font-weight:700;color:var(--accent);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;}
+.emp-card{background:var(--card2);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:12px;margin-bottom:8px;border-left:3px solid var(--accent);}
+.emp-card-name{font-size:.82rem;font-weight:700;color:#fff;}
+.emp-card-details{font-size:.72rem;color:var(--textL);margin-top:3px;}
+.emp-card-valor{font-size:.85rem;font-weight:800;color:var(--accent);margin-top:4px;}
+.emp-none{text-align:center;padding:20px;color:var(--textL);font-size:.8rem;}
+
+/* URGENCIAS */
+.urg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;}
+.urg-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;border-left:4px solid var(--warning);}
+.urg-card.alta{border-left-color:var(--danger);}
+.urg-card.media{border-left-color:var(--warning);}
+.urg-card.baixa{border-left-color:var(--info);}
+.urg-card.concluida{border-left-color:var(--success);opacity:.7;}
+.urg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.urg-resp{font-size:.85rem;font-weight:800;color:#fff;}
+.urg-data{font-size:.65rem;color:var(--textL);}
+.urg-desc{font-size:.78rem;color:var(--text);line-height:1.5;margin-bottom:8px;}
+.urg-footer{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.urg-cliente{font-size:.7rem;color:var(--gold);}
+
+/* MOBILE MENU */
+.mobile-header{display:none;position:sticky;top:0;z-index:90;background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;align-items:center;gap:12px;}
+.mobile-header h1{font-size:.9rem;font-weight:800;color:#fff;letter-spacing:1px;}
+.hamburger{background:none;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:1.1rem;cursor:pointer;line-height:1;}
+.sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:99;}
+.sidebar-overlay.open{display:block;}
+
+/* RESPONSIVO */
+@media(max-width:768px){
+  .sidebar{display:none;z-index:100;}
+  .sidebar.open{display:block;}
+  .mobile-header{display:flex;}
+  .main{margin-left:0;padding-top:0;}
+  .pipeline{grid-template-columns:1fr;}
+  .trello-board{flex-direction:column;}
+  .trello-col{min-width:100%;max-width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <h1>ALICERCE</h1>
+    <p>Plataforma de Gestão 3.0</p>
+  </div>
+  <div class="nav-section">Principal</div>
+  <div class="nav-item active" onclick="showPage('pg-clientes')">
+    <span class="icon">👥</span>Status de Clientes
+  </div>
+  <div class="nav-item" onclick="showPage('pg-pipeline')">
+    <span class="icon">📊</span>Pipeline
+  </div>
+  <div class="nav-item" onclick="showPage('pg-trello')">
+    <span class="icon">📌</span>Corretor x Clientes
+  </div>
+  <div class="nav-item" onclick="showPage('pg-urgencias')">
+    <span class="icon">🔥</span>Urgências do Dia
+  </div>
+  <div class="nav-item" onclick="showPage('pg-corretores')">
+    <span class="icon">🏢</span>Corretores
+  </div>
+  <div class="nav-item" onclick="showPage('pg-checkins')">
+    <span class="icon">📍</span>Check-ins do Dia
+  </div>
+  <div class="nav-item" onclick="showPage('pg-historico945')">
+    <span class="icon">📋</span>Histórico 945
+  </div>
+  <div class="nav-item" onclick="showPage('pg-ranking')">
+    <span class="icon">🏆</span>Ranking Presença
+  </div>
+  <div class="nav-section">Produtividade</div>
+  <div class="nav-item" onclick="showPage('pg-hist-demandas')">
+    <span class="icon">📋</span>Histórico Demandas
+  </div>
+</div>
+
+<!-- MOBILE HEADER -->
+<div class="mobile-header">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <h1>ALICERCE</h1>
+</div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- PAGE: STATUS DE CLIENTES -->
+  <div class="page active" id="pg-clientes">
+    <div class="topbar">
+      <div>
+        <h2>Status de Clientes</h2>
+        <span class="topbar-info">Dados em tempo real da planilha Alicerce</span>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-clientes">
+      <div class="loading">Carregando...</div>
+    </div>
+
+    <div class="filters">
+      <input type="text" class="filter-input" id="f-busca" placeholder="Buscar por nome ou CPF..." oninput="filtrarClientes()" style="flex:1;min-width:200px;">
+      <select class="filter-input" id="f-corretor" onchange="filtrarClientes()">
+        <option value="">Todos os corretores</option>
+      </select>
+      <select class="filter-input" id="f-status" onchange="filtrarClientes()">
+        <option value="">Todos os status</option>
+      </select>
+      <select class="filter-input" id="f-equipe" onchange="filtrarClientes()">
+        <option value="">Todas as equipes</option>
+        <option value="Glauco">Eq. Glauco</option>
+        <option value="Edivan">Eq. Edivan</option>
+        <option value="Adriel">Eq. Adriel</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Corretor</th>
+            <th>Cliente</th>
+            <th>CPF</th>
+            <th>Renda</th>
+            <th>Status</th>
+            <th>Faixa</th>
+          </tr>
+        </thead>
+        <tbody id="tb-clientes">
+          <tr><td colspan="6" class="loading">Carregando dados da planilha...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:.7rem;color:var(--textL);" id="count-clientes"></div>
+  </div>
+
+  <!-- PAGE: PIPELINE -->
+  <div class="page" id="pg-pipeline">
+    <div class="topbar">
+      <div>
+        <h2>Pipeline de Clientes</h2>
+        <span class="topbar-info">Visão por etapa do funil</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-pipeline"></div>
+    <div class="pipeline" id="pipeline-cols"></div>
+  </div>
+
+  <!-- PAGE: TRELLO - CORRETOR x CLIENTES -->
+  <div class="page" id="pg-trello">
+    <div class="topbar">
+      <div>
+        <h2>Corretor x Clientes</h2>
+        <span class="topbar-info">Clique no card do cliente para ver empreendimentos compatíveis</span>
+      </div>
+    </div>
+    <div class="trello-filters">
+      <select class="filter-input" id="tf-equipe" onchange="renderTrello()">
+        <option value="">Todas as equipes</option>
+        <option value="Glauco">Eq. Glauco</option>
+        <option value="Edivan">Eq. Edivan</option>
+        <option value="Adriel">Eq. Adriel</option>
+      </select>
+      <select class="filter-input" id="tf-status" onchange="renderTrello()">
+        <option value="">Todos os status</option>
+        <option value="aprovado">Aprovados</option>
+        <option value="pendente">Pendentes</option>
+        <option value="bacen">BACEN</option>
+        <option value="divida">Dívida/Restrição</option>
+        <option value="comprou">Compraram</option>
+      </select>
+      <input type="text" class="filter-input" id="tf-busca" placeholder="Buscar cliente..." oninput="renderTrello()" style="flex:1;min-width:180px;">
+    </div>
+    <div class="trello-board" id="trello-board">
+      <div class="loading">Carregando...</div>
+    </div>
+  </div>
+
+  <!-- PAGE: URGENCIAS DO DIA -->
+  <div class="page" id="pg-urgencias">
+    <div class="topbar">
+      <div>
+        <h2>Urgências do Dia</h2>
+        <span class="topbar-info">Demandas e pendências por corretor</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-urgencias"></div>
+    <div class="filters">
+      <select class="filter-input" id="uf-corretor" onchange="renderUrgencias()">
+        <option value="">Todos os corretores</option>
+      </select>
+      <select class="filter-input" id="uf-prioridade" onchange="renderUrgencias()">
+        <option value="">Todas as prioridades</option>
+        <option value="Alta">Alta</option>
+        <option value="Media">Média</option>
+        <option value="Baixa">Baixa</option>
+      </select>
+      <select class="filter-input" id="uf-status" onchange="renderUrgencias()">
+        <option value="">Todos os status</option>
+        <option value="Pendente">Pendentes</option>
+        <option value="Concluida">Concluídas</option>
+      </select>
+    </div>
+    <div class="urg-grid" id="urg-grid">
+      <div class="loading">Carregando...</div>
+    </div>
+  </div>
+
+  <!-- PAGE: CORRETORES -->
+  <div class="page" id="pg-corretores">
+    <div class="topbar">
+      <div>
+        <h2>Equipe</h2>
+        <span class="topbar-info">Corretores ativos e performance</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-corretores"></div>
+    <div class="corr-grid" id="corr-grid"></div>
+  </div>
+
+  <!-- PAGE: CHECK-INS DO DIA -->
+  <div class="page" id="pg-checkins">
+    <div class="topbar">
+      <div>
+        <h2>Check-ins do Dia</h2>
+        <span class="topbar-info">Presença e localização dos corretores</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-checkins"></div>
+    <div class="filters">
+      <select class="filter-input" id="ck-equipe" onchange="renderCheckins()">
+        <option value="">Todas as equipes</option>
+        <option value="Glauco">Eq. Glauco</option>
+        <option value="Edivan">Eq. Edivan</option>
+        <option value="Adriel">Eq. Adriel</option>
+      </select>
+      <input type="date" class="filter-input" id="ck-data" onchange="renderCheckins()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Corretor</th>
+            <th>Equipe</th>
+            <th>Hora</th>
+            <th>Local</th>
+            <th>Distância</th>
+          </tr>
+        </thead>
+        <tbody id="tb-checkins">
+          <tr><td colspan="5" class="loading">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGE: HISTÓRICO 945 -->
+  <div class="page" id="pg-historico945">
+    <div class="topbar">
+      <div>
+        <h2>Histórico 945</h2>
+        <span class="topbar-info">Transcrições diárias dos corretores</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-945"></div>
+    <div class="filters">
+      <select class="filter-input" id="h9-corretor" onchange="renderHistorico945()">
+        <option value="">Todos os corretores</option>
+      </select>
+      <select class="filter-input" id="h9-equipe" onchange="renderHistorico945()">
+        <option value="">Todas as equipes</option>
+        <option value="Glauco">Eq. Glauco</option>
+        <option value="Edivan">Eq. Edivan</option>
+        <option value="Adriel">Eq. Adriel</option>
+      </select>
+    </div>
+    <div id="hist945-list"></div>
+  </div>
+
+  <!-- PAGE: HISTÓRICO DE DEMANDAS -->
+  <div class="page" id="pg-hist-demandas">
+    <div class="topbar">
+      <div>
+        <h2>Histórico de Demandas</h2>
+        <span class="topbar-info">Todas as demandas dos corretores — cruzamento com clientes e produtividade</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-hist-dem"></div>
+    <div class="filters">
+      <select class="filter-input" id="hd-corretor" onchange="renderHistDemandas()">
+        <option value="">Todos os corretores</option>
+      </select>
+      <select class="filter-input" id="hd-equipe" onchange="renderHistDemandas()">
+        <option value="">Todas as equipes</option>
+        <option value="Glauco">Eq. Glauco</option>
+        <option value="Edivan">Eq. Edivan</option>
+        <option value="Adriel">Eq. Adriel</option>
+      </select>
+      <select class="filter-input" id="hd-prioridade" onchange="renderHistDemandas()">
+        <option value="">Todas as prioridades</option>
+        <option value="Alta">Alta</option>
+        <option value="Media">Média</option>
+        <option value="Baixa">Baixa</option>
+      </select>
+      <select class="filter-input" id="hd-status" onchange="renderHistDemandas()">
+        <option value="">Todos os status</option>
+        <option value="Pendente">Pendentes</option>
+        <option value="Concluida">Concluídas</option>
+      </select>
+      <input type="date" class="filter-input" id="hd-de" onchange="renderHistDemandas()" title="Data início">
+      <input type="date" class="filter-input" id="hd-ate" onchange="renderHistDemandas()" title="Data fim">
+    </div>
+
+    <!-- PRODUTIVIDADE POR CORRETOR -->
+    <div id="hd-produtividade" style="margin-bottom:24px;"></div>
+
+    <!-- TABELA DE DEMANDAS COM CRUZAMENTO -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Corretor</th>
+            <th>Demanda</th>
+            <th>Prioridade</th>
+            <th>Status</th>
+            <th>Cliente Mencionado</th>
+            <th>Status Cliente</th>
+          </tr>
+        </thead>
+        <tbody id="tb-hist-dem">
+          <tr><td colspan="7" class="loading">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:.7rem;color:var(--textL);" id="count-hist-dem"></div>
+  </div>
+
+  <!-- PAGE: RANKING PRESENÇA -->
+  <div class="page" id="pg-ranking">
+    <div class="topbar">
+      <div>
+        <h2>Ranking de Presença</h2>
+        <span class="topbar-info">Pontuação mensal dos corretores</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-ranking"></div>
+    <div class="filters">
+      <select class="filter-input" id="rk-equipe" onchange="renderRanking()">
+        <option value="">Todas as equipes</option>
+        <option value="Glauco">Eq. Glauco</option>
+        <option value="Edivan">Eq. Edivan</option>
+        <option value="Adriel">Eq. Adriel</option>
+      </select>
+    </div>
+    <div id="ranking-list"></div>
+  </div>
+
+</div>
+
+<!-- MODAL: EMPREENDIMENTOS -->
+<div class="modal-overlay" id="modal-emp" onclick="if(event.target===this)fecharModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-titulo">Cliente</h3>
+      <button class="modal-close" onclick="fecharModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// API CONFIG
+// ============================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
+
+let CLIENTES = [];
+let CORRETORES = [];
+let EMPREENDIMENTOS = [];
+let DEMANDAS = [];
+let REGISTROS = [];
+let CORRETORES_MAP = {}; // nome -> equipe
+
+// ============================================
+// NAVEGAÇÃO
+// ============================================
+function showPage(id, e) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (e && e.currentTarget) e.currentTarget.classList.add('active');
+  else { document.querySelectorAll('.nav-item').forEach(n => { if (n.textContent.trim() && n.onclick && String(n.getAttribute('onclick')).includes(id)) n.classList.add('active'); }); }
+  // Fechar sidebar mobile ao navegar
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+
+// ============================================
+// CARREGAR DADOS
+// ============================================
+async function carregarDados() {
+  try {
+    // Carregar tudo em paralelo (5x mais rápido)
+    const [resCorr, resCli, resEmp, resDem, resReg] = await Promise.all([
+      fetch(API_URL + '?acao=corretores'),
+      fetch(API_URL + '?acao=clientes'),
+      fetch(API_URL + '?acao=empreendimentos'),
+      fetch(API_URL + '?acao=demandas'),
+      fetch(API_URL + '?acao=registros')
+    ]);
+
+    [CORRETORES, CLIENTES, EMPREENDIMENTOS, DEMANDAS, REGISTROS] = await Promise.all([
+      resCorr.json(), resCli.json(), resEmp.json(), resDem.json(), resReg.json()
+    ]);
+
+    CORRETORES.forEach(c => { CORRETORES_MAP[c.NOME] = c.EQUIPE; });
+
+    renderClientes();
+    renderPipeline();
+    renderCorretores();
+    renderTrello();
+    renderUrgencias();
+    renderCheckins();
+    renderHistorico945();
+    renderRanking();
+    renderHistDemandas();
+    preencherFiltros();
+  } catch(e) {
+    document.getElementById('tb-clientes').innerHTML = '<tr><td colspan="6" style="color:var(--danger);text-align:center;padding:20px;">Erro ao carregar dados. Verifique a conexão.</td></tr>';
+  }
+}
+
+// ============================================
+// CLASSIFICAR STATUS
+// ============================================
+function classStatus(s) {
+  if (!s) return { grupo: 'pendente', tag: 'tag-pendente', label: 'PENDENTE' };
+  const su = s.toUpperCase();
+  if (su.includes('COMPROU')) return { grupo: 'comprou', tag: 'tag-comprou', label: s };
+  if (su.includes('APROVAD')) return { grupo: 'aprovado', tag: 'tag-aprovado', label: s };
+  if (su.includes('BACEN')) return { grupo: 'bacen', tag: 'tag-bacen', label: s };
+  if (su.includes('DÍVIDA') || su.includes('DIVIDA') || su.includes('PROTESTO')) return { grupo: 'divida', tag: 'tag-divida', label: s };
+  if (su.includes('RATING') || su.includes('RENDA') || su.includes('CONDICION')) return { grupo: 'rating', tag: 'tag-rating', label: s };
+  if (su === 'PENDENTE' || su === '') return { grupo: 'pendente', tag: 'tag-pendente', label: 'PENDENTE' };
+  return { grupo: 'outro', tag: 'tag-outro', label: s };
+}
+
+function equipeDoCorretor(nomeCorretor) {
+  if (!nomeCorretor || nomeCorretor === 'NÃO IDENTIFICADO') return '';
+  // Busca exata
+  if (CORRETORES_MAP[nomeCorretor]) return CORRETORES_MAP[nomeCorretor];
+  // Busca parcial (sobrenome no nome completo)
+  const upper = nomeCorretor.toUpperCase();
+  for (const c of CORRETORES) {
+    if (c['NOME COMPLETO'] && c['NOME COMPLETO'].toUpperCase().includes(upper)) return c.EQUIPE;
+    if (upper.includes(c.NOME.toUpperCase())) return c.EQUIPE;
+  }
+  return '';
+}
+
+function eqTagHTML(equipe) {
+  if (!equipe) return '';
+  const cls = equipe === 'Glauco' ? 'eq-glauco' : equipe === 'Edivan' ? 'eq-edivan' : 'eq-adriel';
+  return `<span class="eq-tag ${cls}">${equipe}</span>`;
+}
+
+// ============================================
+// RENDER: CLIENTES
+// ============================================
+function renderClientes(dados) {
+  const lista = dados || CLIENTES;
+  const total = lista.length;
+  const aprovados = lista.filter(c => classStatus(c.STATUS).grupo === 'aprovado').length;
+  const pendentes = lista.filter(c => classStatus(c.STATUS).grupo === 'pendente').length;
+  const bacen = lista.filter(c => classStatus(c.STATUS).grupo === 'bacen').length;
+  const compraram = lista.filter(c => classStatus(c.STATUS).grupo === 'comprou').length;
+  const identificados = lista.filter(c => c.CORRETOR && c.CORRETOR !== 'NÃO IDENTIFICADO').length;
+
+  document.getElementById('kpi-clientes').innerHTML = `
+    <div class="kpi blue"><div class="v">${total}</div><div class="l">Total Clientes</div></div>
+    <div class="kpi green"><div class="v">${aprovados}</div><div class="l">Aprovados</div></div>
+    <div class="kpi yellow"><div class="v">${pendentes}</div><div class="l">Pendentes</div></div>
+    <div class="kpi purple"><div class="v">${bacen}</div><div class="l">BACEN</div></div>
+    <div class="kpi green"><div class="v">${compraram}</div><div class="l">Compraram</div></div>
+  `;
+
+  let html = '';
+  lista.forEach(c => {
+    const st = classStatus(c.STATUS);
+    const eq = equipeDoCorretor(c.CORRETOR);
+    const renda = c.RENDA ? `R$ ${Number(c.RENDA).toLocaleString('pt-BR')}` : '-';
+    const corretor = c.CORRETOR || 'NÃO IDENTIFICADO';
+    const isNI = corretor === 'NÃO IDENTIFICADO';
+    html += `<tr>
+      <td><span class="${isNI ? '' : 'corretor-name'}" style="${isNI ? 'color:var(--danger);font-size:.72rem;' : ''}">${corretor}</span> ${eqTagHTML(eq)}</td>
+      <td class="cliente-name">${c.CLIENTE || '-'}</td>
+      <td style="font-size:.72rem;color:var(--textL);">${c.CPF || '-'}</td>
+      <td>${renda}</td>
+      <td><span class="tag ${st.tag}">${st.label}</span></td>
+      <td style="font-size:.72rem;">${c.FAIXA || '-'}</td>
+    </tr>`;
+  });
+
+  document.getElementById('tb-clientes').innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:var(--textL);padding:20px;">Nenhum cliente encontrado.</td></tr>';
+  document.getElementById('count-clientes').textContent = `Exibindo ${lista.length} de ${CLIENTES.length} clientes | ${identificados} com corretor identificado`;
+}
+
+// ============================================
+// FILTROS
+// ============================================
+function preencherFiltros() {
+  const corretores = [...new Set(CLIENTES.map(c => c.CORRETOR).filter(c => c && c !== 'NÃO IDENTIFICADO'))].sort();
+  const selCorr = document.getElementById('f-corretor');
+  corretores.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; selCorr.appendChild(o); });
+  const o2 = document.createElement('option'); o2.value = 'NÃO IDENTIFICADO'; o2.textContent = '⚠ NÃO IDENTIFICADO'; selCorr.appendChild(o2);
+
+  const status = [...new Set(CLIENTES.map(c => c.STATUS).filter(s => s))].sort();
+  const selSt = document.getElementById('f-status');
+  status.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; selSt.appendChild(o); });
+}
+
+function filtrarClientes() {
+  const busca = document.getElementById('f-busca').value.toLowerCase();
+  const corretor = document.getElementById('f-corretor').value;
+  const status = document.getElementById('f-status').value;
+  const equipe = document.getElementById('f-equipe').value;
+
+  const filtrados = CLIENTES.filter(c => {
+    if (busca && !(c.CLIENTE || '').toLowerCase().includes(busca) && !(c.CPF || '').includes(busca)) return false;
+    if (corretor && c.CORRETOR !== corretor) return false;
+    if (status && c.STATUS !== status) return false;
+    if (equipe && equipeDoCorretor(c.CORRETOR) !== equipe) return false;
+    return true;
+  });
+
+  renderClientes(filtrados);
+}
+
+// ============================================
+// RENDER: PIPELINE
+// ============================================
+function renderPipeline() {
+  const grupos = {
+    aprovado: { titulo: 'Aprovados', cor: 'var(--success)', items: [] },
+    bacen: { titulo: 'BACEN / Análise', cor: 'var(--info)', items: [] },
+    pendente: { titulo: 'Pendentes', cor: 'var(--warning)', items: [] },
+    divida: { titulo: 'Dívida / Restrição', cor: 'var(--danger)', items: [] },
+    comprou: { titulo: 'Compraram', cor: 'var(--accent)', items: [] },
+    rating: { titulo: 'Rating / Condicionado', cor: 'var(--purple)', items: [] },
+  };
+
+  CLIENTES.forEach(c => {
+    const st = classStatus(c.STATUS);
+    if (grupos[st.grupo]) grupos[st.grupo].items.push(c);
+  });
+
+  // KPIs
+  document.getElementById('kpi-pipeline').innerHTML = Object.entries(grupos).map(([k, g]) =>
+    `<div class="kpi ${k === 'aprovado' ? 'green' : k === 'pendente' ? 'yellow' : k === 'bacen' ? 'blue' : k === 'divida' ? 'red' : k === 'comprou' ? 'green' : 'purple'}">
+      <div class="v">${g.items.length}</div><div class="l">${g.titulo}</div>
+    </div>`
+  ).join('');
+
+  // Colunas
+  let html = '';
+  Object.entries(grupos).forEach(([k, g]) => {
+    const expandido = pipeExpandido[k] || false;
+    const items = expandido ? g.items : g.items.slice(0, 8);
+    html += `<div class="pipeline-col" style="border-top:3px solid ${g.cor};" id="pipe-col-${k}">
+      <div class="pipeline-header">
+        <span class="pipeline-title" style="color:${g.cor};">${g.titulo}</span>
+        <span class="pipeline-count">${g.items.length}</span>
+      </div>`;
+    items.forEach(c => {
+      const renda = c.RENDA ? `R$ ${Number(c.RENDA).toLocaleString('pt-BR')}` : '';
+      html += `<div class="pipeline-card">
+        <div class="pc-name">${c.CLIENTE}</div>
+        <div class="pc-corretor">${c.CORRETOR || 'Não identificado'} ${eqTagHTML(equipeDoCorretor(c.CORRETOR))}</div>
+        ${renda ? `<div class="pc-renda">${renda}</div>` : ''}
+      </div>`;
+    });
+    if (g.items.length > 8) {
+      if (expandido) {
+        html += `<div style="text-align:center;padding:8px;"><button onclick="togglePipeline('${k}', false)" style="background:transparent;border:1px solid var(--border);color:var(--textL);padding:5px 14px;border-radius:6px;font-size:.72rem;cursor:pointer;">Mostrar menos</button></div>`;
+      } else {
+        html += `<div style="text-align:center;padding:8px;"><button onclick="togglePipeline('${k}', true)" style="background:rgba(100,255,218,.08);border:1px solid var(--accent);color:var(--accent);padding:5px 14px;border-radius:6px;font-size:.72rem;cursor:pointer;font-weight:700;">Ver mais (${g.items.length - 8})</button></div>`;
+      }
+    }
+    html += `</div>`;
+  });
+  document.getElementById('pipeline-cols').innerHTML = html;
+}
+
+// ============================================
+// TOGGLE PIPELINE - expandir/recolher
+// ============================================
+const pipeExpandido = {};
+function togglePipeline(grupo, abrir) {
+  pipeExpandido[grupo] = abrir;
+  renderPipeline();
+}
+
+// ============================================
+// RENDER: CORRETORES
+// ============================================
+function renderCorretores() {
+  const ativos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO !== 'Gerente');
+  const licenca = CORRETORES.filter(c => c.STATUS === 'Licenca');
+  const equipes = { Glauco: [], Edivan: [], Adriel: [] };
+  ativos.forEach(c => { if (equipes[c.EQUIPE]) equipes[c.EQUIPE].push(c); });
+
+  document.getElementById('kpi-corretores').innerHTML = `
+    <div class="kpi blue"><div class="v">${ativos.length}</div><div class="l">Corretores Ativos</div></div>
+    <div class="kpi yellow"><div class="v">${licenca.length}</div><div class="l">Em Licença</div></div>
+    <div class="kpi green"><div class="v">${equipes.Glauco.length}</div><div class="l">Eq. Glauco</div></div>
+    <div class="kpi green"><div class="v">${equipes.Edivan.length}</div><div class="l">Eq. Edivan</div></div>
+    <div class="kpi green"><div class="v">${equipes.Adriel.length}</div><div class="l">Eq. Adriel</div></div>
+  `;
+
+  let html = '';
+  Object.entries(equipes).forEach(([eq, membros]) => {
+    const cor = eq === 'Glauco' ? '#5c9cff' : eq === 'Edivan' ? '#00e676' : '#ffd700';
+    const bgCor = eq === 'Glauco' ? 'rgba(92,156,255,.08)' : eq === 'Edivan' ? 'rgba(0,230,118,.06)' : 'rgba(255,215,0,.06)';
+
+    membros.forEach(c => {
+      const clientes = CLIENTES.filter(cl => {
+        const nome = (cl.CORRETOR || '').toUpperCase();
+        return nome.includes(c.NOME.toUpperCase()) || (c['NOME COMPLETO'] && nome.includes(c['NOME COMPLETO'].toUpperCase()));
+      });
+      const aprovados = clientes.filter(cl => classStatus(cl.STATUS).grupo === 'aprovado').length;
+      const pendentes = clientes.filter(cl => classStatus(cl.STATUS).grupo === 'pendente').length;
+      const cargoTag = c.CARGO === 'Coordenador' ? `<span class="tag" style="background:rgba(171,71,188,.15);color:var(--purple);border:1px solid rgba(171,71,188,.25);font-size:.55rem;">COORD</span>` : '';
+
+      html += `<div class="corr-card" style="border-left:3px solid ${cor};background:${bgCor};">
+        <div class="corr-card-header">
+          <span class="corr-card-name">${c.NOME} ${cargoTag}</span>
+          ${eqTagHTML(eq)}
+        </div>
+        <div class="corr-card-stat">
+          <div class="corr-stat"><div class="csv">${clientes.length}</div><div class="csl">Clientes</div></div>
+          <div class="corr-stat"><div class="csv" style="color:var(--success);">${aprovados}</div><div class="csl">Aprovados</div></div>
+          <div class="corr-stat"><div class="csv" style="color:var(--warning);">${pendentes}</div><div class="csl">Pendentes</div></div>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('corr-grid').innerHTML = html;
+}
+
+// ============================================
+// RENDER: TRELLO BOARD
+// ============================================
+function renderTrello() {
+  const filtroEquipe = document.getElementById('tf-equipe').value;
+  const filtroStatus = document.getElementById('tf-status').value;
+  const busca = (document.getElementById('tf-busca').value || '').toLowerCase();
+
+  // Pegar corretores ativos (sem gerente)
+  let corretoresAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO !== 'Gerente');
+  if (filtroEquipe) corretoresAtivos = corretoresAtivos.filter(c => c.EQUIPE === filtroEquipe);
+
+  // Ordenar por equipe
+  const ordemEquipe = { Glauco: 1, Edivan: 2, Adriel: 3 };
+  corretoresAtivos.sort((a, b) => (ordemEquipe[a.EQUIPE] || 9) - (ordemEquipe[b.EQUIPE] || 9));
+
+  const eqCores = { Glauco: '#5c9cff', Edivan: '#00e676', Adriel: '#ffd700' };
+
+  let html = '';
+
+  // Coluna para NÃO IDENTIFICADOS
+  const niClientes = CLIENTES.filter(c => !c.CORRETOR || c.CORRETOR === 'NÃO IDENTIFICADO');
+  let niFiltered = niClientes;
+  if (filtroStatus) niFiltered = niFiltered.filter(c => classStatus(c.STATUS).grupo === filtroStatus);
+  if (busca) niFiltered = niFiltered.filter(c => (c.CLIENTE || '').toLowerCase().includes(busca));
+
+  corretoresAtivos.forEach(corr => {
+    const cor = eqCores[corr.EQUIPE] || 'var(--accent)';
+    const nomeUpper = corr.NOME.toUpperCase();
+    const nomeCompletoUpper = (corr['NOME COMPLETO'] || '').toUpperCase();
+
+    // Buscar clientes deste corretor
+    let clientes = CLIENTES.filter(c => {
+      if (!c.CORRETOR || c.CORRETOR === 'NÃO IDENTIFICADO') return false;
+      const corrNome = c.CORRETOR.toUpperCase();
+      return corrNome === nomeUpper || corrNome === nomeCompletoUpper || corrNome.includes(nomeUpper) || nomeUpper.includes(corrNome);
+    });
+
+    if (filtroStatus) clientes = clientes.filter(c => classStatus(c.STATUS).grupo === filtroStatus);
+    if (busca) clientes = clientes.filter(c => (c.CLIENTE || '').toLowerCase().includes(busca));
+
+    const cargoTag = corr.CARGO === 'Coordenador' ? ' <span style="font-size:.55rem;color:var(--purple);font-weight:700;">COORD</span>' : '';
+
+    html += `<div class="trello-col" style="border-top:3px solid ${cor};">
+      <div class="trello-col-header">
+        <span class="trello-col-name">${corr.NOME}${cargoTag}</span>
+        <span class="trello-col-count">${clientes.length}</span>
+      </div>
+      <div class="trello-col-body">`;
+
+    if (clientes.length === 0) {
+      html += `<div style="text-align:center;padding:16px;color:var(--textL);font-size:.72rem;">Nenhum cliente</div>`;
+    }
+
+    clientes.forEach((c, idx) => {
+      const st = classStatus(c.STATUS);
+      const renda = c.RENDA ? `R$ ${Number(c.RENDA).toLocaleString('pt-BR')}` : '';
+      html += `<div class="trello-card" onclick='abrirModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>
+        <div class="trello-card-name">${c.CLIENTE}</div>
+        <div class="trello-card-cpf">${c.CPF || 'Sem CPF'}</div>
+        ${renda ? `<div class="trello-card-renda">${renda}</div>` : ''}
+        <div class="trello-card-bottom">
+          <span class="tag ${st.tag}">${st.label}</span>
+          ${c.FAIXA ? `<span style="font-size:.6rem;color:var(--textL);">${c.FAIXA}</span>` : ''}
+        </div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  // Coluna NÃO IDENTIFICADOS (se tiver)
+  if (niFiltered.length > 0 && !filtroEquipe) {
+    html += `<div class="trello-col" style="border-top:3px solid var(--danger);">
+      <div class="trello-col-header">
+        <span class="trello-col-name" style="color:var(--danger);">Sem Corretor</span>
+        <span class="trello-col-count">${niFiltered.length}</span>
+      </div>
+      <div class="trello-col-body">`;
+    niFiltered.slice(0, 20).forEach(c => {
+      const st = classStatus(c.STATUS);
+      html += `<div class="trello-card" onclick='abrirModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>
+        <div class="trello-card-name">${c.CLIENTE}</div>
+        <div class="trello-card-cpf">${c.CPF || 'Sem CPF'}</div>
+        <div class="trello-card-bottom">
+          <span class="tag ${st.tag}">${st.label}</span>
+        </div>
+      </div>`;
+    });
+    if (niFiltered.length > 20) html += `<div style="font-size:.68rem;color:var(--textL);text-align:center;padding:6px;">+ ${niFiltered.length - 20} clientes</div>`;
+    html += `</div></div>`;
+  }
+
+  document.getElementById('trello-board').innerHTML = html || '<div style="padding:30px;color:var(--textL);">Nenhum corretor encontrado.</div>';
+}
+
+// ============================================
+// MODAL: EMPREENDIMENTOS COMPATÍVEIS
+// ============================================
+function abrirModal(cliente) {
+  const modal = document.getElementById('modal-emp');
+  document.getElementById('modal-titulo').textContent = cliente.CLIENTE || 'Cliente';
+
+  const st = classStatus(cliente.STATUS);
+  const renda = cliente.RENDA ? Number(cliente.RENDA) : 0;
+  const rendaFmt = renda ? `R$ ${renda.toLocaleString('pt-BR')}` : 'Não informada';
+  const corretor = cliente.CORRETOR || 'Não identificado';
+  const equipe = equipeDoCorretor(corretor);
+
+  // Info do cliente
+  let html = `<div class="modal-cliente-info">
+    <div class="modal-info-item"><div class="modal-info-label">Corretor</div><div class="modal-info-value">${corretor} ${eqTagHTML(equipe)}</div></div>
+    <div class="modal-info-item"><div class="modal-info-label">CPF</div><div class="modal-info-value">${cliente.CPF || '-'}</div></div>
+    <div class="modal-info-item"><div class="modal-info-label">Renda</div><div class="modal-info-value" style="color:var(--accent);">${rendaFmt}</div></div>
+    <div class="modal-info-item"><div class="modal-info-label">Status</div><div class="modal-info-value"><span class="tag ${st.tag}">${st.label}</span></div></div>
+    <div class="modal-info-item"><div class="modal-info-label">Faixa</div><div class="modal-info-value">${cliente.FAIXA || '-'}</div></div>
+    <div class="modal-info-item"><div class="modal-info-label">Teto Imóvel</div><div class="modal-info-value">${cliente['TETO IMÓVEL'] ? 'R$ ' + Number(cliente['TETO IMÓVEL']).toLocaleString('pt-BR') : '-'}</div></div>
+  </div>`;
+
+  // Match de empreendimentos
+  if (renda > 0 && EMPREENDIMENTOS.length > 0) {
+    // Determinar teto
+    let teto = 500000;
+    if (renda <= 2500) teto = 215000;
+    else if (renda <= 6000) teto = 300000;
+    else teto = 500000;
+
+    // Filtrar empreendimentos compatíveis
+    const compativeis = EMPREENDIMENTOS.filter(e => {
+      const valor = parseFloat(e.VALOR || e['VALOR'] || e['valor'] || 0);
+      return valor > 0 && valor <= teto;
+    }).sort((a, b) => {
+      const va = parseFloat(a.VALOR || a['VALOR'] || 0);
+      const vb = parseFloat(b.VALOR || b['VALOR'] || 0);
+      return va - vb;
+    });
+
+    html += `<div class="emp-title">Empreendimentos Compatíveis (${compativeis.length})</div>`;
+
+    if (compativeis.length > 0) {
+      compativeis.forEach(e => {
+        const nome = e.NOME || e['EMPREENDIMENTO'] || e['nome'] || '-';
+        const construtora = e.CONSTRUTORA || e['construtora'] || '';
+        const bairro = e.BAIRRO || e['bairro'] || '';
+        const regiao = e.REGIAO || e['REGIÃO'] || e['regiao'] || '';
+        const valor = parseFloat(e.VALOR || e['VALOR'] || 0);
+        const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '-';
+        const entrega = e.ENTREGA || e['entrega'] || '';
+
+        html += `<div class="emp-card">
+          <div class="emp-card-name">${nome}</div>
+          <div class="emp-card-details">${construtora}${bairro ? ' | ' + bairro : ''}${regiao ? ' (' + regiao + ')' : ''}${entrega ? ' | Entrega: ' + entrega : ''}</div>
+          <div class="emp-card-valor">${valorFmt}</div>
+        </div>`;
+      });
+    } else {
+      html += `<div class="emp-none">Nenhum empreendimento compatível com a renda deste cliente.</div>`;
+    }
+  } else if (renda === 0) {
+    html += `<div class="emp-none">Renda não informada — não é possível calcular empreendimentos compatíveis.</div>`;
+  } else {
+    html += `<div class="emp-none">Nenhum empreendimento cadastrado na planilha.</div>`;
+  }
+
+  document.getElementById('modal-body').innerHTML = html;
+  modal.classList.add('open');
+}
+
+function fecharModal() {
+  document.getElementById('modal-emp').classList.remove('open');
+}
+
+// Fechar modal com ESC
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+
+// ============================================
+// RENDER: URGENCIAS DO DIA
+// ============================================
+function renderUrgencias() {
+  const filtroCorr = document.getElementById('uf-corretor').value;
+  const filtroPrior = document.getElementById('uf-prioridade').value;
+  const filtroSt = document.getElementById('uf-status').value;
+
+  let lista = [...DEMANDAS];
+
+  // Filtros
+  if (filtroCorr) lista = lista.filter(d => d.RESPONSAVEL === filtroCorr);
+  if (filtroPrior) lista = lista.filter(d => d.PRIORIDADE === filtroPrior);
+  if (filtroSt) lista = lista.filter(d => (d.STATUS || '').toLowerCase().includes(filtroSt.toLowerCase()));
+
+  // Ordenar: Alta primeiro, depois Media, depois Baixa. Pendentes antes de concluídas.
+  const priorOrdem = { 'Alta': 1, 'Media': 2, 'Média': 2, 'Baixa': 3 };
+  lista.sort((a, b) => {
+    const stA = (a.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    const stB = (b.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    if (stA !== stB) return stA - stB;
+    return (priorOrdem[a.PRIORIDADE] || 9) - (priorOrdem[b.PRIORIDADE] || 9);
+  });
+
+  // KPIs
+  const total = lista.length;
+  const altas = lista.filter(d => d.PRIORIDADE === 'Alta').length;
+  const pendentes = lista.filter(d => !(d.STATUS || '').toLowerCase().includes('conclu')).length;
+  const concluidas = lista.filter(d => (d.STATUS || '').toLowerCase().includes('conclu')).length;
+
+  document.getElementById('kpi-urgencias').innerHTML = `
+    <div class="kpi blue"><div class="v">${total}</div><div class="l">Total Demandas</div></div>
+    <div class="kpi red"><div class="v">${altas}</div><div class="l">Prioridade Alta</div></div>
+    <div class="kpi yellow"><div class="v">${pendentes}</div><div class="l">Pendentes</div></div>
+    <div class="kpi green"><div class="v">${concluidas}</div><div class="l">Concluídas</div></div>
+  `;
+
+  // Preencher filtro de corretores na aba urgências
+  const selCorr = document.getElementById('uf-corretor');
+  if (selCorr.options.length <= 1) {
+    const resps = [...new Set(DEMANDAS.map(d => d.RESPONSAVEL).filter(r => r))].sort();
+    resps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; selCorr.appendChild(o); });
+  }
+
+  // Cards
+  let html = '';
+  if (lista.length === 0) {
+    html = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--textL);font-size:.85rem;">Nenhuma demanda encontrada.</div>';
+  }
+
+  lista.forEach(d => {
+    const prior = (d.PRIORIDADE || 'media').toLowerCase();
+    const isConcluida = (d.STATUS || '').toLowerCase().includes('conclu');
+    const cardClass = isConcluida ? 'concluida' : prior === 'alta' ? 'alta' : prior === 'baixa' ? 'baixa' : 'media';
+    const eq = equipeDoCorretor(d.RESPONSAVEL);
+    const priorTag = prior === 'alta' ? 'tag-divida' : prior === 'baixa' ? 'tag-bacen' : 'tag-pendente';
+    const statusTag = isConcluida ? 'tag-aprovado' : 'tag-pendente';
+    const statusLabel = isConcluida ? 'CONCLUÍDA' : 'PENDENTE';
+
+    html += `<div class="urg-card ${cardClass}">
+      <div class="urg-header">
+        <span class="urg-resp">${d.RESPONSAVEL || '-'} ${eqTagHTML(eq)}</span>
+        <span class="urg-data">${d.DATA || '-'}</span>
+      </div>
+      <div class="urg-desc">${d.DESCRICAO || '-'}</div>
+      <div class="urg-footer">
+        <span class="tag ${priorTag}">${d.PRIORIDADE || 'Média'}</span>
+        <span class="tag ${statusTag}">${statusLabel}</span>
+        ${d.TIPO ? `<span class="tag tag-outro">${d.TIPO}</span>` : ''}
+      </div>
+      ${d.CLIENTE ? `<div class="urg-cliente" style="margin-top:6px;">Clientes: ${d.CLIENTE}</div>` : ''}
+    </div>`;
+  });
+
+  document.getElementById('urg-grid').innerHTML = html;
+}
+
+// ============================================
+// CHECK-INS DO DIA
+// ============================================
+function renderCheckins() {
+  const dataInput = document.getElementById('ck-data');
+  if (!dataInput.value) dataInput.value = new Date().toISOString().split('T')[0];
+  const dataFiltro = dataInput.value;
+  const equipeFiltro = document.getElementById('ck-equipe').value;
+
+  // Filtrar check-ins do dia
+  let checkins = REGISTROS.filter(r => {
+    if (r.TIPO !== 'checkin') return false;
+    const dt = r.DATA instanceof Date ? r.DATA : String(r.DATA || '');
+    return dt.substring(0, 10) === dataFiltro;
+  });
+
+  if (equipeFiltro) {
+    checkins = checkins.filter(r => {
+      const eq = r.EQUIPE || CORRETORES_MAP[r.CORRETOR] || '';
+      return eq === equipeFiltro;
+    });
+  }
+
+  // KPIs
+  const total = checkins.length;
+  const noLocal = checkins.filter(r => (r.PRESENCA === 'presente')).length;
+  const fora = checkins.filter(r => r.PRESENCA === 'fora').length;
+  const semGps = checkins.filter(r => r.PRESENCA === 'sem-gps').length;
+
+  // Horário médio
+  let somaMin = 0;
+  let comHora = 0;
+  checkins.forEach(r => {
+    if (r.HORA) {
+      const parts = String(r.HORA).split(':');
+      if (parts.length >= 2) { somaMin += parseInt(parts[0]) * 60 + parseInt(parts[1]); comHora++; }
+    }
+  });
+  const mediaMin = comHora > 0 ? Math.round(somaMin / comHora) : 0;
+  const mediaHora = comHora > 0 ? `${String(Math.floor(mediaMin/60)).padStart(2,'0')}:${String(mediaMin%60).padStart(2,'0')}` : '--:--';
+
+  document.getElementById('kpi-checkins').innerHTML = `
+    <div class="kpi blue"><div class="v">${total}</div><div class="l">Check-ins</div></div>
+    <div class="kpi green"><div class="v">${noLocal}</div><div class="l">No Local</div></div>
+    <div class="kpi red"><div class="v">${fora + semGps}</div><div class="l">Fora / Sem GPS</div></div>
+    <div class="kpi yellow"><div class="v">${mediaHora}</div><div class="l">Hora Média</div></div>
+  `;
+
+  // Tabela
+  if (checkins.length === 0) {
+    document.getElementById('tb-checkins').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--textL);padding:20px;">Nenhum check-in nesta data.</td></tr>';
+    return;
+  }
+
+  // Ordenar por hora
+  checkins.sort((a, b) => (a.HORA || '').localeCompare(b.HORA || ''));
+
+  let html = '';
+  checkins.forEach(r => {
+    const obs = r.OBSERVACOES || '';
+    const isLocal = r.PRESENCA === 'presente';
+    const isFora = r.PRESENCA === 'fora';
+    const localColor = isLocal ? 'var(--success)' : isFora ? 'var(--danger)' : 'var(--textL)';
+
+    // Extrair nome do local e distância da observação
+    let localNome = isLocal ? 'No local' : isFora ? 'Fora do local' : 'Sem GPS';
+    let distancia = '';
+    if (obs.includes('Escritório')) localNome = 'Escritório Recreio';
+    if (obs.includes('Estande') || obs.includes('Novolar')) localNome = 'Estande Novolar';
+    if (obs.includes('FORA')) localNome = 'Fora do local';
+    const distMatch = obs.match(/(\d+)m/);
+    if (distMatch) distancia = distMatch[1] + 'm';
+
+    const eq = r.EQUIPE || CORRETORES_MAP[r.CORRETOR] || '';
+
+    html += `<tr>
+      <td><span class="corretor-name">${r.CORRETOR || '-'}</span></td>
+      <td>${eq ? `<span class="eq-tag eq-${eq.toLowerCase()}">${eq}</span>` : '-'}</td>
+      <td style="font-weight:700;">${r.HORA || '-'}</td>
+      <td style="color:${localColor};font-weight:600;">${localNome}</td>
+      <td style="color:var(--textL);">${distancia || '-'}</td>
+    </tr>`;
+  });
+  document.getElementById('tb-checkins').innerHTML = html;
+}
+
+// ============================================
+// HISTÓRICO 945
+// ============================================
+function renderHistorico945() {
+  const filtroCorr = document.getElementById('h9-corretor').value;
+  const filtroEquipe = document.getElementById('h9-equipe').value;
+
+  // Filtrar registros 945-individual
+  let registros945 = REGISTROS.filter(r => r.TIPO === '945-individual');
+
+  if (filtroCorr) registros945 = registros945.filter(r => r.CORRETOR === filtroCorr);
+  if (filtroEquipe) {
+    registros945 = registros945.filter(r => {
+      const eq = r.EQUIPE || CORRETORES_MAP[r.CORRETOR] || '';
+      return eq === filtroEquipe;
+    });
+  }
+
+  // Preencher filtro de corretores
+  const sel = document.getElementById('h9-corretor');
+  if (sel.options.length <= 1) {
+    const corrs945 = [...new Set(REGISTROS.filter(r => r.TIPO === '945-individual').map(r => r.CORRETOR))].sort();
+    corrs945.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+  }
+
+  // Ordenar por data mais recente
+  registros945.sort((a, b) => {
+    const da = String(a.DATA || '').substring(0, 10);
+    const db = String(b.DATA || '').substring(0, 10);
+    return db.localeCompare(da);
+  });
+
+  // KPIs
+  const total = registros945.length;
+  const hoje = new Date().toISOString().split('T')[0];
+  const regHoje = registros945.filter(r => String(r.DATA || '').substring(0, 10) === hoje).length;
+  const corrsUnicos = new Set(registros945.map(r => r.CORRETOR)).size;
+
+  document.getElementById('kpi-945').innerHTML = `
+    <div class="kpi blue"><div class="v">${total}</div><div class="l">Total 945</div></div>
+    <div class="kpi green"><div class="v">${regHoje}</div><div class="l">Gravados Hoje</div></div>
+    <div class="kpi yellow"><div class="v">${corrsUnicos}</div><div class="l">Corretores</div></div>
+  `;
+
+  if (registros945.length === 0) {
+    document.getElementById('hist945-list').innerHTML = '<div style="text-align:center;padding:30px;color:var(--textL);">Nenhum registro 945 encontrado.</div>';
+    return;
+  }
+
+  let html = '';
+  registros945.forEach(r => {
+    const dt = String(r.DATA || '').substring(0, 10);
+    const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const dtObj = new Date(dt + 'T12:00:00');
+    const diaSem = dias[dtObj.getDay()];
+    const dataFmt = `${dtObj.getDate()}/${String(dtObj.getMonth()+1).padStart(2,'0')}`;
+    const eq = r.EQUIPE || CORRETORES_MAP[r.CORRETOR] || '';
+    const eqCls = eq ? `eq-${eq.toLowerCase()}` : '';
+    const processado = r.DIFICULDADE === 'PROCESSADO';
+
+    html += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div>
+          <span style="font-size:.9rem;font-weight:800;color:#fff;">${r.CORRETOR || '-'}</span>
+          ${eq ? `<span class="eq-tag ${eqCls}" style="margin-left:6px;">${eq}</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${processado ? '<span class="tag tag-aprovado">PROCESSADO</span>' : '<span class="tag tag-pendente">PENDENTE</span>'}
+          <span style="font-size:.7rem;color:var(--textL);">${diaSem}, ${dataFmt} ${r.HORA || ''}</span>
+        </div>
+      </div>
+      <div style="background:var(--card2);border-radius:8px;padding:12px;font-size:.8rem;color:var(--text);line-height:1.5;white-space:pre-wrap;">${r.OBSERVACOES || '-'}</div>
+    </div>`;
+  });
+  document.getElementById('hist945-list').innerHTML = html;
+}
+
+// ============================================
+// HISTÓRICO DE DEMANDAS + PRODUTIVIDADE
+// ============================================
+function renderHistDemandas() {
+  const filtroCorr = document.getElementById('hd-corretor').value;
+  const filtroEquipe = document.getElementById('hd-equipe').value;
+  const filtroPrior = document.getElementById('hd-prioridade').value;
+  const filtroSt = document.getElementById('hd-status').value;
+  const filtroDe = document.getElementById('hd-de').value;
+  const filtroAte = document.getElementById('hd-ate').value;
+
+  let lista = [...DEMANDAS];
+
+  // Filtros
+  if (filtroCorr) lista = lista.filter(d => d.RESPONSAVEL === filtroCorr);
+  if (filtroEquipe) lista = lista.filter(d => {
+    const eq = equipeDoCorretor(d.RESPONSAVEL);
+    return eq === filtroEquipe;
+  });
+  if (filtroPrior) lista = lista.filter(d => {
+    const p = (d.PRIORIDADE || '').toLowerCase();
+    const f = filtroPrior.toLowerCase();
+    return p === f || (f === 'media' && p === 'média') || (f === 'média' && p === 'media');
+  });
+  if (filtroSt === 'Pendente') lista = lista.filter(d => !(d.STATUS || '').toLowerCase().includes('conclu'));
+  if (filtroSt === 'Concluida') lista = lista.filter(d => (d.STATUS || '').toLowerCase().includes('conclu'));
+  if (filtroDe) lista = lista.filter(d => String(d.DATA || '').substring(0, 10) >= filtroDe);
+  if (filtroAte) lista = lista.filter(d => String(d.DATA || '').substring(0, 10) <= filtroAte);
+
+  // Preencher filtro de corretores (uma vez)
+  const selCorr = document.getElementById('hd-corretor');
+  if (selCorr.options.length <= 1) {
+    const resps = [...new Set(DEMANDAS.map(d => d.RESPONSAVEL).filter(r => r))].sort();
+    resps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; selCorr.appendChild(o); });
+  }
+
+  // Ordenar: mais recente primeiro
+  lista.sort((a, b) => {
+    const da = String(a.DATA || '').substring(0, 10);
+    const db = String(b.DATA || '').substring(0, 10);
+    return db.localeCompare(da);
+  });
+
+  // ---- KPIs GERAIS ----
+  const total = lista.length;
+  const concluidas = lista.filter(d => (d.STATUS || '').toLowerCase().includes('conclu')).length;
+  const pendentes = total - concluidas;
+  const taxa = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+  const altas = lista.filter(d => d.PRIORIDADE === 'Alta').length;
+  const comCliente = lista.filter(d => d.CLIENTE && d.CLIENTE.trim()).length;
+
+  document.getElementById('kpi-hist-dem').innerHTML = `
+    <div class="kpi blue"><div class="v">${total}</div><div class="l">Total Demandas</div></div>
+    <div class="kpi green"><div class="v">${concluidas}</div><div class="l">Concluídas</div></div>
+    <div class="kpi yellow"><div class="v">${pendentes}</div><div class="l">Pendentes</div></div>
+    <div class="kpi purple"><div class="v">${taxa}%</div><div class="l">Taxa Conclusão</div></div>
+    <div class="kpi red"><div class="v">${altas}</div><div class="l">Prioridade Alta</div></div>
+    <div class="kpi blue"><div class="v">${comCliente}</div><div class="l">Com Cliente</div></div>
+  `;
+
+  // ---- PRODUTIVIDADE POR CORRETOR ----
+  const porCorretor = {};
+  lista.forEach(d => {
+    const nome = d.RESPONSAVEL || 'Sem responsável';
+    if (!porCorretor[nome]) porCorretor[nome] = { total: 0, concluidas: 0, pendentes: 0, altas: 0, clientes: new Set() };
+    porCorretor[nome].total++;
+    if ((d.STATUS || '').toLowerCase().includes('conclu')) porCorretor[nome].concluidas++;
+    else porCorretor[nome].pendentes++;
+    if (d.PRIORIDADE === 'Alta') porCorretor[nome].altas++;
+    if (d.CLIENTE && d.CLIENTE.trim()) porCorretor[nome].clientes.add(d.CLIENTE.trim());
+  });
+
+  // Ordenar por taxa de conclusão
+  const corrProd = Object.entries(porCorretor).map(([nome, dados]) => ({
+    nome, ...dados, taxa: dados.total > 0 ? Math.round((dados.concluidas / dados.total) * 100) : 0, clientes: dados.clientes.size
+  })).sort((a, b) => b.taxa - a.taxa);
+
+  let prodHtml = '<div style="font-size:.82rem;font-weight:700;color:#fff;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Produtividade por Corretor</div>';
+  prodHtml += '<div class="corr-grid">';
+  corrProd.forEach(c => {
+    const eq = equipeDoCorretor(c.nome);
+    const barWidth = c.taxa;
+    const barColor = c.taxa >= 70 ? 'var(--success)' : c.taxa >= 40 ? 'var(--warning)' : 'var(--danger)';
+
+    prodHtml += `<div class="corr-card">
+      <div class="corr-card-header">
+        <span class="corr-card-name">${c.nome}</span>
+        ${eqTagHTML(eq)}
+      </div>
+      <div class="corr-card-stat">
+        <div class="corr-stat"><div class="csv">${c.total}</div><div class="csl">Demandas</div></div>
+        <div class="corr-stat"><div class="csv" style="color:var(--success);">${c.concluidas}</div><div class="csl">Concluídas</div></div>
+        <div class="corr-stat"><div class="csv" style="color:var(--warning);">${c.pendentes}</div><div class="csl">Pendentes</div></div>
+        <div class="corr-stat"><div class="csv" style="color:var(--accent);">${c.clientes}</div><div class="csl">Clientes</div></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--textL);margin-bottom:4px;">
+          <span>Taxa de conclusão</span><span style="color:${barColor};font-weight:700;">${c.taxa}%</span>
+        </div>
+        <div style="background:var(--card2);border-radius:4px;height:6px;overflow:hidden;">
+          <div style="width:${barWidth}%;height:100%;background:${barColor};border-radius:4px;transition:width .3s;"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  prodHtml += '</div>';
+  document.getElementById('hd-produtividade').innerHTML = prodHtml;
+
+  // ---- TABELA COM CRUZAMENTO DE CLIENTES ----
+  let html = '';
+  if (lista.length === 0) {
+    html = '<tr><td colspan="7" style="text-align:center;color:var(--textL);padding:20px;">Nenhuma demanda encontrada.</td></tr>';
+  }
+
+  lista.forEach(d => {
+    const dt = String(d.DATA || '').substring(0, 10);
+    const dtFmt = dt.includes('-') ? dt.split('-').reverse().slice(0, 2).join('/') : dt;
+    const eq = equipeDoCorretor(d.RESPONSAVEL);
+    const prior = (d.PRIORIDADE || 'media').toLowerCase();
+    const priorTag = prior === 'alta' ? 'tag-divida' : prior === 'baixa' ? 'tag-bacen' : 'tag-pendente';
+    const isConcluida = (d.STATUS || '').toLowerCase().includes('conclu');
+    const statusTag = isConcluida ? 'tag-aprovado' : 'tag-pendente';
+    const statusLabel = isConcluida ? 'CONCLUÍDA' : 'PENDENTE';
+
+    // Cruzamento com cliente
+    let clienteNome = d.CLIENTE || '';
+    let clienteStatus = '';
+    let clienteStatusTag = '';
+    if (clienteNome) {
+      // Buscar cliente na base
+      const clienteMatch = CLIENTES.find(c => {
+        const nomeC = (c.CLIENTE || '').toUpperCase();
+        const nomeD = clienteNome.toUpperCase();
+        return nomeC.includes(nomeD) || nomeD.includes(nomeC);
+      });
+      if (clienteMatch) {
+        const stCli = classStatus(clienteMatch.STATUS);
+        clienteStatus = stCli.label;
+        clienteStatusTag = stCli.tag;
+        clienteNome = clienteMatch.CLIENTE; // nome completo
+      }
+    }
+
+    html += `<tr>
+      <td style="font-size:.72rem;white-space:nowrap;">${dtFmt}</td>
+      <td><span class="corretor-name">${d.RESPONSAVEL || '-'}</span> ${eqTagHTML(eq)}</td>
+      <td style="max-width:280px;">${d.DESCRICAO || '-'}</td>
+      <td><span class="tag ${priorTag}">${d.PRIORIDADE || 'Média'}</span></td>
+      <td><span class="tag ${statusTag}">${statusLabel}</span></td>
+      <td style="color:${clienteNome ? 'var(--gold)' : 'var(--textL)'};">${clienteNome || '-'}</td>
+      <td>${clienteStatus ? `<span class="tag ${clienteStatusTag}">${clienteStatus}</span>` : '-'}</td>
+    </tr>`;
+  });
+
+  document.getElementById('tb-hist-dem').innerHTML = html;
+  document.getElementById('count-hist-dem').textContent = `Exibindo ${lista.length} de ${DEMANDAS.length} demandas | ${concluidas} concluídas (${taxa}%)`;
+}
+
+// ============================================
+// RANKING DE PRESENÇA
+// ============================================
+function renderRanking() {
+  const filtroEquipe = document.getElementById('rk-equipe').value;
+
+  // Filtrar check-ins do mês atual
+  const agora = new Date();
+  const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+
+  const checkinsDoMes = REGISTROS.filter(r => {
+    if (r.TIPO !== 'checkin') return false;
+    const dt = String(r.DATA || '').substring(0, 7);
+    return dt === mesAtual;
+  });
+
+  // Calcular pontuação por corretor
+  const corretoresAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO !== 'Gerente');
+  const pontuacao = {};
+
+  corretoresAtivos.forEach(c => {
+    pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, presente: 0, fora: 0, semGps: 0, ausente: 0, pontos: 0, dias: 0 };
+  });
+
+  // Contar dias úteis no mês até hoje
+  const diasUteis = [];
+  for (let d = 1; d <= agora.getDate(); d++) {
+    const dt = new Date(agora.getFullYear(), agora.getMonth(), d);
+    if (dt.getDay() > 0 && dt.getDay() < 7) diasUteis.push(dt.toISOString().split('T')[0]);
+  }
+
+  // Processar check-ins
+  checkinsDoMes.forEach(r => {
+    const nome = r.CORRETOR;
+    if (!pontuacao[nome]) return;
+    if (r.PRESENCA === 'presente') { pontuacao[nome].presente++; pontuacao[nome].pontos += 3; }
+    else if (r.PRESENCA === 'fora') { pontuacao[nome].fora++; pontuacao[nome].pontos += 1; }
+    else if (r.PRESENCA === 'sem-gps') { pontuacao[nome].semGps++; pontuacao[nome].pontos += 1; }
+  });
+
+  // Calcular ausentes (dias úteis sem check-in)
+  Object.values(pontuacao).forEach(p => {
+    p.dias = p.presente + p.fora + p.semGps;
+    p.ausente = Math.max(0, diasUteis.length - p.dias);
+    p.pontos += p.ausente * -2;
+  });
+
+  // Filtrar por equipe
+  let lista = Object.values(pontuacao);
+  if (filtroEquipe) lista = lista.filter(p => p.equipe === filtroEquipe);
+
+  // Ordenar por pontos (maior primeiro)
+  lista.sort((a, b) => b.pontos - a.pontos);
+
+  // KPIs
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mesNome = meses[agora.getMonth()];
+  const totalPresente = lista.reduce((s, p) => s + p.presente, 0);
+  const totalAusente = lista.reduce((s, p) => s + p.ausente, 0);
+
+  document.getElementById('kpi-ranking').innerHTML = `
+    <div class="kpi blue"><div class="v">${mesNome}</div><div class="l">Mês Atual</div></div>
+    <div class="kpi green"><div class="v">${totalPresente}</div><div class="l">Presenças Total</div></div>
+    <div class="kpi red"><div class="v">${totalAusente}</div><div class="l">Ausências Total</div></div>
+    <div class="kpi yellow"><div class="v">${diasUteis.length}</div><div class="l">Dias Úteis</div></div>
+  `;
+
+  if (lista.length === 0) {
+    document.getElementById('ranking-list').innerHTML = '<div style="text-align:center;padding:30px;color:var(--textL);">Nenhum dado de presença.</div>';
+    return;
+  }
+
+  let html = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Corretor</th><th>Equipe</th><th>Presentes</th><th>Fora</th><th>Ausentes</th><th>Pontos</th></tr></thead><tbody>';
+
+  lista.forEach((p, i) => {
+    const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
+    const ptColor = p.pontos >= 0 ? 'var(--success)' : 'var(--danger)';
+    const eqCls = p.equipe ? `eq-${p.equipe.toLowerCase()}` : '';
+
+    html += `<tr>
+      <td style="font-size:1rem;text-align:center;">${medalha}</td>
+      <td><span class="corretor-name">${p.nome}</span> ${p.cargo === 'Coordenador' ? '<span class="tag" style="background:rgba(171,71,188,.15);color:var(--purple);border:1px solid rgba(171,71,188,.25);font-size:.5rem;">COORD</span>' : ''}</td>
+      <td>${p.equipe ? `<span class="eq-tag ${eqCls}">${p.equipe}</span>` : '-'}</td>
+      <td style="color:var(--success);font-weight:700;">${p.presente}</td>
+      <td style="color:var(--warning);">${p.fora + p.semGps}</td>
+      <td style="color:var(--danger);">${p.ausente}</td>
+      <td style="color:${ptColor};font-weight:800;font-size:1rem;">${p.pontos}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  html += '<div style="margin-top:10px;font-size:.65rem;color:var(--textL);">Pontuação: Presente no local = +3pts | Fora/Sem GPS = +1pt | Ausente = -2pts</div>';
+
+  document.getElementById('ranking-list').innerHTML = html;
+}
+
+// ============================================
+// INIT
+// ============================================
+carregarDados();
+</script>
+
+</body>
+</html>
