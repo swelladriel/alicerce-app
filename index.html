@@ -1182,18 +1182,16 @@ function renderMinhasVendas() {
 
   if (total === 0) {
     document.getElementById('vd-lista').innerHTML = '<div class="m-empty">Nenhuma venda este mês.</div>';
-    return;
+  } else {
+    const lista = [...vendasMes].sort((a, b) => {
+      const da = String(a.DATA_VENDA || '').substring(0, 10);
+      const db = String(b.DATA_VENDA || '').substring(0, 10);
+      return db.localeCompare(da);
+    });
+    document.getElementById('vd-lista').innerHTML = lista.map(v => renderVendaCard(v)).join('');
   }
 
-  const lista = [...vendasMes].sort((a, b) => {
-    const da = String(a.DATA_VENDA || '').substring(0, 10);
-    const db = String(b.DATA_VENDA || '').substring(0, 10);
-    return db.localeCompare(da);
-  });
-
-  document.getElementById('vd-lista').innerHTML = lista.map(v => renderVendaCard(v)).join('');
-
-  // Renderizar histórico também
+  // Renderizar histórico sempre
   renderHistoricoVendas();
 }
 
