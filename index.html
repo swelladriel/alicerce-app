@@ -94,27 +94,17 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .checkin-hist-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.78rem;}
 .checkin-hist-item:last-child{border-bottom:none;}
 
-/* 945 GRAVAÇÃO */
+/* 945 DITADO */
 .rec-box{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:20px;margin-bottom:14px;}
 .rec-title{font-size:.85rem;font-weight:800;color:#fff;margin-bottom:4px;}
 .rec-sub{font-size:.7rem;color:var(--textL);margin-bottom:16px;}
-.rec-btn{width:100%;padding:16px;border:none;border-radius:var(--rad);font-size:1rem;font-weight:800;cursor:pointer;transition:all .15s;letter-spacing:.5px;}
-.rec-btn.gravar{background:var(--danger);color:#fff;}
-.rec-btn.gravar::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff;margin-right:8px;animation:pulse 1.2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
-.rec-btn.parar{background:var(--card2);color:var(--danger);border:2px solid var(--danger);}
-.rec-btn.iniciar{background:var(--accent);color:#000;}
-.rec-btn:active{transform:scale(.98);}
-.rec-status{text-align:center;margin-top:10px;font-size:.78rem;color:var(--textL);}
-.rec-timer{font-size:1.8rem;font-weight:900;color:#fff;text-align:center;margin:12px 0;}
-.rec-transcricao{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:14px;}
-.rec-trans-title{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
-.rec-trans-text{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;min-height:100px;font-size:.82rem;color:var(--text);line-height:1.5;white-space:pre-wrap;}
-.rec-trans-text[contenteditable]{outline:none;}
-.rec-trans-text[contenteditable]:focus{border-color:var(--accent);}
+.rec-textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px;min-height:180px;font-size:.88rem;color:var(--text);line-height:1.6;resize:vertical;outline:none;font-family:inherit;}
+.rec-textarea:focus{border-color:var(--accent);}
+.rec-textarea::placeholder{color:var(--textL);}
 .rec-enviar{width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.9rem;font-weight:800;cursor:pointer;margin-top:10px;}
 .rec-enviar:disabled{opacity:.4;cursor:default;}
 .rec-enviar:active{opacity:.8;}
+.rec-dica{text-align:center;margin-top:10px;font-size:.68rem;color:var(--textL);line-height:1.4;}
 .rec-historico{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-top:14px;}
 .rec-hist-title{font-size:.75rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
 .rec-hist-item{background:var(--card2);border:1px solid rgba(255,255,255,.04);border-radius:8px;padding:10px;margin-bottom:8px;}
@@ -168,6 +158,26 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 .loading{text-align:center;padding:30px;color:var(--textL);font-size:.82rem;}
 .loading::before{content:'';display:block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* LEMBRETE */
+.lembrete{background:var(--warning);color:#000;padding:10px 16px;font-size:.78rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;animation:slideDown .3s ease;}
+.lembrete-danger{background:var(--danger);color:#fff;}
+.lembrete button{background:rgba(0,0,0,.2);color:inherit;border:none;border-radius:6px;padding:4px 10px;font-size:.68rem;font-weight:700;cursor:pointer;}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* OFFLINE BANNER */
+.offline-bar{background:var(--danger);color:#fff;text-align:center;padding:8px;font-size:.72rem;font-weight:700;display:none;}
+.offline-bar.show{display:block;}
+
+/* ANIMAÇÃO DE CONFIRMAÇÃO */
+.confirm-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;animation:confirmFadeIn .3s ease forwards;}
+.confirm-circle{width:100px;height:100px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;transform:scale(0);animation:confirmPop .4s cubic-bezier(.175,.885,.32,1.275) .2s forwards;box-shadow:0 0 40px rgba(0,230,118,.4);}
+.confirm-check{width:45px;height:25px;border-left:5px solid #fff;border-bottom:5px solid #fff;transform:rotate(-45deg) scale(0);animation:confirmCheck .3s ease .5s forwards;margin-top:-5px;}
+.confirm-text{color:#fff;font-size:1rem;font-weight:800;margin-top:20px;letter-spacing:1px;opacity:0;animation:confirmTextIn .3s ease .7s forwards;}
+@keyframes confirmFadeIn{to{opacity:1;}}
+@keyframes confirmPop{to{transform:scale(1);}}
+@keyframes confirmCheck{to{transform:rotate(-45deg) scale(1);}}
+@keyframes confirmTextIn{to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
 <body>
@@ -187,6 +197,8 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 
 <!-- APP -->
 <div class="app-shell" id="app-shell">
+  <div class="offline-bar" id="offline-bar">Sem internet — mostrando dados salvos</div>
+  <div id="lembretes-container"></div>
   <div class="app-header">
     <div class="app-header-top">
       <div>
@@ -250,27 +262,14 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       </div>
     </div>
 
-    <!-- TAB: 945 GRAVAÇÃO -->
+    <!-- TAB: 945 DITADO -->
     <div class="app-page" id="tab-945">
-      <!-- Estado: pronto pra gravar -->
-      <div id="rec-inicio">
-        <div class="rec-box">
-          <div class="rec-title">945 Individual</div>
-          <div class="rec-sub">Grave seu relatório diário: o que fez, plano do dia, dificuldades e clientes.</div>
-          <div class="rec-timer" id="rec-timer">00:00</div>
-          <button class="rec-btn iniciar" id="rec-btn" onclick="toggleGravacao()">GRAVAR 945</button>
-          <div class="rec-status" id="rec-status"></div>
-        </div>
-      </div>
-
-      <!-- Estado: transcrição pronta pra revisar -->
-      <div id="rec-revisao" style="display:none;">
-        <div class="rec-transcricao">
-          <div class="rec-trans-title">Revise sua transcrição</div>
-          <div class="rec-trans-text" id="rec-texto" contenteditable="true"></div>
-        </div>
+      <div class="rec-box">
+        <div class="rec-title">945 Individual</div>
+        <div class="rec-sub">Toque no campo abaixo e use o microfone do teclado para ditar seu relatório.</div>
+        <textarea class="rec-textarea" id="rec-texto" placeholder="Toque aqui e use o 🎤 do teclado para ditar...&#10;&#10;Fale sobre: o que fez, plano do dia, dificuldades e clientes."></textarea>
         <button class="rec-enviar" id="rec-enviar" onclick="enviar945()">ENVIAR 945</button>
-        <button onclick="cancelar945()" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--textL);border-radius:var(--rad);padding:12px;font-size:.8rem;cursor:pointer;margin-top:8px;">Cancelar e gravar novamente</button>
+        <div class="rec-dica">Dica: toque o 🎤 no teclado para ditar por voz</div>
         <div class="rec-sent-msg" id="rec-sent-msg">945 enviado com sucesso!</div>
       </div>
 
@@ -429,12 +428,30 @@ async function fazerLogin() {
     document.getElementById('app-tabs').style.top = headerH + 'px';
   }, 50);
 
-  await carregarMeusClientes();
+  // Tentar carregar da internet, se falhar usa cache
+  if (navigator.onLine) {
+    try {
+      await carregarTudo();
+    } catch(e) {
+      if (!carregarDoCache()) {
+        alert('Sem internet e sem dados salvos. Conecte-se e tente novamente.');
+        return;
+      }
+      document.getElementById('offline-bar').classList.add('show');
+    }
+  } else {
+    if (!carregarDoCache()) {
+      alert('Sem internet e sem dados salvos. Conecte-se e tente novamente.');
+      return;
+    }
+    document.getElementById('offline-bar').classList.add('show');
+  }
+
   if (isMaster) carregarEquipe();
-  carregarDemandas();
   iniciarRelogio();
   carregarCheckins();
   carregarHistorico945();
+  verificarLembretes();
 }
 
 async function atualizarTudo() {
@@ -442,8 +459,7 @@ async function atualizarTudo() {
   btn.textContent = '...';
   btn.disabled = true;
   try {
-    await carregarMeusClientes();
-    await carregarDemandas();
+    await carregarTudo();
     const isMaster = USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente';
     if (isMaster) carregarEquipe();
     btn.textContent = 'Atualizado!';
@@ -474,22 +490,26 @@ function showTab(id, e) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (e && e.currentTarget) e.currentTarget.classList.add('active');
+  // Quando abrir aba 945, focar no textarea pra abrir o teclado automaticamente
+  if (id === 'tab-945') {
+    setTimeout(() => { document.getElementById('rec-texto').focus(); }, 200);
+  }
 }
 
 // ============================================
-// PIPELINE - MEUS CLIENTES
+// CARREGAR TUDO EM 1 CHAMADA SÓ (mais rápido)
 // ============================================
-async function carregarMeusClientes() {
-  const [resCli, resEmp] = await Promise.all([
-    fetch(API_URL + '?acao=clientes'),
-    fetch(API_URL + '?acao=empreendimentos')
-  ]);
-  CLIENTES = await resCli.json();
-  EMPREENDIMENTOS = await resEmp.json();
+async function carregarTudo() {
+  const res = await fetch(API_URL + '?acao=tudo');
+  const dados = await res.json();
 
+  CLIENTES = dados.clientes || [];
+  EMPREENDIMENTOS = dados.empreendimentos || [];
+  DEMANDAS = dados.demandas || [];
+
+  // Filtrar meus clientes
   const nomeUpper = USUARIO.NOME.toUpperCase();
   const nomeCompleto = (USUARIO['NOME COMPLETO'] || '').toUpperCase();
-
   MEUS_CLIENTES = CLIENTES.filter(c => {
     if (!c.CORRETOR) return false;
     const corrUpper = c.CORRETOR.toUpperCase();
@@ -497,6 +517,9 @@ async function carregarMeusClientes() {
   });
 
   renderMeusClientes();
+  renderDemandas();
+  iniciarMonitorMeiaNoite();
+  salvarCache(); // salvar dados pra modo offline
 }
 
 function getEmpreendimentosCompativeis(renda) {
@@ -602,15 +625,6 @@ function setFiltro(grupo) {
 let DEMANDAS_FILTRADAS = [];
 let DEM_FILTRO_PRIOR = '';
 let DEM_FILTRO_STATUS = '';
-
-async function carregarDemandas() {
-  const res = await fetch(API_URL + '?acao=demandas');
-  DEMANDAS = await res.json();
-  renderDemandas();
-
-  // Monitorar virada de meia-noite: quando o dia muda, limpa os cards automaticamente
-  iniciarMonitorMeiaNoite();
-}
 
 let _monitorMeiaNoite = null;
 function iniciarMonitorMeiaNoite() {
@@ -1078,8 +1092,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModalC
 // ============================================
 // Locais autorizados para check-in
 const LOCAIS = [
-  { nome: 'Escritório Recreio', lat: -23.0178593, lng: -43.5109178 },
-  { nome: 'Estande Novolar', lat: -22.9325, lng: -43.3580 },
+  { nome: 'Escritório Recreio', lat: -23.0164008, lng: -43.4783989 },
+  { nome: 'Estande Novolar', lat: -22.9555204, lng: -43.3774365 },
 ];
 const RAIO_METROS = 100; // Cerca virtual de 100m
 
@@ -1204,6 +1218,9 @@ function registrarCheckin(lat, lng) {
   const distTxt = distancia !== null ? ` (${Math.round(distancia)}m)` : '';
   document.getElementById('checkin-status').textContent = `Check-in às ${hora} — ${localTag}${distTxt}`;
 
+  mostrarConfirmacao('CHECK-IN REGISTRADO');
+  verificarLembretes();
+
   carregarCheckins();
 
   // Salvar na planilha via GET (evita CORS com Apps Script)
@@ -1257,149 +1274,11 @@ function carregarCheckins() {
 }
 
 // ============================================
-// 945 - GRAVAÇÃO E TRANSCRIÇÃO
+// 945 - DITADO (usa microfone nativo do teclado)
 // ============================================
-let gravando = false;
-let recognition = null;
-let recTimer = null;
-let recSegundos = 0;
-let transcricaoTexto = '';
-
-function toggleGravacao() {
-  if (gravando) {
-    pararGravacao();
-  } else {
-    iniciarGravacao();
-  }
-}
-
-function iniciarGravacao() {
-  // Verificar suporte
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('Seu navegador não suporta gravação de voz. Use o Chrome.');
-    return;
-  }
-
-  transcricaoTexto = '';
-  let partesFinal = [];
-
-  function iniciarSessao() {
-    const rec = new SpeechRecognition();
-    rec.lang = 'pt-BR';
-    rec.continuous = false;    // UMA frase por sessão — mais confiável no mobile
-    rec.interimResults = false; // Só resultado final
-
-    rec.onresult = (event) => {
-      const texto = event.results[0][0].transcript.trim();
-      if (!texto) return;
-
-      // Deduplicação agressiva: verificar se o texto já existe ou se as palavras repetem
-      const palavrasNovas = texto.toLowerCase().split(/\s+/);
-      let duplicado = false;
-
-      if (partesFinal.length > 0) {
-        const ultimaFrase = partesFinal[partesFinal.length - 1].toLowerCase();
-        // Frase idêntica
-        if (ultimaFrase === texto.toLowerCase()) duplicado = true;
-        // Frase contida na anterior ou vice-versa
-        if (ultimaFrase.includes(texto.toLowerCase()) || texto.toLowerCase().includes(ultimaFrase)) duplicado = true;
-        // Primeiras palavras da nova são iguais às últimas da anterior
-        const palavrasAntes = ultimaFrase.split(/\s+/);
-        const overlap = Math.min(4, palavrasAntes.length, palavrasNovas.length);
-        for (let n = overlap; n >= 2; n--) {
-          if (palavrasAntes.slice(-n).join(' ') === palavrasNovas.slice(0, n).join(' ')) {
-            // Overlap parcial: adicionar só a parte nova
-            const parteNova = palavrasNovas.slice(n).join(' ');
-            if (parteNova) partesFinal.push(parteNova);
-            duplicado = true;
-            break;
-          }
-        }
-      }
-
-      if (!duplicado) partesFinal.push(texto);
-
-      transcricaoTexto = partesFinal.join(' ');
-      document.getElementById('rec-status').textContent = transcricaoTexto.length > 50 ? '...' + transcricaoTexto.slice(-50) : transcricaoTexto;
-    };
-
-    rec.onerror = (event) => {
-      if (event.error === 'no-speech' || event.error === 'aborted') {
-        // Silêncio ou cancelamento — reiniciar normalmente
-      } else {
-        console.log('Erro reconhecimento:', event.error);
-      }
-    };
-
-    rec.onend = () => {
-      if (gravando) {
-        // Esperar 300ms pra limpar o buffer de áudio antes de reiniciar
-        setTimeout(() => {
-          if (gravando) iniciarSessao();
-        }, 300);
-      }
-    };
-
-    recognition = rec;
-    rec.start();
-  }
-
-  iniciarSessao();
-  gravando = true;
-  recSegundos = 0;
-
-  const btn = document.getElementById('rec-btn');
-  btn.className = 'rec-btn gravar';
-  btn.textContent = 'PARAR GRAVAÇÃO';
-  document.getElementById('rec-status').textContent = 'Ouvindo...';
-
-  // Timer
-  recTimer = setInterval(() => {
-    recSegundos++;
-    const min = String(Math.floor(recSegundos / 60)).padStart(2, '0');
-    const sec = String(recSegundos % 60).padStart(2, '0');
-    document.getElementById('rec-timer').textContent = `${min}:${sec}`;
-  }, 1000);
-}
-
-function pararGravacao() {
-  gravando = false;
-  if (recognition) {
-    recognition.stop();
-    recognition = null;
-  }
-  if (recTimer) {
-    clearInterval(recTimer);
-    recTimer = null;
-  }
-
-  const btn = document.getElementById('rec-btn');
-  btn.className = 'rec-btn iniciar';
-  btn.textContent = 'GRAVAR 945';
-  document.getElementById('rec-status').textContent = '';
-
-  if (transcricaoTexto.trim().length > 0) {
-    // Mostrar tela de revisão
-    document.getElementById('rec-inicio').style.display = 'none';
-    document.getElementById('rec-revisao').style.display = 'block';
-    document.getElementById('rec-texto').textContent = transcricaoTexto.trim();
-    document.getElementById('rec-sent-msg').style.display = 'none';
-  } else {
-    alert('Nenhuma fala detectada. Tente novamente.');
-    document.getElementById('rec-timer').textContent = '00:00';
-  }
-}
-
-function cancelar945() {
-  document.getElementById('rec-inicio').style.display = 'block';
-  document.getElementById('rec-revisao').style.display = 'none';
-  document.getElementById('rec-timer').textContent = '00:00';
-  transcricaoTexto = '';
-}
 
 async function enviar945() {
-  const texto = document.getElementById('rec-texto').textContent.trim();
+  const texto = document.getElementById('rec-texto').value.trim();
   if (!texto) { alert('Transcrição vazia.'); return; }
 
   const btn = document.getElementById('rec-enviar');
@@ -1489,18 +1368,17 @@ async function enviar945() {
     } catch(e) {} // Se falhar, o trigger diário pega depois
 
     btn.textContent = 'ENVIADO!';
-    document.getElementById('rec-sent-msg').style.display = 'block';
+    mostrarConfirmacao('945 ENVIADO');
+    verificarLembretes();
 
-    // Atualizar demandas localmente pra aparecer na hora
-    carregarDemandas();
+    // Atualizar dados pra demandas aparecerem na hora
+    carregarTudo();
 
     setTimeout(() => {
-      document.getElementById('rec-inicio').style.display = 'block';
-      document.getElementById('rec-revisao').style.display = 'none';
-      document.getElementById('rec-timer').textContent = '00:00';
+      document.getElementById('rec-texto').value = '';
       btn.disabled = false;
       btn.textContent = 'ENVIAR 945';
-      transcricaoTexto = '';
+      document.getElementById('rec-sent-msg').style.display = 'none';
       carregarHistorico945();
     }, 2000);
   } else {
@@ -1533,6 +1411,125 @@ function carregarHistorico945() {
   });
   document.getElementById('rec-hist-list').innerHTML = html;
 }
+
+// ============================================
+// ANIMAÇÃO DE CONFIRMAÇÃO
+// ============================================
+function mostrarConfirmacao(mensagem) {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-circle"><div class="confirm-check"></div></div>
+    <div class="confirm-text">${mensagem}</div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Vibrar o celular (se suportar)
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+  // Remover depois de 1.8s
+  setTimeout(() => {
+    overlay.style.animation = 'confirmFadeIn .3s ease reverse forwards';
+    setTimeout(() => overlay.remove(), 300);
+  }, 1800);
+}
+
+// ============================================
+// LEMBRETES (check-in e 945)
+// ============================================
+function verificarLembretes() {
+  if (!USUARIO) return;
+  const agora = new Date();
+  const hora = agora.getHours();
+  const minuto = agora.getMinutes();
+  const hoje = agora.toISOString().split('T')[0];
+  let html = '';
+
+  // Só mostrar lembretes em horário comercial (8h-19h) e dias úteis
+  const diaSemana = agora.getDay();
+  if (diaSemana === 0 || diaSemana === 6 || hora < 8 || hora >= 19) {
+    document.getElementById('lembretes-container').innerHTML = '';
+    return;
+  }
+
+  // Verificar check-in
+  const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
+  const fezCheckin = checkins.find(c => c.data === hoje);
+
+  if (!fezCheckin && hora >= 9) {
+    const urgente = hora >= 10;
+    html += `<div class="lembrete ${urgente ? 'lembrete-danger' : ''}">
+      <span>${urgente ? 'Você ainda não fez check-in hoje!' : 'Lembrete: faça seu check-in'}</span>
+      <button onclick="showTab('tab-checkin')">Fazer agora</button>
+    </div>`;
+  }
+
+  // Verificar 945
+  const hist945 = JSON.parse(localStorage.getItem('alicerce-945-' + USUARIO.NOME) || '[]');
+  const fez945 = hist945.find(h => h.data === hoje);
+
+  if (!fez945 && hora >= 9 && (hora > 9 || minuto >= 30)) {
+    const urgente = hora >= 11;
+    html += `<div class="lembrete ${urgente ? 'lembrete-danger' : ''}">
+      <span>${urgente ? 'Você ainda não fez o 945 hoje!' : 'Lembrete: registre seu 945'}</span>
+      <button onclick="showTab('tab-945')">Fazer agora</button>
+    </div>`;
+  }
+
+  document.getElementById('lembretes-container').innerHTML = html;
+}
+
+// Verificar lembretes a cada 60 segundos
+setInterval(verificarLembretes, 60000);
+
+// ============================================
+// MODO OFFLINE (mostra dados salvos se sem internet)
+// ============================================
+const CACHE_KEY = 'alicerce-cache-dados';
+
+function salvarCache() {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      clientes: CLIENTES,
+      empreendimentos: EMPREENDIMENTOS,
+      demandas: DEMANDAS,
+      salvoEm: new Date().toISOString()
+    }));
+  } catch(e) {} // localStorage cheio, ignora
+}
+
+function carregarDoCache() {
+  try {
+    const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (!cache) return false;
+
+    CLIENTES = cache.clientes || [];
+    EMPREENDIMENTOS = cache.empreendimentos || [];
+    DEMANDAS = cache.demandas || [];
+
+    const nomeUpper = USUARIO.NOME.toUpperCase();
+    const nomeCompleto = (USUARIO['NOME COMPLETO'] || '').toUpperCase();
+    MEUS_CLIENTES = CLIENTES.filter(c => {
+      if (!c.CORRETOR) return false;
+      const corrUpper = c.CORRETOR.toUpperCase();
+      return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
+    });
+
+    renderMeusClientes();
+    renderDemandas();
+    return true;
+  } catch(e) { return false; }
+}
+
+// Monitorar conexão
+window.addEventListener('online', () => {
+  document.getElementById('offline-bar').classList.remove('show');
+  carregarTudo(); // recarregar dados reais
+});
+
+window.addEventListener('offline', () => {
+  document.getElementById('offline-bar').classList.add('show');
+});
 
 // ============================================
 // INIT
