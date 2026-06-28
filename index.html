@@ -535,10 +535,17 @@ async function carregarTudo() {
     return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
   });
 
-  // Filtrar minhas vendas
+  // Filtrar minhas vendas (com mapa de nomes que diferem entre planilhas)
+  const NOMES_EQUIV = {
+    'EDVAM SILVA': 'EDIVAN SILVA',
+    'DANDARA CAMPUS': 'DANDARA CAMPOS',
+    'WILIAN BUENO': 'WILLIAM BUENO',
+  };
   MINHAS_VENDAS = VENDAS.filter(v => {
     if (!v.CORRETOR) return false;
-    const corrUpper = v.CORRETOR.toUpperCase();
+    let corrUpper = v.CORRETOR.toUpperCase().trim();
+    // Traduzir nome se tiver equivalência
+    if (NOMES_EQUIV[corrUpper]) corrUpper = NOMES_EQUIV[corrUpper];
     return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
   });
 
