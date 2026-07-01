@@ -342,7 +342,7 @@ tr:hover{background:rgba(100,255,218,.02);}
     <div class="topbar">
       <div>
         <h2>Urgências do Dia</h2>
-        <span class="topbar-info">Demandas e pendências por corretor</span>
+        <span class="topbar-info">Demandas de hoje por corretor</span>
       </div>
     </div>
     <div class="kpi-grid" id="kpi-urgencias"></div>
@@ -356,14 +356,25 @@ tr:hover{background:rgba(100,255,218,.02);}
         <option value="Media">Média</option>
         <option value="Baixa">Baixa</option>
       </select>
-      <select class="filter-input" id="uf-status" onchange="renderUrgencias()">
-        <option value="">Todos os status</option>
-        <option value="Pendente">Pendentes</option>
-        <option value="Concluida">Concluídas</option>
-      </select>
     </div>
     <div class="urg-grid" id="urg-grid">
       <div class="loading">Carregando...</div>
+    </div>
+
+    <!-- HISTÓRICO DE DEMANDAS ANTERIORES -->
+    <div style="margin-top:30px;padding-top:20px;border-top:2px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div>
+          <h3 style="font-size:1rem;font-weight:700;color:#fff;">Histórico de Demandas</h3>
+          <span style="font-size:.72rem;color:var(--textL);">Demandas de dias anteriores</span>
+        </div>
+        <select class="filter-input" id="uf-hist-corretor" onchange="renderUrgencias()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div class="urg-grid" id="urg-grid-hist">
+        <div class="loading">Carregando...</div>
+      </div>
     </div>
   </div>
 
@@ -676,6 +687,29 @@ async function carregarDados() {
 // ============================================
 // CLASSIFICAR STATUS
 // ============================================
+// Converter hora ISO (1899-12-30T12:32:28.000Z) ou texto pra HH:MM (horário Brasília)
+function fmtHora(h) {
+  if (!h) return '-';
+  const s = String(h);
+  // Se é formato ISO com T e Z (UTC) — converter pra Brasília (UTC-3)
+  if (s.includes('T') && s.includes('Z')) {
+    const match = s.match(/T(\d{2}):(\d{2})/);
+    if (match) {
+      let hora = parseInt(match[1]) - 3; // UTC-3 (Brasília)
+      if (hora < 0) hora += 24;
+      return `${String(hora).padStart(2, '0')}:${match[2]}`;
+    }
+  }
+  // Se é formato ISO sem Z
+  if (s.includes('T')) {
+    const match = s.match(/T(\d{2}):(\d{2})/);
+    if (match) return `${match[1]}:${match[2]}`;
+  }
+  // Se já é HH:MM ou HH:MM:SS
+  if (s.match(/^\d{1,2}:\d{2}/)) return s.substring(0, 5);
+  return s;
+}
+
 function classStatus(s) {
   if (!s) return { grupo: 'pendente', tag: 'tag-pendente', label: 'PENDENTE' };
   const su = s.toUpperCase();
@@ -1068,78 +1102,116 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(
 // ============================================
 // RENDER: URGENCIAS DO DIA
 // ============================================
+function renderCardDemanda(d) {
+  const prior = (d.PRIORIDADE || 'media').toLowerCase();
+  const isConcluida = (d.STATUS || '').toLowerCase().includes('conclu');
+  const cardClass = isConcluida ? 'concluida' : prior === 'alta' ? 'alta' : prior === 'baixa' ? 'baixa' : 'media';
+  const eq = equipeDoCorretor(d.RESPONSAVEL);
+  const priorTag = prior === 'alta' ? 'tag-divida' : prior === 'baixa' ? 'tag-bacen' : 'tag-pendente';
+  const statusTag = isConcluida ? 'tag-aprovado' : 'tag-pendente';
+  const statusLabel = isConcluida ? 'CONCLUÍDA' : 'PENDENTE';
+  const dtRaw = d.DATA;
+  const dt = dtRaw ? (String(dtRaw).includes('T') ? String(dtRaw).substring(0, 10) : String(dtRaw)) : '';
+  const dtFmt = dt.includes('-') ? dt.split('-').reverse().slice(0, 2).join('/') : dt;
+
+  return `<div class="urg-card ${cardClass}">
+    <div class="urg-header">
+      <span class="urg-resp">${d.RESPONSAVEL || '-'} ${eqTagHTML(eq)}</span>
+      <span class="urg-data">${dtFmt || '-'}</span>
+    </div>
+    <div class="urg-desc">${d.DESCRICAO || '-'}</div>
+    <div class="urg-footer">
+      <span class="tag ${priorTag}">${d.PRIORIDADE || 'Média'}</span>
+      <span class="tag ${statusTag}">${statusLabel}</span>
+      ${d.TIPO ? `<span class="tag tag-outro">${d.TIPO}</span>` : ''}
+    </div>
+    ${d.CLIENTE ? `<div class="urg-cliente" style="margin-top:6px;">Clientes: ${d.CLIENTE}</div>` : ''}
+  </div>`;
+}
+
 function renderUrgencias() {
   const filtroCorr = document.getElementById('uf-corretor').value;
   const filtroPrior = document.getElementById('uf-prioridade').value;
-  const filtroSt = document.getElementById('uf-status').value;
+  const filtroHistCorr = document.getElementById('uf-hist-corretor').value;
+  const hoje = new Date().toISOString().split('T')[0];
 
-  let lista = [...DEMANDAS];
+  // Separar demandas de hoje e anteriores
+  const todasDemandas = [...DEMANDAS];
+  const demandasHoje = todasDemandas.filter(d => {
+    const dt = String(d.DATA || '').substring(0, 10);
+    return dt === hoje;
+  });
+  const demandasAntigas = todasDemandas.filter(d => {
+    const dt = String(d.DATA || '').substring(0, 10);
+    return dt && dt !== hoje;
+  });
 
-  // Filtros
-  if (filtroCorr) lista = lista.filter(d => d.RESPONSAVEL === filtroCorr);
-  if (filtroPrior) lista = lista.filter(d => d.PRIORIDADE === filtroPrior);
-  if (filtroSt) lista = lista.filter(d => (d.STATUS || '').toLowerCase().includes(filtroSt.toLowerCase()));
+  // Filtrar demandas de hoje
+  let listaHoje = [...demandasHoje];
+  if (filtroCorr) listaHoje = listaHoje.filter(d => d.RESPONSAVEL === filtroCorr);
+  if (filtroPrior) listaHoje = listaHoje.filter(d => {
+    const p = (d.PRIORIDADE || '').toLowerCase();
+    const f = filtroPrior.toLowerCase();
+    return p === f || (f === 'media' && p === 'média') || (f === 'média' && p === 'media');
+  });
 
-  // Ordenar: Alta primeiro, depois Media, depois Baixa. Pendentes antes de concluídas.
+  // Ordenar
   const priorOrdem = { 'Alta': 1, 'Media': 2, 'Média': 2, 'Baixa': 3 };
-  lista.sort((a, b) => {
+  listaHoje.sort((a, b) => {
     const stA = (a.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
     const stB = (b.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
     if (stA !== stB) return stA - stB;
     return (priorOrdem[a.PRIORIDADE] || 9) - (priorOrdem[b.PRIORIDADE] || 9);
   });
 
-  // KPIs
-  const total = lista.length;
-  const altas = lista.filter(d => d.PRIORIDADE === 'Alta').length;
-  const pendentes = lista.filter(d => !(d.STATUS || '').toLowerCase().includes('conclu')).length;
-  const concluidas = lista.filter(d => (d.STATUS || '').toLowerCase().includes('conclu')).length;
+  // KPIs (só do dia)
+  const total = listaHoje.length;
+  const altas = listaHoje.filter(d => d.PRIORIDADE === 'Alta').length;
+  const pendentes = listaHoje.filter(d => !(d.STATUS || '').toLowerCase().includes('conclu')).length;
+  const concluidas = listaHoje.filter(d => (d.STATUS || '').toLowerCase().includes('conclu')).length;
 
   document.getElementById('kpi-urgencias').innerHTML = `
-    <div class="kpi blue"><div class="v">${total}</div><div class="l">Total Demandas</div></div>
+    <div class="kpi blue"><div class="v">${total}</div><div class="l">Demandas Hoje</div></div>
     <div class="kpi red"><div class="v">${altas}</div><div class="l">Prioridade Alta</div></div>
     <div class="kpi yellow"><div class="v">${pendentes}</div><div class="l">Pendentes</div></div>
     <div class="kpi green"><div class="v">${concluidas}</div><div class="l">Concluídas</div></div>
   `;
 
-  // Preencher filtro de corretores na aba urgências
+  // Preencher filtros de corretores
   const selCorr = document.getElementById('uf-corretor');
   if (selCorr.options.length <= 1) {
     const resps = [...new Set(DEMANDAS.map(d => d.RESPONSAVEL).filter(r => r))].sort();
     resps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; selCorr.appendChild(o); });
   }
-
-  // Cards
-  let html = '';
-  if (lista.length === 0) {
-    html = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--textL);font-size:.85rem;">Nenhuma demanda encontrada.</div>';
+  const selHistCorr = document.getElementById('uf-hist-corretor');
+  if (selHistCorr.options.length <= 1) {
+    const resps = [...new Set(DEMANDAS.map(d => d.RESPONSAVEL).filter(r => r))].sort();
+    resps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; selHistCorr.appendChild(o); });
   }
 
-  lista.forEach(d => {
-    const prior = (d.PRIORIDADE || 'media').toLowerCase();
-    const isConcluida = (d.STATUS || '').toLowerCase().includes('conclu');
-    const cardClass = isConcluida ? 'concluida' : prior === 'alta' ? 'alta' : prior === 'baixa' ? 'baixa' : 'media';
-    const eq = equipeDoCorretor(d.RESPONSAVEL);
-    const priorTag = prior === 'alta' ? 'tag-divida' : prior === 'baixa' ? 'tag-bacen' : 'tag-pendente';
-    const statusTag = isConcluida ? 'tag-aprovado' : 'tag-pendente';
-    const statusLabel = isConcluida ? 'CONCLUÍDA' : 'PENDENTE';
+  // Cards de hoje
+  let htmlHoje = '';
+  if (listaHoje.length === 0) {
+    htmlHoje = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--textL);font-size:.85rem;">Nenhuma demanda hoje.</div>';
+  }
+  listaHoje.forEach(d => { htmlHoje += renderCardDemanda(d); });
+  document.getElementById('urg-grid').innerHTML = htmlHoje;
 
-    html += `<div class="urg-card ${cardClass}">
-      <div class="urg-header">
-        <span class="urg-resp">${d.RESPONSAVEL || '-'} ${eqTagHTML(eq)}</span>
-        <span class="urg-data">${d.DATA || '-'}</span>
-      </div>
-      <div class="urg-desc">${d.DESCRICAO || '-'}</div>
-      <div class="urg-footer">
-        <span class="tag ${priorTag}">${d.PRIORIDADE || 'Média'}</span>
-        <span class="tag ${statusTag}">${statusLabel}</span>
-        ${d.TIPO ? `<span class="tag tag-outro">${d.TIPO}</span>` : ''}
-      </div>
-      ${d.CLIENTE ? `<div class="urg-cliente" style="margin-top:6px;">Clientes: ${d.CLIENTE}</div>` : ''}
-    </div>`;
+  // Histórico (demandas anteriores)
+  let listaHist = [...demandasAntigas];
+  if (filtroHistCorr) listaHist = listaHist.filter(d => d.RESPONSAVEL === filtroHistCorr);
+  listaHist.sort((a, b) => {
+    const da = String(a.DATA || '').substring(0, 10);
+    const db = String(b.DATA || '').substring(0, 10);
+    return db.localeCompare(da);
   });
 
-  document.getElementById('urg-grid').innerHTML = html;
+  let htmlHist = '';
+  if (listaHist.length === 0) {
+    htmlHist = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--textL);font-size:.85rem;">Nenhuma demanda anterior.</div>';
+  }
+  listaHist.forEach(d => { htmlHist += renderCardDemanda(d); });
+  document.getElementById('urg-grid-hist').innerHTML = htmlHist;
 }
 
 // ============================================
@@ -1176,7 +1248,8 @@ function renderCheckins() {
   let comHora = 0;
   checkins.forEach(r => {
     if (r.HORA) {
-      const parts = String(r.HORA).split(':');
+      const horaFmt = fmtHora(r.HORA);
+      const parts = horaFmt.split(':');
       if (parts.length >= 2) { somaMin += parseInt(parts[0]) * 60 + parseInt(parts[1]); comHora++; }
     }
   });
@@ -1197,7 +1270,7 @@ function renderCheckins() {
   }
 
   // Ordenar por hora
-  checkins.sort((a, b) => (a.HORA || '').localeCompare(b.HORA || ''));
+  checkins.sort((a, b) => fmtHora(a.HORA).localeCompare(fmtHora(b.HORA)));
 
   let html = '';
   checkins.forEach(r => {
@@ -1220,7 +1293,7 @@ function renderCheckins() {
     html += `<tr>
       <td><span class="corretor-name">${r.CORRETOR || '-'}</span></td>
       <td>${eq ? `<span class="eq-tag eq-${eq.toLowerCase()}">${eq}</span>` : '-'}</td>
-      <td style="font-weight:700;">${r.HORA || '-'}</td>
+      <td style="font-weight:700;">${fmtHora(r.HORA)}</td>
       <td style="color:${localColor};font-weight:600;">${localNome}</td>
       <td style="color:var(--textL);">${distancia || '-'}</td>
     </tr>`;
@@ -1296,7 +1369,7 @@ function renderHistorico945() {
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           ${processado ? '<span class="tag tag-aprovado">PROCESSADO</span>' : '<span class="tag tag-pendente">PENDENTE</span>'}
-          <span style="font-size:.7rem;color:var(--textL);">${diaSem}, ${dataFmt} ${r.HORA || ''}</span>
+          <span style="font-size:.7rem;color:var(--textL);">${diaSem}, ${dataFmt} ${fmtHora(r.HORA)}</span>
         </div>
       </div>
       <div style="background:var(--card2);border-radius:8px;padding:12px;font-size:.8rem;color:var(--text);line-height:1.5;white-space:pre-wrap;">${r.OBSERVACOES || '-'}</div>
