@@ -7,7 +7,7 @@
 <style>
 :root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:10px;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
 /* SIDEBAR */
 .sidebar{width:240px;background:linear-gradient(180deg,#0d1117,#0b0f14);position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;z-index:100;}
@@ -22,7 +22,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .nav-section{padding:10px 20px 5px;font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.2);font-weight:700;}
 
 /* MAIN */
-.main{margin-left:240px;padding:24px;width:calc(100vw - 240px);box-sizing:border-box;overflow-x:auto;}
+.main{margin-left:240px;padding:24px;}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
 .topbar h2{font-size:1.15rem;font-weight:600;color:#fff;}
 .topbar-info{font-size:.72rem;color:var(--textL);}
@@ -602,7 +602,6 @@ tr:hover{background:rgba(100,255,218,.02);}
     <!-- DETALHE DO DIA -->
     <div style="width:100%;margin-top:20px;" id="plat-cal-detalhe">
       <div style="text-align:center;padding:40px;color:var(--textL);font-size:.85rem;">Selecione um dia no calendário</div>
-    </div>
     </div>
   </div>
 
@@ -1950,36 +1949,34 @@ function renderRanking() {
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr>';
-  html += '<th style="text-align:center;width:40px;">#</th>';
-  html += '<th>Corretor</th>';
-  html += '<th style="text-align:center;">Check-in</th>';
-  html += '<th style="text-align:center;">Agenda</th>';
-  html += '<th style="text-align:center;">Atendim.</th>';
-  html += '<th style="text-align:center;">Vendas</th>';
-  html += '<th style="text-align:center;">945</th>';
-  html += '<th style="text-align:center;">Total</th>';
-  html += '</tr></thead><tbody>';
+  let html = '';
 
   lista.forEach((p, i) => {
     const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
     const ptColor = p.pontos >= 0 ? 'var(--success)' : 'var(--danger)';
     const eqCls = p.equipe ? `eq-${p.equipe.toLowerCase()}` : '';
+    const bgRow = i < 3 ? 'rgba(255,215,0,.03)' : 'var(--card)';
 
-    html += `<tr>
-      <td style="text-align:center;font-size:1rem;">${medalha}</td>
-      <td><span class="corretor-name">${p.nome}</span> ${p.cargo === 'Coordenador' ? '<span class="tag" style="background:rgba(171,71,188,.15);color:var(--purple);border:1px solid rgba(171,71,188,.25);font-size:.5rem;">COORD</span>' : ''} ${p.equipe ? `<span class="eq-tag ${eqCls}">${p.equipe}</span>` : ''}</td>
-      <td style="text-align:center;color:var(--accent);font-weight:700;">${p.ptCheckin}</td>
-      <td style="text-align:center;color:var(--gold);font-weight:700;">${p.ptAgenda}</td>
-      <td style="text-align:center;color:var(--success);font-weight:700;">${p.ptAtend}</td>
-      <td style="text-align:center;color:var(--info);font-weight:700;">${p.ptVenda}</td>
-      <td style="text-align:center;color:var(--purple);font-weight:700;">${p.pt945}</td>
-      <td style="text-align:center;color:${ptColor};font-weight:900;font-size:1.1rem;">${p.pontos}</td>
-    </tr>`;
+    html += `<div style="background:${bgRow};border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:8px;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:1.2rem;min-width:32px;text-align:center;">${medalha}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.88rem;font-weight:800;color:#fff;">${p.nome} ${p.cargo === 'Coordenador' ? '<span style="font-size:.55rem;color:var(--purple);font-weight:700;"> COORD</span>' : ''} ${p.equipe ? `<span class="eq-tag ${eqCls}" style="margin-left:4px;">${p.equipe}</span>` : ''}</div>
+        <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
+          <span style="font-size:.65rem;color:var(--accent);">Check-in <b>${p.ptCheckin}</b></span>
+          <span style="font-size:.65rem;color:var(--gold);">Agenda <b>${p.ptAgenda}</b></span>
+          <span style="font-size:.65rem;color:var(--success);">Atendim. <b>${p.ptAtend}</b></span>
+          <span style="font-size:.65rem;color:var(--info);">Vendas <b>${p.ptVenda}</b></span>
+          <span style="font-size:.65rem;color:var(--purple);">945 <b>${p.pt945}</b></span>
+        </div>
+      </div>
+      <div style="text-align:center;min-width:50px;">
+        <div style="font-size:1.5rem;font-weight:900;color:${ptColor};">${p.pontos}</div>
+        <div style="font-size:.55rem;color:var(--textL);">PTS</div>
+      </div>
+    </div>`;
   });
 
-  html += '</tbody></table></div>';
-  html += `<div style="margin-top:14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);font-size:.65rem;color:var(--textL);line-height:1.8;">
+  html += `<div style="margin-top:14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:.65rem;color:var(--textL);line-height:1.8;">
     <strong style="color:#fff;">Sistema de Pontos:</strong><br>
     Check-in: antes 9:30 = +5 | 9:30-10:00 = +3 | 10:00-10:30 = +1 | após 10:30 = 0 | 3+ atrasos = -3/dia | ausência = -5<br>
     Agendamento: +3 | Atendimento confirmado: +5 | Venda: +20 | Consórcio: +10 | 945: +2 (não fez: -2)<br>
