@@ -22,7 +22,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .nav-section{padding:10px 20px 5px;font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.2);font-weight:700;}
 
 /* MAIN */
-.main{margin-left:240px;padding:24px;}
+.main{margin-left:240px;padding:24px;width:calc(100vw - 240px);box-sizing:border-box;overflow-x:auto;}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
 .topbar h2{font-size:1.15rem;font-weight:600;color:#fff;}
 .topbar-info{font-size:.72rem;color:var(--textL);}
@@ -48,7 +48,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 select.filter-input{cursor:pointer;}
 
 /* TABELA */
-.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);overflow-x:auto;max-width:100%;}
 table{width:100%;border-collapse:collapse;font-size:.78rem;}
 thead{background:var(--card2);}
 th{padding:12px 14px;text-align:left;font-weight:600;color:var(--textL);text-transform:uppercase;font-size:.68rem;letter-spacing:.5px;border-bottom:1px solid var(--border);}
@@ -198,44 +198,35 @@ tr:hover{background:rgba(100,255,218,.02);}
     <h1>ALICERCE</h1>
     <p>Plataforma de Gestão 3.0</p>
   </div>
-  <div class="nav-section">Principal</div>
-  <div class="nav-item active" onclick="showPage('pg-clientes')">
-    <span class="icon">👥</span>Status de Clientes
-  </div>
-  <div class="nav-item" onclick="showPage('pg-pipeline')">
-    <span class="icon">📊</span>Pipeline
-  </div>
-  <div class="nav-item" onclick="showPage('pg-trello')">
-    <span class="icon">📌</span>Corretor x Clientes
-  </div>
-  <div class="nav-item" onclick="showPage('pg-urgencias')">
+  <div class="nav-item active" onclick="showPage('pg-urgencias')">
     <span class="icon">🔥</span>Urgências do Dia
+  </div>
+  <div class="nav-item" onclick="showPage('pg-agenda')">
+    <span class="icon">📅</span>Calendário
   </div>
   <div class="nav-item" onclick="showPage('pg-vendas')">
     <span class="icon">💰</span>Vendas
   </div>
-  <div class="nav-item" onclick="showPage('pg-corretores')">
-    <span class="icon">🏢</span>Corretores
-  </div>
-  <div class="nav-item" onclick="showPage('pg-checkins')">
-    <span class="icon">📍</span>Check-ins do Dia
-  </div>
-  <div class="nav-item" onclick="showPage('pg-historico945')">
-    <span class="icon">📋</span>Histórico 945
-  </div>
   <div class="nav-item" onclick="showPage('pg-ranking')">
-    <span class="icon">🏆</span>Ranking Presença
+    <span class="icon">🏆</span>Ranking
   </div>
-  <div class="nav-item" onclick="showPage('pg-agenda')">
-    <span class="icon">📅</span>Agenda do Time
+  <div class="nav-section" onclick="toggleMaisPlat()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 20px;">
+    <span>+ MAIS</span>
+    <span id="mais-plat-seta" style="font-size:.7rem;">▼</span>
   </div>
-  <div class="nav-section">Produtividade</div>
-  <div class="nav-item" onclick="showPage('pg-hist-demandas')">
-    <span class="icon">📋</span>Histórico Demandas
-  </div>
-  <div class="nav-section">Inteligência IA</div>
-  <div class="nav-item" onclick="showPage('pg-relatorio-ia')">
-    <span class="icon">🤖</span>Relatório Diário IA
+  <div id="mais-plat-items" style="display:none;">
+    <div class="nav-item" onclick="showPageComFiltro('clientes','tabela')">
+      <span class="icon">👥</span>Clientes
+    </div>
+    <div class="nav-item" onclick="showPage('pg-corretores')">
+      <span class="icon">🏢</span>Corretores
+    </div>
+    <div class="nav-item" onclick="showPageComFiltro('atividades','checkins')">
+      <span class="icon">📋</span>Atividades
+    </div>
+    <div class="nav-item" onclick="showPageComFiltro('sentinela','diario')">
+      <span class="icon">🤖</span>Sentinela
+    </div>
   </div>
 </div>
 
@@ -250,7 +241,7 @@ tr:hover{background:rgba(100,255,218,.02);}
 <div class="main">
 
   <!-- PAGE: STATUS DE CLIENTES -->
-  <div class="page active" id="pg-clientes">
+  <div class="page" id="pg-clientes">
     <div class="topbar">
       <div>
         <h2>Status de Clientes</h2>
@@ -341,7 +332,7 @@ tr:hover{background:rgba(100,255,218,.02);}
   </div>
 
   <!-- PAGE: URGENCIAS DO DIA -->
-  <div class="page" id="pg-urgencias">
+  <div class="page active" id="pg-urgencias">
     <div class="topbar">
       <div>
         <h2>Urgências do Dia</h2>
@@ -625,8 +616,8 @@ tr:hover{background:rgba(100,255,218,.02);}
   <div class="page" id="pg-ranking">
     <div class="topbar">
       <div>
-        <h2>Ranking de Presença</h2>
-        <span class="topbar-info">Pontuação mensal dos corretores</span>
+        <h2>Ranking</h2>
+        <span class="topbar-info">Gamificação mensal — Check-in, Agendamentos, Atendimentos, Vendas e 945</span>
       </div>
     </div>
     <div class="kpi-grid" id="kpi-ranking"></div>
@@ -652,6 +643,21 @@ tr:hover{background:rgba(100,255,218,.02);}
     </div>
     <div id="relatorio-ia-status" style="margin-bottom:16px;"></div>
     <div id="relatorio-ia-content" style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;">
+      <div class="loading">Carregando relatório...</div>
+    </div>
+  </div>
+
+  <!-- PAGE: RELATÓRIO SEMANAL -->
+  <div class="page" id="pg-relatorio-semanal">
+    <div class="topbar">
+      <div>
+        <h2>Relatório Semanal</h2>
+        <span class="topbar-info">Produtividade da equipe — gerado toda quarta-feira pelo Sentinela</span>
+      </div>
+      <button onclick="carregarRelatorioSemanal()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:.78rem;font-weight:700;cursor:pointer;">Atualizar</button>
+    </div>
+    <div id="relatorio-sem-status" style="margin-bottom:16px;"></div>
+    <div id="relatorio-sem-content" style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;">
       <div class="loading">Carregando relatório...</div>
     </div>
   </div>
@@ -695,6 +701,89 @@ function showPage(id, e) {
   // Fechar sidebar mobile ao navegar
   document.querySelector('.sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// Páginas combinadas com filtro
+const PAGINAS_COMBINADAS = {
+  clientes: {
+    titulo: 'Clientes',
+    sub: {
+      tabela: { pagina: 'pg-clientes', label: 'Tabela' },
+      pipeline: { pagina: 'pg-pipeline', label: 'Pipeline' },
+      corretor: { pagina: 'pg-trello', label: 'Por Corretor' }
+    }
+  },
+  atividades: {
+    titulo: 'Atividades',
+    sub: {
+      checkins: { pagina: 'pg-checkins', label: 'Check-ins' },
+      hist945: { pagina: 'pg-historico945', label: '945' },
+      demandas: { pagina: 'pg-hist-demandas', label: 'Demandas' }
+    }
+  },
+  sentinela: {
+    titulo: 'Sentinela',
+    sub: {
+      diario: { pagina: 'pg-relatorio-ia', label: 'Diário' },
+      semanal: { pagina: 'pg-relatorio-semanal', label: 'Semanal' }
+    }
+  }
+};
+
+function showPageComFiltro(grupo, subKey) {
+  const config = PAGINAS_COMBINADAS[grupo];
+  if (!config) return;
+
+  // Esconder todas as páginas
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  // Mostrar a sub-página
+  const sub = config.sub[subKey];
+  document.getElementById(sub.pagina).classList.add('active');
+
+  // Adicionar/atualizar barra de filtro no topo da página
+  const pagina = document.getElementById(sub.pagina);
+  let filtroBar = pagina.querySelector('.combo-filter-bar');
+  if (!filtroBar) {
+    filtroBar = document.createElement('div');
+    filtroBar.className = 'combo-filter-bar';
+    filtroBar.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);';
+    pagina.insertBefore(filtroBar, pagina.firstChild);
+  }
+
+  // Preencher filtros
+  let barHtml = '';
+  Object.entries(config.sub).forEach(([key, s]) => {
+    const ativo = key === subKey;
+    barHtml += `<div onclick="showPageComFiltro('${grupo}','${key}')" style="padding:8px 16px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;${ativo ? 'background:rgba(100,255,218,.1);color:var(--accent);border:1px solid var(--accent);' : 'background:var(--card);color:var(--textL);border:1px solid var(--border);'}">${s.label}</div>`;
+  });
+  filtroBar.innerHTML = barHtml;
+
+  // Remover filtro das outras sub-páginas do mesmo grupo
+  Object.entries(config.sub).forEach(([key, s]) => {
+    if (key !== subKey) {
+      const outra = document.getElementById(s.pagina);
+      const fb = outra.querySelector('.combo-filter-bar');
+      if (fb) fb.remove();
+    }
+  });
+
+  // Fechar sidebar mobile
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+function toggleMaisPlat() {
+  const items = document.getElementById('mais-plat-items');
+  const seta = document.getElementById('mais-plat-seta');
+  if (items.style.display === 'none') {
+    items.style.display = 'block';
+    seta.textContent = '▲';
+  } else {
+    items.style.display = 'none';
+    seta.textContent = '▼';
+  }
 }
 
 function toggleSidebar() {
@@ -1738,74 +1827,139 @@ function renderVendas() {
 // ============================================
 function renderRanking() {
   const filtroEquipe = document.getElementById('rk-equipe').value;
-
-  // Filtrar check-ins do mês atual
   const agora = new Date();
   const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
 
-  const checkinsDoMes = REGISTROS.filter(r => {
-    if (r.TIPO !== 'checkin') return false;
-    const dt = String(r.DATA || '').substring(0, 7);
-    return dt === mesAtual;
-  });
-
-  // Calcular pontuação por corretor
   const corretoresAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO !== 'Gerente');
   const pontuacao = {};
 
   corretoresAtivos.forEach(c => {
-    pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, presente: 0, fora: 0, semGps: 0, ausente: 0, pontos: 0, dias: 0 };
+    pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, pontos: 0, ptCheckin: 0, ptAgenda: 0, ptAtend: 0, ptVenda: 0, pt945: 0, checkins: 0, agendamentos: 0, atendimentos: 0, vendas: 0, consorcios: 0, dias945: 0, atrasos: 0 };
   });
 
-  // Contar dias úteis no mês até hoje
+  // Dias úteis do mês
   const diasUteis = [];
   for (let d = 1; d <= agora.getDate(); d++) {
     const dt = new Date(agora.getFullYear(), agora.getMonth(), d);
-    if (dt.getDay() > 0 && dt.getDay() < 7) diasUteis.push(dt.toISOString().split('T')[0]);
+    if (dt.getDay() > 0 && dt.getDay() < 6) diasUteis.push(dt.toISOString().split('T')[0]);
   }
 
-  // Processar check-ins
-  checkinsDoMes.forEach(r => {
+  // === CHECK-IN: pontuar por horário ===
+  const checkinsPorCorretorDia = {};
+  REGISTROS.filter(r => r.TIPO === 'checkin' && String(r.DATA || '').substring(0, 7) === mesAtual).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
-    if (r.PRESENCA === 'presente') { pontuacao[nome].presente++; pontuacao[nome].pontos += 3; }
-    else if (r.PRESENCA === 'fora') { pontuacao[nome].fora++; pontuacao[nome].pontos += 1; }
-    else if (r.PRESENCA === 'sem-gps') { pontuacao[nome].semGps++; pontuacao[nome].pontos += 1; }
+    const hora = fmtHora(r.HORA);
+    const [h, m] = hora.split(':').map(Number);
+    const minutos = h * 60 + m;
+
+    let pts = 0;
+    if (minutos < 570) pts = 5;        // antes 9:30
+    else if (minutos < 600) pts = 3;    // 9:30-10:00
+    else if (minutos < 630) pts = 1;    // 10:00-10:30
+    else { pontuacao[nome].atrasos++; } // após 10:30
+
+    pontuacao[nome].ptCheckin += pts;
+    pontuacao[nome].checkins++;
+    const dia = String(r.DATA || '').substring(0, 10);
+    if (!checkinsPorCorretorDia[nome]) checkinsPorCorretorDia[nome] = new Set();
+    checkinsPorCorretorDia[nome].add(dia);
   });
 
-  // Calcular ausentes (dias úteis sem check-in)
+  // Penalizar ausências e atrasos consecutivos
   Object.values(pontuacao).forEach(p => {
-    p.dias = p.presente + p.fora + p.semGps;
-    p.ausente = Math.max(0, diasUteis.length - p.dias);
-    p.pontos += p.ausente * -2;
+    const diasComCheckin = checkinsPorCorretorDia[p.nome] ? checkinsPorCorretorDia[p.nome].size : 0;
+    const ausencias = Math.max(0, diasUteis.length - diasComCheckin);
+    p.ptCheckin += ausencias * -5; // -5 por dia sem check-in
+    if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3; // -3 por dia após 3+ atrasos
   });
 
-  // Filtrar por equipe
+  // === AGENDAMENTOS: +3 por agendamento ===
+  const agendaMes = (typeof AGENDA_PLAT !== 'undefined' ? AGENDA_PLAT : []).filter(a => {
+    const dt = String(a.DATA || '').substring(0, 7);
+    return dt === mesAtual && (a.TIPO || 'Cliente') === 'Cliente';
+  });
+  agendaMes.forEach(a => {
+    const nome = a.CORRETOR;
+    if (!pontuacao[nome]) return;
+    pontuacao[nome].agendamentos++;
+    pontuacao[nome].ptAgenda += 3;
+  });
+
+  // === ATENDIMENTOS: +5 por atendimento confirmado ===
+  const atendMes = REGISTROS.filter(r => r.TIPO === 'atendimento-confirmado' && String(r.DATA || '').substring(0, 7) === mesAtual);
+  atendMes.forEach(r => {
+    const nome = r.CORRETOR;
+    if (!pontuacao[nome]) return;
+    pontuacao[nome].atendimentos++;
+    pontuacao[nome].ptAtend += 5;
+  });
+
+  // === VENDAS: +20 venda, +10 consórcio ===
+  VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
+    let corrNome = (v.CORRETOR || '').toUpperCase();
+    // Buscar nome correspondente
+    const corr = corretoresAtivos.find(c => corrNome.includes(c.NOME.toUpperCase()) || c.NOME.toUpperCase().includes(corrNome));
+    if (!corr || !pontuacao[corr.NOME]) return;
+    const isConsorcio = (v.STATUS_VENDA || '').includes('CONSORCIO');
+    if (isConsorcio) { pontuacao[corr.NOME].consorcios++; pontuacao[corr.NOME].ptVenda += 10; }
+    else { pontuacao[corr.NOME].vendas++; pontuacao[corr.NOME].ptVenda += 20; }
+  });
+
+  // === 945: +2 fez, -2 não fez ===
+  const diasCom945 = {};
+  REGISTROS.filter(r => r.TIPO === '945-individual' && String(r.DATA || '').substring(0, 7) === mesAtual).forEach(r => {
+    const nome = r.CORRETOR;
+    if (!pontuacao[nome]) return;
+    if (!diasCom945[nome]) diasCom945[nome] = new Set();
+    diasCom945[nome].add(String(r.DATA || '').substring(0, 10));
+  });
+  Object.values(pontuacao).forEach(p => {
+    const dias = diasCom945[p.nome] ? diasCom945[p.nome].size : 0;
+    p.dias945 = dias;
+    const naoFez = Math.max(0, diasUteis.length - dias);
+    p.pt945 = (dias * 2) + (naoFez * -2);
+  });
+
+  // === TOTAL ===
+  Object.values(pontuacao).forEach(p => {
+    p.pontos = p.ptCheckin + p.ptAgenda + p.ptAtend + p.ptVenda + p.pt945;
+  });
+
+  // Filtrar e ordenar
   let lista = Object.values(pontuacao);
   if (filtroEquipe) lista = lista.filter(p => p.equipe === filtroEquipe);
-
-  // Ordenar por pontos (maior primeiro)
   lista.sort((a, b) => b.pontos - a.pontos);
 
   // KPIs
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const mesNome = meses[agora.getMonth()];
-  const totalPresente = lista.reduce((s, p) => s + p.presente, 0);
-  const totalAusente = lista.reduce((s, p) => s + p.ausente, 0);
+  const totalPontos = lista.reduce((s, p) => s + p.pontos, 0);
+  const totalVendas = lista.reduce((s, p) => s + p.vendas + p.consorcios, 0);
+  const totalAtend = lista.reduce((s, p) => s + p.atendimentos, 0);
 
   document.getElementById('kpi-ranking').innerHTML = `
-    <div class="kpi blue"><div class="v">${mesNome}</div><div class="l">Mês Atual</div></div>
-    <div class="kpi green"><div class="v">${totalPresente}</div><div class="l">Presenças Total</div></div>
-    <div class="kpi red"><div class="v">${totalAusente}</div><div class="l">Ausências Total</div></div>
-    <div class="kpi yellow"><div class="v">${diasUteis.length}</div><div class="l">Dias Úteis</div></div>
+    <div class="kpi blue"><div class="v">${mesNome}</div><div class="l">Mês Comercial</div></div>
+    <div class="kpi green"><div class="v">${totalVendas}</div><div class="l">Vendas</div></div>
+    <div class="kpi yellow"><div class="v">${totalAtend}</div><div class="l">Atendimentos</div></div>
+    <div class="kpi purple"><div class="v">${diasUteis.length}</div><div class="l">Dias Úteis</div></div>
   `;
 
   if (lista.length === 0) {
-    document.getElementById('ranking-list').innerHTML = '<div style="text-align:center;padding:30px;color:var(--textL);">Nenhum dado de presença.</div>';
+    document.getElementById('ranking-list').innerHTML = '<div style="text-align:center;padding:30px;color:var(--textL);">Nenhum dado.</div>';
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr><th>#</th><th>Corretor</th><th>Equipe</th><th>Presentes</th><th>Fora</th><th>Ausentes</th><th>Pontos</th></tr></thead><tbody>';
+  let html = '<div class="table-wrap"><table><thead><tr>';
+  html += '<th style="text-align:center;width:40px;">#</th>';
+  html += '<th>Corretor</th>';
+  html += '<th style="text-align:center;">Check-in</th>';
+  html += '<th style="text-align:center;">Agenda</th>';
+  html += '<th style="text-align:center;">Atendim.</th>';
+  html += '<th style="text-align:center;">Vendas</th>';
+  html += '<th style="text-align:center;">945</th>';
+  html += '<th style="text-align:center;">Total</th>';
+  html += '</tr></thead><tbody>';
 
   lista.forEach((p, i) => {
     const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
@@ -1813,18 +1967,24 @@ function renderRanking() {
     const eqCls = p.equipe ? `eq-${p.equipe.toLowerCase()}` : '';
 
     html += `<tr>
-      <td style="font-size:1rem;text-align:center;">${medalha}</td>
-      <td><span class="corretor-name">${p.nome}</span> ${p.cargo === 'Coordenador' ? '<span class="tag" style="background:rgba(171,71,188,.15);color:var(--purple);border:1px solid rgba(171,71,188,.25);font-size:.5rem;">COORD</span>' : ''}</td>
-      <td>${p.equipe ? `<span class="eq-tag ${eqCls}">${p.equipe}</span>` : '-'}</td>
-      <td style="color:var(--success);font-weight:700;">${p.presente}</td>
-      <td style="color:var(--warning);">${p.fora + p.semGps}</td>
-      <td style="color:var(--danger);">${p.ausente}</td>
-      <td style="color:${ptColor};font-weight:800;font-size:1rem;">${p.pontos}</td>
+      <td style="text-align:center;font-size:1rem;">${medalha}</td>
+      <td><span class="corretor-name">${p.nome}</span> ${p.cargo === 'Coordenador' ? '<span class="tag" style="background:rgba(171,71,188,.15);color:var(--purple);border:1px solid rgba(171,71,188,.25);font-size:.5rem;">COORD</span>' : ''} ${p.equipe ? `<span class="eq-tag ${eqCls}">${p.equipe}</span>` : ''}</td>
+      <td style="text-align:center;color:var(--accent);font-weight:700;">${p.ptCheckin}</td>
+      <td style="text-align:center;color:var(--gold);font-weight:700;">${p.ptAgenda}</td>
+      <td style="text-align:center;color:var(--success);font-weight:700;">${p.ptAtend}</td>
+      <td style="text-align:center;color:var(--info);font-weight:700;">${p.ptVenda}</td>
+      <td style="text-align:center;color:var(--purple);font-weight:700;">${p.pt945}</td>
+      <td style="text-align:center;color:${ptColor};font-weight:900;font-size:1.1rem;">${p.pontos}</td>
     </tr>`;
   });
 
   html += '</tbody></table></div>';
-  html += '<div style="margin-top:10px;font-size:.65rem;color:var(--textL);">Pontuação: Presente no local = +3pts | Fora/Sem GPS = +1pt | Ausente = -2pts</div>';
+  html += `<div style="margin-top:14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);font-size:.65rem;color:var(--textL);line-height:1.8;">
+    <strong style="color:#fff;">Sistema de Pontos:</strong><br>
+    Check-in: antes 9:30 = +5 | 9:30-10:00 = +3 | 10:00-10:30 = +1 | após 10:30 = 0 | 3+ atrasos = -3/dia | ausência = -5<br>
+    Agendamento: +3 | Atendimento confirmado: +5 | Venda: +20 | Consórcio: +10 | 945: +2 (não fez: -2)<br>
+    <strong style="color:var(--gold);">Pontos resetam todo mês comercial.</strong>
+  </div>`;
 
   document.getElementById('ranking-list').innerHTML = html;
 }
@@ -1903,6 +2063,72 @@ async function carregarRelatorioIA() {
     status.innerHTML = `<div class="relatorio-info">
       <span>📅 ${dataMatch ? dataMatch[1] : 'Data não identificada'}</span>
       <span>🤖 Gerado por IA às 11h</span>
+      <span>🔄 Atualizado: ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
+    </div>`;
+
+  } catch(e) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);">
+      <div style="font-size:.9rem;font-weight:600;">Erro ao carregar relatório</div>
+      <div style="font-size:.78rem;color:var(--textL);margin-top:6px;">Verifique sua conexão e tente novamente.</div>
+    </div>`;
+  }
+}
+
+// ============================================
+// RELATÓRIO SEMANAL
+// ============================================
+const RELATORIO_SEM_URL = 'https://raw.githubusercontent.com/swelladriel/alicerce-app/main/relatorio-semanal.md';
+
+async function carregarRelatorioSemanal() {
+  const container = document.getElementById('relatorio-sem-content');
+  const status = document.getElementById('relatorio-sem-status');
+  container.innerHTML = '<div class="loading">Carregando relatório semanal...</div>';
+
+  try {
+    const resp = await fetch(RELATORIO_SEM_URL + '?t=' + Date.now());
+
+    if (resp.status === 404) {
+      container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--textL);">
+        <div style="font-size:2rem;margin-bottom:12px;">📊</div>
+        <div style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:6px;">Nenhum relatório semanal disponível</div>
+        <div style="font-size:.78rem;">O Sentinela gera o relatório toda quarta-feira às 9h.</div>
+      </div>`;
+      status.innerHTML = '';
+      return;
+    }
+
+    const md = await resp.text();
+
+    let html = md
+      .replace(/\|(.+)\|\n\|[-| :]+\|\n/g, (match, header) => {
+        const cols = header.split('|').map(c => c.trim()).filter(c => c);
+        return '<table><thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>\n';
+      })
+      .replace(/\|(.+)\|/g, (match, row) => {
+        const cols = row.split('|').map(c => c.trim()).filter(c => c);
+        return '<tr>' + cols.map(c => '<td>' + c + '</td>').join('') + '</tr>';
+      })
+      .replace(/(<\/tr>\n?)(\n(?:<div|<h|<p|\n))/g, '$1</tbody></table>$2')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^---$/gm, '<hr>')
+      .replace(/`(.+?)`/g, '<code>$1</code>')
+      .replace(/^(?!<[hultbod]|<li|<hr|<block)(.+)$/gm, '<p>$1</p>')
+      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+    if (html.includes('<tbody>') && !html.includes('</tbody>')) html += '</tbody></table>';
+
+    container.innerHTML = '<div class="md-content">' + html + '</div>';
+
+    const dataMatch = md.match(/(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/);
+    status.innerHTML = `<div class="relatorio-info">
+      <span>📊 ${dataMatch ? dataMatch[1] : 'Relatório semanal'}</span>
+      <span>🤖 Gerado pelo Sentinela</span>
       <span>🔄 Atualizado: ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
     </div>`;
 
@@ -2136,6 +2362,7 @@ function iniciarMonitorAgenda() {
 // ============================================
 carregarDados();
 carregarRelatorioIA();
+carregarRelatorioSemanal();
 iniciarMonitorAgenda();
 </script>
 
