@@ -1828,6 +1828,7 @@ function renderRanking() {
   const filtroEquipe = document.getElementById('rk-equipe').value;
   const agora = new Date();
   const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+  const INICIO_MES_COMERCIAL = '2026-07-03'; // Início do mês comercial atual
 
   const corretoresAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO !== 'Gerente');
   const pontuacao = {};
@@ -1836,16 +1837,16 @@ function renderRanking() {
     pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, pontos: 0, ptCheckin: 0, ptAgenda: 0, ptAtend: 0, ptVenda: 0, pt945: 0, checkins: 0, agendamentos: 0, atendimentos: 0, vendas: 0, consorcios: 0, dias945: 0, atrasos: 0 };
   });
 
-  // Dias úteis do mês
+  // Dias úteis do mês comercial (a partir de INICIO_MES_COMERCIAL)
   const diasUteis = [];
-  for (let d = 1; d <= agora.getDate(); d++) {
-    const dt = new Date(agora.getFullYear(), agora.getMonth(), d);
+  const dtInicio = new Date(INICIO_MES_COMERCIAL + 'T12:00:00');
+  for (let dt = new Date(dtInicio); dt <= agora; dt.setDate(dt.getDate() + 1)) {
     if (dt.getDay() > 0 && dt.getDay() < 6) diasUteis.push(dt.toISOString().split('T')[0]);
   }
 
   // === CHECK-IN: pontuar por horário ===
   const checkinsPorCorretorDia = {};
-  REGISTROS.filter(r => r.TIPO === 'checkin' && String(r.DATA || '').substring(0, 7) === mesAtual).forEach(r => {
+  REGISTROS.filter(r => r.TIPO === 'checkin' && String(r.DATA || '').substring(0, 10) >= INICIO_MES_COMERCIAL).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
     const hora = fmtHora(r.HORA);
@@ -1875,8 +1876,8 @@ function renderRanking() {
 
   // === AGENDAMENTOS: +3 por agendamento ===
   const agendaMes = (typeof AGENDA_PLAT !== 'undefined' ? AGENDA_PLAT : []).filter(a => {
-    const dt = String(a.DATA || '').substring(0, 7);
-    return dt === mesAtual && (a.TIPO || 'Cliente') === 'Cliente';
+    const dt = String(a.DATA || '').substring(0, 10);
+    return dt >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente';
   });
   agendaMes.forEach(a => {
     const nome = a.CORRETOR;
@@ -1886,7 +1887,7 @@ function renderRanking() {
   });
 
   // === ATENDIMENTOS: +5 por atendimento confirmado ===
-  const atendMes = REGISTROS.filter(r => r.TIPO === 'atendimento-confirmado' && String(r.DATA || '').substring(0, 7) === mesAtual);
+  const atendMes = REGISTROS.filter(r => r.TIPO === 'atendimento-confirmado' && String(r.DATA || '').substring(0, 10) >= INICIO_MES_COMERCIAL);
   atendMes.forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
@@ -1907,7 +1908,7 @@ function renderRanking() {
 
   // === 945: +2 fez, -2 não fez ===
   const diasCom945 = {};
-  REGISTROS.filter(r => r.TIPO === '945-individual' && String(r.DATA || '').substring(0, 7) === mesAtual).forEach(r => {
+  REGISTROS.filter(r => r.TIPO === '945-individual' && String(r.DATA || '').substring(0, 10) >= INICIO_MES_COMERCIAL).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
     if (!diasCom945[nome]) diasCom945[nome] = new Set();
