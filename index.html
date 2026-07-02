@@ -262,6 +262,11 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div id="hist-lista"><div class="loading">Carregando...</div></div>
     </div>
 
+    <!-- TAB: ÚNICA COISA -->
+    <div class="app-page" id="tab-unica">
+      <div id="unica-content"><div class="loading">Carregando...</div></div>
+    </div>
+
     <!-- TAB: CHECK-IN -->
     <div class="app-page" id="tab-checkin">
       <div class="checkin-box">
@@ -336,6 +341,7 @@ let EMPREENDIMENTOS = [];
 let DEMANDAS = [];
 let VENDAS = [];
 let MINHAS_VENDAS = [];
+let UNICA_COISA = [];
 let USUARIO = null;
 let MEUS_CLIENTES = [];
 let FILTRO_ATIVO = '';
@@ -417,14 +423,17 @@ async function fazerLogin() {
   let tabsHtml = '';
   if (isGerente) {
     tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Urgências</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-unica', event)">Foco</div>`;
     tabsHtml += `<div class="tab" onclick="showTab('tab-equipe', event)">Minha Equipe</div>`;
     tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
   } else if (isMaster) {
     tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Demandas</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-unica', event)">Foco</div>`;
     tabsHtml += `<div class="tab" onclick="showTab('tab-equipe', event)">Minha Equipe</div>`;
     tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
   } else {
     tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Demandas</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-unica', event)">Foco</div>`;
     tabsHtml += `<div class="tab" onclick="showTab('tab-pipeline', event)">Meus Clientes</div>`;
   }
   tabsHtml += `<div class="tab" onclick="showTab('tab-vendas', event)">Vendas</div>`;
@@ -525,6 +534,7 @@ async function carregarTudo() {
   EMPREENDIMENTOS = dados.empreendimentos || [];
   DEMANDAS = dados.demandas || [];
   VENDAS = dados.vendas || [];
+  UNICA_COISA = dados.unicaCoisa || [];
 
   // Filtrar meus clientes
   const nomeUpper = USUARIO.NOME.toUpperCase();
@@ -551,6 +561,7 @@ async function carregarTudo() {
   renderMeusClientes();
   renderDemandas();
   renderMinhasVendas();
+  renderUnicaCoisa();
   iniciarMonitorMeiaNoite();
   salvarCache(); // salvar dados pra modo offline
 }
@@ -1119,6 +1130,109 @@ function salvarInfoCliente() {
 
 // Fechar modal com ESC
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModalCliente(); });
+
+// ============================================
+// ÚNICA COISA
+// ============================================
+function renderUnicaCoisa() {
+  const isMaster = USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente';
+  const nomeUpper = USUARIO.NOME.toUpperCase();
+  const nomeCompleto = (USUARIO['NOME COMPLETO'] || '').toUpperCase();
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Pegar a mais recente de cada corretor
+  const porCorretor = {};
+  UNICA_COISA.forEach(u => {
+    const corr = u.CORRETOR || '';
+    const dt = String(u.DATA || '').substring(0, 10);
+    if (!porCorretor[corr] || dt > porCorretor[corr].dt) {
+      porCorretor[corr] = { ...u, dt: dt };
+    }
+  });
+
+  let html = '';
+
+  if (isMaster) {
+    // Gerente/Coordenador vê de todos
+    const equipe = USUARIO.EQUIPE;
+    const isGerente = USUARIO.CARGO === 'Gerente';
+    const membros = isGerente
+      ? CORRETORES.filter(c => c.STATUS === 'Ativo')
+      : CORRETORES.filter(c => c.EQUIPE === equipe && c.STATUS === 'Ativo');
+
+    // Minha única coisa primeiro
+    const minha = porCorretor[USUARIO.NOME];
+    if (minha) {
+      html += renderCardUnica(minha, true);
+    }
+
+    // Equipe
+    html += `<div style="font-size:.72rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;padding-top:10px;border-top:1px solid var(--border);">Equipe</div>`;
+
+    membros.forEach(m => {
+      if (m.NOME === USUARIO.NOME) return;
+      const u = porCorretor[m.NOME];
+      if (u) {
+        html += renderCardUnica(u, false);
+      } else {
+        html += `<div class="m-client" style="opacity:.5;">
+          <div class="m-client-name">${m.NOME}</div>
+          <div style="font-size:.72rem;color:var(--textL);">Sem foco definido ainda</div>
+        </div>`;
+      }
+    });
+  } else {
+    // Corretor vê só o dele
+    const minha = Object.values(porCorretor).find(u => {
+      const corrUpper = (u.CORRETOR || '').toUpperCase();
+      return corrUpper === nomeUpper || corrUpper === nomeCompleto || corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper);
+    });
+
+    if (minha) {
+      html += renderCardUnica(minha, true);
+    } else {
+      html += `<div style="text-align:center;padding:40px;color:var(--textL);">
+        <div style="font-size:1.5rem;margin-bottom:10px;">🎯</div>
+        <div style="font-size:.85rem;font-weight:600;color:#fff;margin-bottom:6px;">Seu foco ainda não foi definido</div>
+        <div style="font-size:.75rem;">A IA vai analisar seu 945 e definir sua única coisa do dia.</div>
+      </div>`;
+    }
+  }
+
+  document.getElementById('unica-content').innerHTML = html;
+}
+
+function renderCardUnica(u, destaque) {
+  const dt = String(u.DATA || '').substring(0, 10);
+  const dtFmt = dt.includes('-') ? dt.split('-').reverse().slice(0, 2).join('/') : dt;
+  const borderColor = destaque ? 'var(--gold)' : 'var(--accent)';
+  const bgColor = destaque ? 'rgba(255,215,0,.04)' : 'var(--card)';
+
+  return `<div style="background:${bgColor};border:1px solid var(--border);border-left:4px solid ${borderColor};border-radius:var(--rad);padding:16px;margin-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-size:.9rem;font-weight:800;color:#fff;">${destaque ? '🎯 ' : ''}${u.CORRETOR || '-'}</span>
+      <span style="font-size:.6rem;color:var(--textL);">${dtFmt}</span>
+    </div>
+    <div style="background:var(--card2);border-radius:8px;padding:14px;margin-bottom:10px;">
+      <div style="font-size:.62rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">A Única Coisa</div>
+      <div style="font-size:.88rem;color:#fff;font-weight:600;line-height:1.5;">${u.FOCO || u.UNICA_COISA || '-'}</div>
+    </div>
+    ${u['POR QUE'] ? `<div style="background:rgba(255,215,0,.04);border:1px solid rgba(255,215,0,.1);border-radius:8px;padding:10px;margin-bottom:10px;">
+      <div style="font-size:.58rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Por quê</div>
+      <div style="font-size:.72rem;color:var(--text);line-height:1.4;">${u['POR QUE']}</div>
+    </div>` : ''}
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.15);border-radius:8px;padding:10px;">
+        <div style="font-size:.58rem;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Dificuldade</div>
+        <div style="font-size:.72rem;color:var(--text);line-height:1.4;">${u.DIFICULDADE || '-'}</div>
+      </div>
+      <div style="flex:1;background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:10px;">
+        <div style="font-size:.58rem;color:var(--success);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Facilidade</div>
+        <div style="font-size:.72rem;color:var(--text);line-height:1.4;">${u.FACILIDADE || '-'}</div>
+      </div>
+    </div>
+  </div>`;
+}
 
 // ============================================
 // MINHAS VENDAS (MÊS ATUAL + COMISSÃO)
