@@ -226,6 +226,9 @@ tr:hover{background:rgba(100,255,218,.02);}
   <div class="nav-item" onclick="showPage('pg-ranking')">
     <span class="icon">🏆</span>Ranking Presença
   </div>
+  <div class="nav-item" onclick="showPage('pg-agenda')">
+    <span class="icon">📅</span>Agenda do Time
+  </div>
   <div class="nav-section">Produtividade</div>
   <div class="nav-item" onclick="showPage('pg-hist-demandas')">
     <span class="icon">📋</span>Histórico Demandas
@@ -566,6 +569,58 @@ tr:hover{background:rgba(100,255,218,.02);}
     <div style="margin-top:10px;font-size:.7rem;color:var(--textL);" id="count-hist-dem"></div>
   </div>
 
+  <!-- PAGE: AGENDA DO TIME -->
+  <div class="page" id="pg-agenda">
+    <div class="topbar">
+      <div>
+        <h2>Agenda do Time</h2>
+        <span class="topbar-info">Agendamentos de clientes e eventos — atualização em tempo real</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-agenda"></div>
+    <div class="filters">
+      <select class="filter-input" id="pag-corretor" onchange="renderAgendaPlat()">
+        <option value="">Todos os corretores</option>
+      </select>
+      <select class="filter-input" id="pag-tipo" onchange="renderAgendaPlat()">
+        <option value="">Todos os tipos</option>
+        <option value="Cliente">Clientes</option>
+        <option value="Reunião Semanal">Reunião Semanal</option>
+        <option value="Alinhamento Mensal">Alinhamento Mensal</option>
+        <option value="Meeting Empresa">Meeting Empresa</option>
+      </select>
+    </div>
+    <!-- CALENDÁRIO 100% -->
+    <div style="width:100%;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <button onclick="mudarMesPlat(-1)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 18px;color:var(--text);cursor:pointer;font-weight:700;font-size:1rem;">◀</button>
+        <span style="font-size:1.3rem;font-weight:900;color:#fff;text-transform:capitalize;letter-spacing:1px;" id="plat-cal-titulo"></span>
+        <button onclick="mudarMesPlat(1)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 18px;color:var(--text);cursor:pointer;font-weight:700;font-size:1rem;">▶</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:8px;">
+        <div style="font-size:.78rem;color:var(--textL);font-weight:700;padding:8px;">DOM</div>
+        <div style="font-size:.78rem;color:var(--textL);font-weight:700;padding:8px;">SEG</div>
+        <div style="font-size:.78rem;color:var(--textL);font-weight:700;padding:8px;">TER</div>
+        <div style="font-size:.78rem;color:var(--textL);font-weight:700;padding:8px;">QUA</div>
+        <div style="font-size:.78rem;color:var(--textL);font-weight:700;padding:8px;">QUI</div>
+        <div style="font-size:.78rem;color:var(--textL);font-weight:700;padding:8px;">SEX</div>
+        <div style="font-size:.78rem;color:var(--textL);font-weight:700;padding:8px;">SÁB</div>
+      </div>
+      <div id="plat-cal-dias" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;"></div>
+    </div>
+    <!-- DETALHE DO DIA -->
+    <div style="width:100%;margin-top:20px;" id="plat-cal-detalhe">
+      <div style="text-align:center;padding:40px;color:var(--textL);font-size:.85rem;">Selecione um dia no calendário</div>
+    </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICAÇÃO DE AGENDAMENTO -->
+  <div id="plat-notif" style="display:none;position:fixed;top:20px;right:20px;background:#111820;border:2px solid var(--gold);border-radius:12px;padding:16px 24px;z-index:500;box-shadow:0 4px 20px rgba(255,215,0,.3);animation:slideDown .4s ease;">
+    <div style="font-size:.7rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Novo Agendamento</div>
+    <div id="plat-notif-texto" style="font-size:.9rem;color:#fff;font-weight:700;margin-top:6px;"></div>
+  </div>
+
   <!-- PAGE: RANKING PRESENÇA -->
   <div class="page" id="pg-ranking">
     <div class="topbar">
@@ -666,6 +721,13 @@ async function carregarDados() {
       resCorr.json(), resCli.json(), resEmp.json(), resDem.json(), resReg.json(), resVend.json()
     ]);
 
+    // Carregar agenda
+    try {
+      const resAg = await fetch(API_URL + '?acao=agenda');
+      AGENDA_PLAT = await resAg.json();
+    } catch(e) { AGENDA_PLAT = []; }
+    PLAT_AGENDA_COUNT = AGENDA_PLAT.length;
+
     CORRETORES.forEach(c => { CORRETORES_MAP[c.NOME] = c.EQUIPE; });
 
     renderClientes();
@@ -678,6 +740,7 @@ async function carregarDados() {
     renderRanking();
     renderHistDemandas();
     renderVendas();
+    renderAgendaPlat();
     preencherFiltros();
   } catch(e) {
     document.getElementById('tb-clientes').innerHTML = '<tr><td colspan="6" style="color:var(--danger);text-align:center;padding:20px;">Erro ao carregar dados. Verifique a conexão.</td></tr>';
@@ -1852,10 +1915,228 @@ async function carregarRelatorioIA() {
 }
 
 // ============================================
+// AGENDA DO TIME (PLATAFORMA)
+// ============================================
+let AGENDA_PLAT = [];
+let PLAT_MES = new Date().getMonth();
+let PLAT_ANO = new Date().getFullYear();
+let PLAT_DIA_SEL = null;
+let PLAT_AGENDA_COUNT = 0;
+
+function tocarSomAgendaPlat() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notas = [880, 1108, 1320, 1760, 1320, 1760, 2093];
+    notas.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+    });
+  } catch(e) {}
+}
+
+function renderAgendaPlat() {
+  const filtroCorr = document.getElementById('pag-corretor').value;
+  const filtroTipo = document.getElementById('pag-tipo').value;
+
+  let lista = [...AGENDA_PLAT];
+  if (filtroCorr) lista = lista.filter(a => a.CORRETOR === filtroCorr);
+  if (filtroTipo) lista = lista.filter(a => (a.TIPO || 'Cliente') === filtroTipo);
+
+  // Preencher filtro corretores
+  const sel = document.getElementById('pag-corretor');
+  if (sel.options.length <= 1) {
+    const corrs = [...new Set(AGENDA_PLAT.map(a => a.CORRETOR).filter(c => c))].sort();
+    corrs.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+  }
+
+  // KPIs
+  const hoje = new Date().toISOString().split('T')[0];
+  const agHoje = lista.filter(a => String(a.DATA || '').substring(0, 10) === hoje).length;
+  const agSemana = lista.filter(a => {
+    const dt = new Date(String(a.DATA || '').substring(0, 10) + 'T12:00:00');
+    const diff = (dt - new Date(hoje + 'T12:00:00')) / 86400000;
+    return diff >= 0 && diff < 7;
+  }).length;
+  const totalClientes = lista.filter(a => (a.TIPO || 'Cliente') === 'Cliente').length;
+  const totalEventos = lista.filter(a => (a.TIPO || 'Cliente') !== 'Cliente').length;
+
+  document.getElementById('kpi-agenda').innerHTML = `
+    <div class="kpi green"><div class="v">${agHoje}</div><div class="l">Hoje</div></div>
+    <div class="kpi blue"><div class="v">${agSemana}</div><div class="l">Esta Semana</div></div>
+    <div class="kpi yellow"><div class="v">${totalClientes}</div><div class="l">Clientes</div></div>
+    <div class="kpi purple"><div class="v">${totalEventos}</div><div class="l">Eventos</div></div>
+  `;
+
+  // Calendário
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('plat-cal-titulo').textContent = `${meses[PLAT_MES]} ${PLAT_ANO}`;
+
+  const primeiroDia = new Date(PLAT_ANO, PLAT_MES, 1).getDay();
+  const diasNoMes = new Date(PLAT_ANO, PLAT_MES + 1, 0).getDate();
+
+  const diasComAgenda = {};
+  lista.forEach(a => {
+    const dt = String(a.DATA || '').substring(0, 10);
+    if (dt.startsWith(`${PLAT_ANO}-${String(PLAT_MES + 1).padStart(2, '0')}`)) {
+      diasComAgenda[dt] = (diasComAgenda[dt] || 0) + 1;
+    }
+  });
+
+  let calHtml = '';
+  for (let i = 0; i < primeiroDia; i++) calHtml += '<div style="padding:20px;"></div>';
+  for (let d = 1; d <= diasNoMes; d++) {
+    const dataStr = `${PLAT_ANO}-${String(PLAT_MES + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isHoje = dataStr === hoje;
+    const qtd = diasComAgenda[dataStr] || 0;
+    const isSel = dataStr === PLAT_DIA_SEL;
+    const bg = isSel ? 'rgba(255,215,0,.15)' : isHoje ? 'rgba(100,255,218,.08)' : 'var(--card)';
+    const border = isSel ? 'var(--gold)' : isHoje ? 'var(--accent)' : 'var(--border)';
+    const borderWidth = isSel ? '2px' : isHoje ? '2px' : '1px';
+    calHtml += `<div onclick="selecionarDiaPlat('${dataStr}')" style="background:${bg};border:${borderWidth} solid ${border};border-radius:10px;text-align:center;padding:16px 8px;cursor:pointer;position:relative;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all .15s;">
+      <div style="font-size:1.1rem;font-weight:800;color:#fff;">${d}</div>
+      ${qtd > 0 ? `<div style="display:flex;align-items:center;gap:4px;margin-top:6px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--gold);"></div><span style="font-size:.65rem;color:var(--gold);font-weight:700;">${qtd}</span></div>` : ''}
+    </div>`;
+  }
+  document.getElementById('plat-cal-dias').innerHTML = calHtml;
+
+  if (PLAT_DIA_SEL) renderDiaDetalhePlat(PLAT_DIA_SEL, lista);
+}
+
+function mudarMesPlat(dir) {
+  PLAT_MES += dir;
+  if (PLAT_MES > 11) { PLAT_MES = 0; PLAT_ANO++; }
+  if (PLAT_MES < 0) { PLAT_MES = 11; PLAT_ANO--; }
+  PLAT_DIA_SEL = null;
+  document.getElementById('plat-cal-detalhe').innerHTML = '<div style="text-align:center;padding:40px;color:var(--textL);font-size:.82rem;">Selecione um dia no calendário</div>';
+  renderAgendaPlat();
+}
+
+function selecionarDiaPlat(dataStr) {
+  PLAT_DIA_SEL = dataStr;
+  renderAgendaPlat();
+}
+
+function renderDiaDetalhePlat(dataStr, listaFiltrada) {
+  const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const dt = new Date(dataStr + 'T12:00:00');
+  const [ano, mes, dia] = dataStr.split('-');
+  const titulo = `${dias[dt.getDay()]}, ${dia}/${mes}`;
+
+  let agendamentos = listaFiltrada.filter(a => String(a.DATA || '').substring(0, 10) === dataStr);
+
+  const porHora = {};
+  agendamentos.forEach(a => {
+    let hora = fmtHora(a.HORA || '00:00');
+    if (!porHora[hora]) porHora[hora] = [];
+    porHora[hora].push(a);
+  });
+
+  const horasOrdenadas = Object.keys(porHora).sort();
+
+  let html = `<div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:14px;">${titulo}</div>`;
+
+  if (horasOrdenadas.length === 0) {
+    html += '<div style="text-align:center;padding:30px;color:var(--textL);font-size:.82rem;">Nenhum agendamento neste dia.</div>';
+  }
+
+  horasOrdenadas.forEach(hora => {
+    html += `<div style="margin-bottom:12px;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">${hora}</div>`;
+    porHora[hora].forEach((a, ai) => {
+      const tipo = a.TIPO || 'Cliente';
+      const atendido = (a.ATENDIDO || '').toUpperCase() === 'SIM';
+      const corBorda = atendido ? 'var(--success)' : tipo === 'Cliente' ? 'var(--gold)' : tipo === 'Reunião Semanal' ? 'var(--info)' : tipo === 'Alinhamento Mensal' ? 'var(--purple)' : 'var(--accent)';
+      const cardBg = atendido ? 'rgba(0,230,118,.08)' : 'var(--card2)';
+      const cardBorder = atendido ? 'rgba(0,230,118,.2)' : 'rgba(255,255,255,.06)';
+      const icone = tipo === 'Cliente' ? '' : tipo === 'Reunião Semanal' ? '📋 ' : tipo === 'Alinhamento Mensal' ? '📊 ' : '🤝 ';
+      const tipoTag = tipo !== 'Cliente' ? `<div style="font-size:.6rem;color:${corBorda};font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">${tipo}</div>` : '';
+      const eq = equipeDoCorretor(a.CORRETOR);
+      const idxPlat = AGENDA_PLAT.indexOf(a);
+      html += `<div style="background:${cardBg};border:1px solid ${cardBorder};border-radius:8px;padding:12px;margin-bottom:6px;border-left:3px solid ${corBorda};">
+        ${tipoTag}
+        <div style="font-size:.85rem;font-weight:700;color:#fff;">${icone}${a.CLIENTE || '-'} ${atendido ? '<span style="font-size:.65rem;color:var(--success);font-weight:700;">✓ ATENDIDO</span>' : ''}</div>
+        ${tipo === 'Cliente' && a.CONTATO ? `<div style="font-size:.72rem;color:var(--textL);margin-top:2px;">${a.CONTATO}</div>` : ''}
+        <div style="font-size:.72rem;color:var(--accent);margin-top:4px;font-weight:600;">${a.CORRETOR || '-'} ${eqTagHTML(eq)}</div>
+        ${!atendido ? `<button onclick="marcarAtendidoPlat(${idxPlat})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('plat-cal-detalhe').innerHTML = html;
+}
+
+async function marcarAtendidoPlat(idx) {
+  const a = AGENDA_PLAT[idx];
+  if (!a) return;
+
+  a.ATENDIDO = 'SIM';
+
+  // Salvar na planilha
+  const params = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      DATA: String(a.DATA || '').substring(0, 10),
+      HORA: a.HORA || '',
+      TIPO: 'atendimento-confirmado',
+      CLIENTE: a.CLIENTE || '',
+      CONTATO: a.CONTATO || '',
+      CORRETOR: a.CORRETOR || '',
+      EQUIPE: a.EQUIPE || '',
+      PRESENCA: 'atendido',
+      'O QUE FEZ': '', 'PLANO DO DIA': '', 'DIFICULDADE': '', 'CLIENTES': a.CLIENTE || '',
+      'OBSERVACOES': `Atendimento confirmado via Plataforma | Cliente: ${a.CLIENTE} | Corretor: ${a.CORRETOR}`
+    })
+  });
+  fetch(API_URL + '?' + params.toString()).catch(() => {});
+
+  // Atualizar visual
+  renderDiaDetalhePlat(PLAT_DIA_SEL, AGENDA_PLAT);
+}
+
+// Monitorar novos agendamentos a cada 10 segundos
+function iniciarMonitorAgenda() {
+  setInterval(async () => {
+    try {
+      const resp = await fetch(API_URL + '?acao=agenda');
+      const novaAgenda = await resp.json();
+      if (novaAgenda.length > PLAT_AGENDA_COUNT && PLAT_AGENDA_COUNT > 0) {
+        // Novo agendamento detectado!
+        const novos = novaAgenda.slice(PLAT_AGENDA_COUNT);
+        novos.forEach(a => {
+          // Notificação visual
+          const notif = document.getElementById('plat-notif');
+          document.getElementById('plat-notif-texto').textContent = `${a.CLIENTE || a.TIPO || 'Evento'} — ${a.CORRETOR || ''}`;
+          notif.style.display = 'block';
+          setTimeout(() => { notif.style.display = 'none'; }, 4000);
+          // Som
+          tocarSomAgendaPlat();
+        });
+        AGENDA_PLAT = novaAgenda;
+        PLAT_AGENDA_COUNT = novaAgenda.length;
+        renderAgendaPlat();
+      } else {
+        AGENDA_PLAT = novaAgenda;
+        PLAT_AGENDA_COUNT = novaAgenda.length;
+      }
+    } catch(e) {}
+  }, 10000);
+}
+
+// ============================================
 // INIT
 // ============================================
 carregarDados();
 carregarRelatorioIA();
+iniciarMonitorAgenda();
 </script>
 
 </body>
