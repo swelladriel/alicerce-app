@@ -218,6 +218,7 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 @keyframes confirmPop{to{transform:scale(1);}}
 @keyframes confirmCheck{to{transform:rotate(-45deg) scale(1);}}
 @keyframes confirmTextIn{to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(244,67,54,.5);}70%{box-shadow:0 0 0 16px rgba(244,67,54,0);}100%{box-shadow:0 0 0 0 rgba(244,67,54,0);}}
 </style>
 </head>
 <body>
@@ -363,6 +364,23 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       </div>
     </div>
 
+    <!-- MODAL: REMARCAR -->
+    <div class="modal-agenda" id="modal-remarcar" onclick="if(event.target===this)fecharRemarcar()">
+      <div class="modal-agenda-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-agenda-title">📅 Remarcar Atendimento</div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">Nova Data</div>
+          <input type="date" class="modal-input" id="remarcar-data">
+        </div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">Novo Horário</div>
+          <input type="time" class="modal-input" id="remarcar-hora">
+        </div>
+        <button class="cal-add-btn" onclick="confirmarRemarcar()">CONFIRMAR REMARCAÇÃO</button>
+      </div>
+    </div>
+
     <!-- TAB: REGISTRO (Check-in + 945 juntos) -->
     <div class="app-page" id="tab-registro">
       <div class="m-filter" style="margin-bottom:14px;">
@@ -384,10 +402,14 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div id="registro-view-945" style="display:none;">
         <div class="rec-box">
           <div class="rec-title">945 Individual</div>
-          <div class="rec-sub">Toque no campo abaixo e use o microfone do teclado para ditar seu relatório.</div>
+          <div class="rec-sub" id="rec-sub-texto">Toque no campo abaixo e use o microfone do teclado para ditar seu relatório.</div>
+          <div id="rec-audio-btn-container" style="display:none;text-align:center;margin-bottom:14px;">
+            <button id="rec-audio-btn" onclick="toggleGravacaoAudio()" style="width:100%;max-width:280px;padding:14px 24px;border-radius:10px;border:none;background:#c62828;color:#fff;font-size:.85rem;font-weight:800;cursor:pointer;transition:all .3s;letter-spacing:.5px;">GRAVAR</button>
+            <div id="rec-audio-status" style="font-size:.7rem;color:var(--textL);margin-top:8px;"></div>
+          </div>
           <textarea class="rec-textarea" id="rec-texto" placeholder="Toque aqui e use o 🎤 do teclado para ditar...&#10;&#10;Fale sobre: o que fez, plano do dia, dificuldades e clientes."></textarea>
           <button class="rec-enviar" id="rec-enviar" onclick="enviar945()">ENVIAR 945</button>
-          <div class="rec-dica">Dica: toque o 🎤 no teclado para ditar por voz</div>
+          <div class="rec-dica" id="rec-dica-texto">Dica: toque o 🎤 no teclado para ditar por voz</div>
           <div class="rec-sent-msg" id="rec-sent-msg">945 enviado com sucesso!</div>
         </div>
         <div class="rec-historico" id="rec-historico">
@@ -571,6 +593,7 @@ async function fazerLogin() {
   iniciarRelogio();
   carregarCheckins();
   carregarHistorico945();
+  inicializarAudio945();
   verificarLembretes();
 }
 
@@ -1691,16 +1714,24 @@ function renderDiaDetalhe(dataStr) {
       const corBorda = tipo === 'Cliente' ? 'var(--gold)' : tipo === 'Reunião Semanal' ? 'var(--info)' : tipo === 'Alinhamento Mensal' ? 'var(--purple)' : 'var(--accent)';
       const icone = tipo === 'Cliente' ? '' : tipo === 'Reunião Semanal' ? '📋 ' : tipo === 'Alinhamento Mensal' ? '📊 ' : '🤝 ';
       const tipoTag = tipo !== 'Cliente' ? `<div style="font-size:.58rem;color:${corBorda};font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">${tipo}</div>` : '';
-      const atendido = (a.ATENDIDO || '').toUpperCase() === 'SIM';
-      const cardBg = atendido ? 'rgba(0,230,118,.08)' : 'var(--card2)';
-      const cardBorder = atendido ? 'rgba(0,230,118,.2)' : 'rgba(255,255,255,.06)';
+      const statusAtendido = (a.ATENDIDO || '').toUpperCase();
+      const atendido = statusAtendido === 'SIM';
+      const bolo = statusAtendido === 'BOLO';
+      const cardBg = atendido ? 'rgba(0,230,118,.08)' : bolo ? 'rgba(244,67,54,.08)' : 'var(--card2)';
+      const cardBorder = atendido ? 'rgba(0,230,118,.2)' : bolo ? 'rgba(244,67,54,.2)' : 'rgba(255,255,255,.06)';
+      const cardLeftColor = atendido ? 'var(--success)' : bolo ? '#f44336' : corBorda;
       const idxAgenda = AGENDA.indexOf(a);
-      html += `<div class="cal-card" style="border-left-color:${atendido ? 'var(--success)' : corBorda};background:${cardBg};border-color:${cardBorder};">
+      const statusLabel = atendido ? '<span style="font-size:.6rem;color:var(--success);font-weight:700;">✓ ATENDIDO</span>' : bolo ? '<span style="font-size:.6rem;color:#f44336;font-weight:700;">🍰 BOLO</span>' : '';
+      html += `<div class="cal-card" style="border-left-color:${cardLeftColor};background:${cardBg};border-color:${cardBorder};">
         ${tipoTag}
-        <div class="cal-card-cliente">${icone}${a.CLIENTE || '-'} ${atendido ? '<span style="font-size:.6rem;color:var(--success);font-weight:700;">✓ ATENDIDO</span>' : ''}</div>
+        <div class="cal-card-cliente">${icone}${a.CLIENTE || '-'} ${statusLabel}</div>
         ${tipo === 'Cliente' && podVerContato && a.CONTATO ? `<div class="cal-card-contato">${a.CONTATO}</div>` : ''}
         <div class="cal-card-corretor">${a.CORRETOR || '-'}</div>
-        ${podVerContato && !atendido ? `<button onclick="marcarAtendido(${idxAgenda})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>` : ''}
+        ${!atendido && !bolo ? `${podVerContato ? `<button onclick="marcarAtendido(${idxAgenda})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>` : ''}
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button onclick="marcarBolo(${idxAgenda})" style="flex:1;background:#f44336;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">🍰 BOLO</button>
+          <button onclick="abrirRemarcar(${idxAgenda})" style="flex:1;background:rgba(255,255,255,.08);color:var(--gold);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;font-size:.68rem;font-weight:600;cursor:pointer;">📅 REMARCAR</button>
+        </div>` : ''}
       </div>`;
     });
     html += '</div>';
@@ -1739,9 +1770,106 @@ async function marcarAtendido(idx) {
   });
   fetch(API_URL + '?' + params.toString()).catch(() => {});
 
+  // Atualizar na aba Agenda da planilha
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'SIM' } })
+    });
+  } catch(e) {}
+
   // Atualizar visual
   renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
   mostrarConfirmacao('ATENDIMENTO CONFIRMADO');
+}
+
+async function marcarBolo(idx) {
+  const a = AGENDA[idx];
+  if (!a) return;
+  if (!confirm('Confirmar que o cliente não compareceu? (Isso NÃO penaliza o corretor)')) return;
+
+  a.ATENDIDO = 'BOLO';
+
+  // Registrar no log
+  const params = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      DATA: String(a.DATA || '').substring(0, 10),
+      HORA: a.HORA || '',
+      TIPO: 'cliente-bolo',
+      CLIENTE: a.CLIENTE || '',
+      CONTATO: a.CONTATO || '',
+      CORRETOR: a.CORRETOR || '',
+      EQUIPE: a.EQUIPE || '',
+      PRESENCA: 'bolo',
+      'OBSERVACOES': `Cliente não compareceu | ${a.CLIENTE} | Corretor: ${a.CORRETOR} | Registrado por ${USUARIO.NOME}`
+    })
+  });
+  fetch(API_URL + '?' + params.toString()).catch(() => {});
+
+  // Atualizar na aba Agenda
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'BOLO' } })
+    });
+  } catch(e) {}
+
+  renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
+  mostrarConfirmacao('🍰 BOLO REGISTRADO');
+}
+
+let REMARCAR_IDX = null;
+function abrirRemarcar(idx) {
+  REMARCAR_IDX = idx;
+  const a = AGENDA[idx];
+  if (!a) return;
+  document.getElementById('remarcar-data').value = String(a.DATA || '').substring(0, 10);
+  let hora = String(a.HORA || '');
+  if (hora.includes('T')) { const m = hora.match(/T(\d{2}:\d{2})/); if (m) hora = m[1]; }
+  document.getElementById('remarcar-hora').value = hora.substring(0, 5);
+  document.getElementById('modal-remarcar').classList.add('open');
+}
+
+function fecharRemarcar() {
+  document.getElementById('modal-remarcar').classList.remove('open');
+  REMARCAR_IDX = null;
+}
+
+async function confirmarRemarcar() {
+  if (REMARCAR_IDX === null) return;
+  const a = AGENDA[REMARCAR_IDX];
+  if (!a) return;
+
+  const novaData = document.getElementById('remarcar-data').value;
+  const novaHora = document.getElementById('remarcar-hora').value;
+  if (!novaData || !novaHora) { alert('Preencha data e horário.'); return; }
+
+  const dataAntiga = String(a.DATA || '').substring(0, 10);
+  const horaAntiga = a.HORA || '';
+
+  // Atualizar local
+  a.DATA = novaData;
+  a.HORA = novaHora;
+
+  // Atualizar na planilha
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: dataAntiga, HORA: horaAntiga, CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { DATA: novaData, HORA: novaHora } })
+    });
+  } catch(e) {}
+
+  fecharRemarcar();
+  renderCalendario();
+  renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
+  mostrarConfirmacao('📅 REMARCADO COM SUCESSO');
 }
 
 function toggleCamposAgenda() {
@@ -2021,8 +2149,101 @@ function carregarCheckins() {
 }
 
 // ============================================
-// 945 - DITADO (usa microfone nativo do teclado)
+// 945 - GRAVAÇÃO DE ÁUDIO (com fallback ditado)
 // ============================================
+
+let audioRecognition = null;
+let audioGravando = false;
+
+function inicializarAudio945() {
+  const SpeechRecog = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecog) {
+    document.getElementById('rec-audio-btn-container').style.display = 'block';
+    document.getElementById('rec-sub-texto').textContent = 'Toque no microfone para gravar ou digite no campo abaixo.';
+    document.getElementById('rec-dica-texto').textContent = 'Toque 🎤 para gravar por voz ou use o teclado';
+  }
+  // Se não suporta, mantém o layout original com ditado nativo
+}
+
+function toggleGravacaoAudio() {
+  if (audioGravando) {
+    pararGravacao();
+  } else {
+    iniciarGravacao();
+  }
+}
+
+function iniciarGravacao() {
+  const SpeechRecog = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecog) return;
+
+  audioRecognition = new SpeechRecog();
+  audioRecognition.lang = 'pt-BR';
+  audioRecognition.continuous = true;
+  audioRecognition.interimResults = true;
+
+  const textarea = document.getElementById('rec-texto');
+  const textoAntes = textarea.value;
+
+  audioRecognition.onresult = function(e) {
+    let interim = '';
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        final += e.results[i][0].transcript + ' ';
+      } else {
+        interim += e.results[i][0].transcript;
+      }
+    }
+    if (final) {
+      textarea.value = textarea.value + final;
+    }
+    document.getElementById('rec-audio-status').textContent = interim ? '🔴 ' + interim : '🔴 Gravando...';
+  };
+
+  audioRecognition.onerror = function(e) {
+    if (e.error === 'not-allowed') {
+      alert('Permissão de microfone negada. Use o ditado do teclado.');
+      pararGravacao();
+    } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      document.getElementById('rec-audio-status').textContent = 'Erro: ' + e.error + '. Tente novamente.';
+      pararGravacao();
+    }
+  };
+
+  audioRecognition.onend = function() {
+    // Reiniciar automaticamente se ainda está gravando (speech recognition para sozinho)
+    if (audioGravando) {
+      try { audioRecognition.start(); } catch(e) { pararGravacao(); }
+    }
+  };
+
+  try {
+    audioRecognition.start();
+    audioGravando = true;
+    const btn = document.getElementById('rec-audio-btn');
+    btn.style.background = '#b71c1c';
+    btn.style.animation = 'pulse 1.5s infinite';
+    btn.textContent = 'PARAR';
+    document.getElementById('rec-audio-status').textContent = '🔴 Gravando... toque para parar';
+  } catch(e) {
+    alert('Não foi possível iniciar a gravação. Use o ditado do teclado.');
+  }
+}
+
+function pararGravacao() {
+  audioGravando = false;
+  if (audioRecognition) {
+    try { audioRecognition.stop(); } catch(e) {}
+    audioRecognition = null;
+  }
+  const btn = document.getElementById('rec-audio-btn');
+  btn.style.background = '#c62828';
+  btn.style.animation = 'none';
+  btn.textContent = 'GRAVAR';
+  document.getElementById('rec-audio-status').textContent = 'Gravação finalizada';
+  setTimeout(() => { document.getElementById('rec-audio-status').textContent = ''; }, 3000);
+}
 
 async function enviar945() {
   const texto = document.getElementById('rec-texto').value.trim();
