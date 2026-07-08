@@ -2276,20 +2276,27 @@ function renderDiaDetalhePlat(dataStr, listaFiltrada) {
       <div style="font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">${hora}</div>`;
     porHora[hora].forEach((a, ai) => {
       const tipo = a.TIPO || 'Cliente';
-      const atendido = (a.ATENDIDO || '').toUpperCase() === 'SIM';
-      const corBorda = atendido ? 'var(--success)' : tipo === 'Cliente' ? 'var(--gold)' : tipo === 'Reunião Semanal' ? 'var(--info)' : tipo === 'Alinhamento Mensal' ? 'var(--purple)' : 'var(--accent)';
-      const cardBg = atendido ? 'rgba(0,230,118,.08)' : 'var(--card2)';
-      const cardBorder = atendido ? 'rgba(0,230,118,.2)' : 'rgba(255,255,255,.06)';
+      const statusAtendido = (a.ATENDIDO || '').toUpperCase();
+      const atendido = statusAtendido === 'SIM';
+      const bolo = statusAtendido === 'BOLO';
+      const corBorda = atendido ? 'var(--success)' : bolo ? '#f44336' : tipo === 'Cliente' ? 'var(--gold)' : tipo === 'Reunião Semanal' ? 'var(--info)' : tipo === 'Alinhamento Mensal' ? 'var(--purple)' : 'var(--accent)';
+      const cardBg = atendido ? 'rgba(0,230,118,.08)' : bolo ? 'rgba(244,67,54,.08)' : 'var(--card2)';
+      const cardBorder = atendido ? 'rgba(0,230,118,.2)' : bolo ? 'rgba(244,67,54,.2)' : 'rgba(255,255,255,.06)';
       const icone = tipo === 'Cliente' ? '' : tipo === 'Reunião Semanal' ? '📋 ' : tipo === 'Alinhamento Mensal' ? '📊 ' : '🤝 ';
       const tipoTag = tipo !== 'Cliente' ? `<div style="font-size:.6rem;color:${corBorda};font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">${tipo}</div>` : '';
+      const statusLabel = atendido ? '<span style="font-size:.65rem;color:var(--success);font-weight:700;">✓ ATENDIDO</span>' : bolo ? '<span style="font-size:.65rem;color:#f44336;font-weight:700;">🍰 BOLO</span>' : '';
       const eq = equipeDoCorretor(a.CORRETOR);
       const idxPlat = AGENDA_PLAT.indexOf(a);
       html += `<div style="background:${cardBg};border:1px solid ${cardBorder};border-radius:8px;padding:12px;margin-bottom:6px;border-left:3px solid ${corBorda};">
         ${tipoTag}
-        <div style="font-size:.85rem;font-weight:700;color:#fff;">${icone}${a.CLIENTE || '-'} ${atendido ? '<span style="font-size:.65rem;color:var(--success);font-weight:700;">✓ ATENDIDO</span>' : ''}</div>
+        <div style="font-size:.85rem;font-weight:700;color:#fff;">${icone}${a.CLIENTE || '-'} ${statusLabel}</div>
         ${tipo === 'Cliente' && a.CONTATO ? `<div style="font-size:.72rem;color:var(--textL);margin-top:2px;">${a.CONTATO}</div>` : ''}
         <div style="font-size:.72rem;color:var(--accent);margin-top:4px;font-weight:600;">${a.CORRETOR || '-'} ${eqTagHTML(eq)}</div>
-        ${!atendido ? `<button onclick="marcarAtendidoPlat(${idxPlat})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>` : ''}
+        ${!atendido && !bolo ? `<button onclick="marcarAtendidoPlat(${idxPlat})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button onclick="marcarBoloPlat(${idxPlat})" style="flex:1;background:#f44336;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">🍰 BOLO</button>
+          <button onclick="abrirRemarcarPlat(${idxPlat})" style="flex:1;background:rgba(255,255,255,.08);color:var(--gold);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;font-size:.68rem;font-weight:600;cursor:pointer;">📅 REMARCAR</button>
+        </div>` : ''}
       </div>`;
     });
     html += '</div>';
@@ -2322,7 +2329,98 @@ async function marcarAtendidoPlat(idx) {
   });
   fetch(API_URL + '?' + params.toString()).catch(() => {});
 
+  // Atualizar coluna ATENDIDO na aba Agenda
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'SIM' } })
+    });
+  } catch(e) {}
+
   // Atualizar visual
+  renderDiaDetalhePlat(PLAT_DIA_SEL, AGENDA_PLAT);
+}
+
+async function marcarBoloPlat(idx) {
+  const a = AGENDA_PLAT[idx];
+  if (!a) return;
+  if (!confirm('Confirmar que o cliente não compareceu? (Isso NÃO penaliza o corretor)')) return;
+
+  a.ATENDIDO = 'BOLO';
+
+  const params = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      DATA: String(a.DATA || '').substring(0, 10),
+      HORA: a.HORA || '',
+      TIPO: 'cliente-bolo',
+      CLIENTE: a.CLIENTE || '',
+      CONTATO: a.CONTATO || '',
+      CORRETOR: a.CORRETOR || '',
+      EQUIPE: a.EQUIPE || '',
+      PRESENCA: 'bolo',
+      'OBSERVACOES': `Cliente não compareceu | ${a.CLIENTE} | Corretor: ${a.CORRETOR} | Registrado via Plataforma`
+    })
+  });
+  fetch(API_URL + '?' + params.toString()).catch(() => {});
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'BOLO' } })
+    });
+  } catch(e) {}
+
+  renderDiaDetalhePlat(PLAT_DIA_SEL, AGENDA_PLAT);
+}
+
+let REMARCAR_PLAT_IDX = null;
+function abrirRemarcarPlat(idx) {
+  REMARCAR_PLAT_IDX = idx;
+  const a = AGENDA_PLAT[idx];
+  if (!a) return;
+  document.getElementById('remarcar-plat-data').value = String(a.DATA || '').substring(0, 10);
+  let hora = String(a.HORA || '');
+  if (hora.includes('T')) { const m = hora.match(/T(\d{2}:\d{2})/); if (m) hora = m[1]; }
+  document.getElementById('remarcar-plat-hora').value = hora.substring(0, 5);
+  document.getElementById('modal-remarcar-plat').classList.add('open');
+}
+
+function fecharRemarcarPlat() {
+  document.getElementById('modal-remarcar-plat').classList.remove('open');
+  REMARCAR_PLAT_IDX = null;
+}
+
+async function confirmarRemarcarPlat() {
+  if (REMARCAR_PLAT_IDX === null) return;
+  const a = AGENDA_PLAT[REMARCAR_PLAT_IDX];
+  if (!a) return;
+
+  const novaData = document.getElementById('remarcar-plat-data').value;
+  const novaHora = document.getElementById('remarcar-plat-hora').value;
+  if (!novaData || !novaHora) { alert('Preencha data e horário.'); return; }
+
+  const dataAntiga = String(a.DATA || '').substring(0, 10);
+  const horaAntiga = a.HORA || '';
+
+  a.DATA = novaData;
+  a.HORA = novaHora;
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: dataAntiga, HORA: horaAntiga, CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { DATA: novaData, HORA: novaHora } })
+    });
+  } catch(e) {}
+
+  fecharRemarcarPlat();
+  renderCalendarioPlat();
   renderDiaDetalhePlat(PLAT_DIA_SEL, AGENDA_PLAT);
 }
 
@@ -2363,6 +2461,22 @@ carregarRelatorioIA();
 carregarRelatorioSemanal();
 iniciarMonitorAgenda();
 </script>
+
+<!-- MODAL: REMARCAR (Plataforma) -->
+<div class="modal-overlay" id="modal-remarcar-plat" onclick="if(event.target===this)fecharRemarcarPlat()">
+  <div style="background:var(--card);border-radius:16px;width:100%;max-width:400px;padding:24px;">
+    <div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:16px;text-align:center;">📅 Remarcar Atendimento</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">Nova Data</div>
+      <input type="date" id="remarcar-plat-data" style="width:100%;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:#fff;font-size:.85rem;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">Novo Horário</div>
+      <input type="time" id="remarcar-plat-hora" style="width:100%;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:#fff;font-size:.85rem;">
+    </div>
+    <button onclick="confirmarRemarcarPlat()" style="width:100%;padding:12px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;">CONFIRMAR REMARCAÇÃO</button>
+  </div>
+</div>
 
 </body>
 </html>
