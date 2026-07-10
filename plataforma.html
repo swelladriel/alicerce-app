@@ -2029,12 +2029,12 @@ function renderRanking() {
       <div style="flex:1;min-width:0;">
         <div style="font-size:.88rem;font-weight:800;color:#fff;">${p.nome} ${p.equipe ? `<span class="eq-tag ${eqCls}" style="margin-left:4px;">${p.equipe}</span>` : ''}</div>
         <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
-          <span style="font-size:.65rem;color:var(--accent);">Check-in <b>${p.ptCheckin}</b></span>
-          <span style="font-size:.65rem;color:var(--gold);">Agenda <b>${p.ptAgenda}</b></span>
-          <span style="font-size:.65rem;color:var(--success);">Atendim. <b>${p.ptAtend}</b></span>
-          <span style="font-size:.65rem;color:var(--warning);">Pastas <b>${p.ptPasta}</b></span>
-          <span style="font-size:.65rem;color:var(--info);">Vendas <b>${p.ptVenda}</b></span>
-          <span style="font-size:.65rem;color:var(--purple);">945 <b>${p.pt945}</b></span>
+          <span style="font-size:.65rem;color:var(--accent);">Check-in <b>${p.ptCheckin}</b> <span style="opacity:.5;">(${p.checkins}x)</span></span>
+          <span style="font-size:.65rem;color:var(--gold);">Agenda <b>${p.ptAgenda}</b> <span style="opacity:.5;">(${p.agendamentos}x)</span></span>
+          <span style="font-size:.65rem;color:var(--success);">Atendim. <b>${p.ptAtend}</b> <span style="opacity:.5;">(${p.atendimentos}x)</span></span>
+          <span style="font-size:.65rem;color:var(--warning);">Pastas <b>${p.ptPasta}</b> <span style="opacity:.5;">(${p.pastas}x)</span></span>
+          <span style="font-size:.65rem;color:var(--info);">Vendas <b>${p.ptVenda}</b> <span style="opacity:.5;">(${p.vendas + p.consorcios}x)</span></span>
+          <span style="font-size:.65rem;color:var(--purple);">945 <b>${p.pt945}</b> <span style="opacity:.5;">(${p.dias945}x)</span></span>
         </div>
       </div>
       <div style="text-align:center;min-width:50px;">
