@@ -1962,7 +1962,8 @@ function renderRanking() {
 
   // === VENDAS: +20 venda, +10 consórcio (desde INICIO_MES_COMERCIAL) ===
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
-    let corrNome = (v.CORRETOR || '').toUpperCase();
+    let corrNome = (v.CORRETOR || '').trim().toUpperCase();
+    if (!corrNome || !v.CLIENTE) return; // Ignorar linhas vazias
     const corr = corretoresAtivos.find(c => corrNome.includes(c.NOME.toUpperCase()) || c.NOME.toUpperCase().includes(corrNome));
     if (!corr || !pontuacao[corr.NOME]) return;
     const isConsorcio = (v.STATUS_VENDA || '').includes('CONSORCIO');
