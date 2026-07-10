@@ -1828,53 +1828,71 @@ function renderRanking() {
   const filtroEquipe = document.getElementById('rk-equipe').value;
   const agora = new Date();
   const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
-  const INICIO_MES_COMERCIAL = '2026-07-03'; // Início do mês comercial atual
+  const INICIO_MES_COMERCIAL = '2026-07-03';
+  const INICIO_CHECKIN_945 = '2026-07-11'; // Check-in e 945 valem só a partir desta data
 
-  const corretoresAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO !== 'Gerente');
+  // Excluir coordenadores e gerente do ranking
+  const EXCLUIDOS = ['Glauco Ribeiro', 'Edvan Silva', 'Marcelo Arouca', 'Adriel Duarte'];
+  const corretoresAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && !EXCLUIDOS.includes(c.NOME));
   const pontuacao = {};
 
   corretoresAtivos.forEach(c => {
     pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, pontos: 0, ptCheckin: 0, ptAgenda: 0, ptAtend: 0, ptPasta: 0, ptVenda: 0, pt945: 0, checkins: 0, agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, consorcios: 0, dias945: 0, atrasos: 0 };
   });
 
-  // Dias úteis do mês comercial (a partir de INICIO_MES_COMERCIAL)
-  const diasUteis = [];
-  const dtInicio = new Date(INICIO_MES_COMERCIAL + 'T12:00:00');
-  for (let dt = new Date(dtInicio); dt <= agora; dt.setDate(dt.getDate() + 1)) {
-    if (dt.getDay() > 0 && dt.getDay() < 6) diasUteis.push(dt.toISOString().split('T')[0]);
+  // Dias úteis (seg-sex) a partir de INICIO_CHECKIN_945 (pra check-in e 945)
+  const diasUteisCheckin = [];
+  const dtInicioCheckin = new Date(INICIO_CHECKIN_945 + 'T12:00:00');
+  for (let dt = new Date(dtInicioCheckin); dt <= agora; dt.setDate(dt.getDate() + 1)) {
+    if (dt.getDay() > 0 && dt.getDay() < 6) diasUteisCheckin.push(dt.toISOString().split('T')[0]);
   }
 
-  // === CHECK-IN: pontuar por horário ===
+  // Dias úteis desde início do mês comercial (pra KPI)
+  const diasUteisMes = [];
+  const dtInicioMes = new Date(INICIO_MES_COMERCIAL + 'T12:00:00');
+  for (let dt = new Date(dtInicioMes); dt <= agora; dt.setDate(dt.getDate() + 1)) {
+    if (dt.getDay() > 0 && dt.getDay() < 6) diasUteisMes.push(dt.toISOString().split('T')[0]);
+  }
+
+  // Helper: verificar se é sábado ou domingo
+  function isFimDeSemana(dataStr) {
+    const dt = new Date(dataStr + 'T12:00:00');
+    return dt.getDay() === 0 || dt.getDay() === 6;
+  }
+
+  // === CHECK-IN: pontuar por horário (só a partir de INICIO_CHECKIN_945) ===
   const checkinsPorCorretorDia = {};
-  REGISTROS.filter(r => r.TIPO === 'checkin' && String(r.DATA || '').substring(0, 10) >= INICIO_MES_COMERCIAL).forEach(r => {
+  REGISTROS.filter(r => r.TIPO === 'checkin' && String(r.DATA || '').substring(0, 10) >= INICIO_CHECKIN_945).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
+    const dia = String(r.DATA || '').substring(0, 10);
     const hora = fmtHora(r.HORA);
     const [h, m] = hora.split(':').map(Number);
     const minutos = h * 60 + m;
+    const fds = isFimDeSemana(dia);
+    const multiplicador = fds ? 2 : 1; // Dobro no fim de semana
 
     let pts = 0;
-    if (minutos < 570) pts = 5;        // antes 9:30
-    else if (minutos < 600) pts = 3;    // 9:30-10:00
-    else if (minutos < 630) pts = 1;    // 10:00-10:30
-    else { pontuacao[nome].atrasos++; } // após 10:30
+    if (minutos < 570) pts = 5 * multiplicador;        // antes 9:30
+    else if (minutos < 600) pts = 3 * multiplicador;    // 9:30-10:00
+    else if (minutos < 630) pts = 1 * multiplicador;    // 10:00-10:30
+    else if (!fds) { pontuacao[nome].atrasos++; }        // após 10:30 (só penaliza seg-sex)
 
     pontuacao[nome].ptCheckin += pts;
     pontuacao[nome].checkins++;
-    const dia = String(r.DATA || '').substring(0, 10);
     if (!checkinsPorCorretorDia[nome]) checkinsPorCorretorDia[nome] = new Set();
     checkinsPorCorretorDia[nome].add(dia);
   });
 
-  // Penalizar ausências e atrasos consecutivos
+  // Penalizar ausências e atrasos (só dias úteis seg-sex, nunca sáb/dom)
   Object.values(pontuacao).forEach(p => {
-    const diasComCheckin = checkinsPorCorretorDia[p.nome] ? checkinsPorCorretorDia[p.nome].size : 0;
-    const ausencias = Math.max(0, diasUteis.length - diasComCheckin);
-    p.ptCheckin += ausencias * -5; // -5 por dia sem check-in
-    if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3; // -3 por dia após 3+ atrasos
+    const diasComCheckin = checkinsPorCorretorDia[p.nome] ? [...checkinsPorCorretorDia[p.nome]].filter(d => !isFimDeSemana(d)).length : 0;
+    const ausencias = Math.max(0, diasUteisCheckin.length - diasComCheckin);
+    p.ptCheckin += ausencias * -5;
+    if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3;
   });
 
-  // === AGENDAMENTOS: +3 por agendamento ===
+  // === AGENDAMENTOS: +3 (desde INICIO_MES_COMERCIAL) ===
   const agendaMes = (typeof AGENDA_PLAT !== 'undefined' ? AGENDA_PLAT : []).filter(a => {
     const dt = String(a.DATA || '').substring(0, 10);
     return dt >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente';
@@ -1886,7 +1904,7 @@ function renderRanking() {
     pontuacao[nome].ptAgenda += 3;
   });
 
-  // === ATENDIMENTOS: +5 por atendimento confirmado ===
+  // === ATENDIMENTOS: +5 (desde INICIO_MES_COMERCIAL) ===
   const atendMes = REGISTROS.filter(r => r.TIPO === 'atendimento-confirmado' && String(r.DATA || '').substring(0, 10) >= INICIO_MES_COMERCIAL);
   atendMes.forEach(r => {
     const nome = r.CORRETOR;
@@ -1895,7 +1913,7 @@ function renderRanking() {
     pontuacao[nome].ptAtend += 5;
   });
 
-  // === PASTAS: +8 por pasta subida (cliente criado no mês comercial) ===
+  // === PASTAS: +8 (desde INICIO_MES_COMERCIAL) ===
   CLIENTES.filter(c => {
     const dt = String(c['DATA CRIAÇÃO'] || c['DATA CRIACAO'] || '').substring(0, 10);
     return dt >= INICIO_MES_COMERCIAL;
@@ -1907,10 +1925,9 @@ function renderRanking() {
     pontuacao[corr.NOME].ptPasta += 8;
   });
 
-  // === VENDAS: +20 venda, +10 consórcio ===
+  // === VENDAS: +20 venda, +10 consórcio (desde INICIO_MES_COMERCIAL) ===
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let corrNome = (v.CORRETOR || '').toUpperCase();
-    // Buscar nome correspondente
     const corr = corretoresAtivos.find(c => corrNome.includes(c.NOME.toUpperCase()) || c.NOME.toUpperCase().includes(corrNome));
     if (!corr || !pontuacao[corr.NOME]) return;
     const isConsorcio = (v.STATUS_VENDA || '').includes('CONSORCIO');
@@ -1918,19 +1935,21 @@ function renderRanking() {
     else { pontuacao[corr.NOME].vendas++; pontuacao[corr.NOME].ptVenda += 20; }
   });
 
-  // === 945: +2 fez, -2 não fez ===
+  // === 945: +2 fez, -2 não fez (só a partir de INICIO_CHECKIN_945, sem penalizar sáb/dom) ===
   const diasCom945 = {};
-  REGISTROS.filter(r => r.TIPO === '945-individual' && String(r.DATA || '').substring(0, 10) >= INICIO_MES_COMERCIAL).forEach(r => {
+  REGISTROS.filter(r => r.TIPO === '945-individual' && String(r.DATA || '').substring(0, 10) >= INICIO_CHECKIN_945).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
     if (!diasCom945[nome]) diasCom945[nome] = new Set();
     diasCom945[nome].add(String(r.DATA || '').substring(0, 10));
   });
   Object.values(pontuacao).forEach(p => {
-    const dias = diasCom945[p.nome] ? diasCom945[p.nome].size : 0;
-    p.dias945 = dias;
-    const naoFez = Math.max(0, diasUteis.length - dias);
-    p.pt945 = (dias * 2) + (naoFez * -2);
+    const todosDias = diasCom945[p.nome] ? diasCom945[p.nome] : new Set();
+    const diasFez = todosDias.size;
+    // Contar só dias úteis sem 945 pra penalizar (não penaliza sáb/dom)
+    const diasUteisSem945 = diasUteisCheckin.filter(d => !todosDias.has(d)).length;
+    p.dias945 = diasFez;
+    p.pt945 = (diasFez * 2) + (diasUteisSem945 * -2);
   });
 
   // === TOTAL ===
@@ -1948,13 +1967,13 @@ function renderRanking() {
   const mesNome = meses[agora.getMonth()];
   const totalPontos = lista.reduce((s, p) => s + p.pontos, 0);
   const totalVendas = lista.reduce((s, p) => s + p.vendas + p.consorcios, 0);
-  const totalAtend = lista.reduce((s, p) => s + p.atendimentos, 0);
+  const totalPastas = lista.reduce((s, p) => s + p.pastas, 0);
 
   document.getElementById('kpi-ranking').innerHTML = `
     <div class="kpi blue"><div class="v">${mesNome}</div><div class="l">Mês Comercial</div></div>
     <div class="kpi green"><div class="v">${totalVendas}</div><div class="l">Vendas</div></div>
-    <div class="kpi yellow"><div class="v">${totalAtend}</div><div class="l">Atendimentos</div></div>
-    <div class="kpi purple"><div class="v">${diasUteis.length}</div><div class="l">Dias Úteis</div></div>
+    <div class="kpi yellow"><div class="v">${totalPastas}</div><div class="l">Pastas</div></div>
+    <div class="kpi purple"><div class="v">${diasUteisMes.length}</div><div class="l">Dias Úteis</div></div>
   `;
 
   if (lista.length === 0) {
@@ -1973,7 +1992,7 @@ function renderRanking() {
     html += `<div style="background:${bgRow};border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:8px;display:flex;align-items:center;gap:14px;">
       <div style="font-size:1.2rem;min-width:32px;text-align:center;">${medalha}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:.88rem;font-weight:800;color:#fff;">${p.nome} ${p.cargo === 'Coordenador' ? '<span style="font-size:.55rem;color:var(--purple);font-weight:700;"> COORD</span>' : ''} ${p.equipe ? `<span class="eq-tag ${eqCls}" style="margin-left:4px;">${p.equipe}</span>` : ''}</div>
+        <div style="font-size:.88rem;font-weight:800;color:#fff;">${p.nome} ${p.equipe ? `<span class="eq-tag ${eqCls}" style="margin-left:4px;">${p.equipe}</span>` : ''}</div>
         <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
           <span style="font-size:.65rem;color:var(--accent);">Check-in <b>${p.ptCheckin}</b></span>
           <span style="font-size:.65rem;color:var(--gold);">Agenda <b>${p.ptAgenda}</b></span>
@@ -1992,9 +2011,10 @@ function renderRanking() {
 
   html += `<div style="margin-top:14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:.65rem;color:var(--textL);line-height:1.8;">
     <strong style="color:#fff;">Sistema de Pontos:</strong><br>
-    Check-in: antes 9:30 = +5 | 9:30-10:00 = +3 | 10:00-10:30 = +1 | após 10:30 = 0 | 3+ atrasos = -3/dia | ausência = -5<br>
-    Agendamento: +3 | Atendimento confirmado: +5 | Pasta subida: +8 | Consórcio: +10 | Venda: +20 | 945: +2 (não fez: -2)<br>
-    <strong style="color:var(--gold);">Pontos resetam todo mês comercial.</strong>
+    Check-in (seg-sex): antes 9:30 = +5 | 9:30-10:00 = +3 | 10:00-10:30 = +1 | após 10:30 = 0 | 3+ atrasos = -3/dia | ausência = -5<br>
+    Check-in (sáb-dom): mesma regra com <strong style="color:var(--gold);">DOBRO</strong> dos pontos | sem penalidade por ausência<br>
+    Agendamento: +3 | Atendimento: +5 | Pasta subida: +8 | Consórcio: +10 | Venda: +20 | 945: +2 (não fez seg-sex: -2)<br>
+    <strong style="color:var(--gold);">Pontos resetam todo mês comercial. Coordenadores e gerente fora do ranking.</strong>
   </div>`;
 
   document.getElementById('ranking-list').innerHTML = html;
