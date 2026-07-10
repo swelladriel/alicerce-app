@@ -616,7 +616,7 @@ tr:hover{background:rgba(100,255,218,.02);}
     <div class="topbar">
       <div>
         <h2>Ranking</h2>
-        <span class="topbar-info">Gamificação mensal — Check-in, Agendamentos, Atendimentos, Vendas e 945</span>
+        <span class="topbar-info">Gamificação mensal — Check-in, Agendamentos, Atendimentos, Pastas, Vendas e 945</span>
       </div>
     </div>
     <div class="kpi-grid" id="kpi-ranking"></div>
@@ -1834,7 +1834,7 @@ function renderRanking() {
   const pontuacao = {};
 
   corretoresAtivos.forEach(c => {
-    pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, pontos: 0, ptCheckin: 0, ptAgenda: 0, ptAtend: 0, ptVenda: 0, pt945: 0, checkins: 0, agendamentos: 0, atendimentos: 0, vendas: 0, consorcios: 0, dias945: 0, atrasos: 0 };
+    pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, pontos: 0, ptCheckin: 0, ptAgenda: 0, ptAtend: 0, ptPasta: 0, ptVenda: 0, pt945: 0, checkins: 0, agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, consorcios: 0, dias945: 0, atrasos: 0 };
   });
 
   // Dias úteis do mês comercial (a partir de INICIO_MES_COMERCIAL)
@@ -1895,6 +1895,18 @@ function renderRanking() {
     pontuacao[nome].ptAtend += 5;
   });
 
+  // === PASTAS: +8 por pasta subida (cliente criado no mês comercial) ===
+  CLIENTES.filter(c => {
+    const dt = String(c['DATA CRIAÇÃO'] || c['DATA CRIACAO'] || '').substring(0, 10);
+    return dt >= INICIO_MES_COMERCIAL;
+  }).forEach(c => {
+    const corrNome = (c.CORRETOR || '');
+    const corr = corretoresAtivos.find(ca => ca.NOME === corrNome || corrNome.toUpperCase().includes(ca.NOME.toUpperCase()) || ca.NOME.toUpperCase().includes(corrNome.toUpperCase()));
+    if (!corr || !pontuacao[corr.NOME]) return;
+    pontuacao[corr.NOME].pastas++;
+    pontuacao[corr.NOME].ptPasta += 8;
+  });
+
   // === VENDAS: +20 venda, +10 consórcio ===
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let corrNome = (v.CORRETOR || '').toUpperCase();
@@ -1923,7 +1935,7 @@ function renderRanking() {
 
   // === TOTAL ===
   Object.values(pontuacao).forEach(p => {
-    p.pontos = p.ptCheckin + p.ptAgenda + p.ptAtend + p.ptVenda + p.pt945;
+    p.pontos = p.ptCheckin + p.ptAgenda + p.ptAtend + p.ptPasta + p.ptVenda + p.pt945;
   });
 
   // Filtrar e ordenar
@@ -1966,6 +1978,7 @@ function renderRanking() {
           <span style="font-size:.65rem;color:var(--accent);">Check-in <b>${p.ptCheckin}</b></span>
           <span style="font-size:.65rem;color:var(--gold);">Agenda <b>${p.ptAgenda}</b></span>
           <span style="font-size:.65rem;color:var(--success);">Atendim. <b>${p.ptAtend}</b></span>
+          <span style="font-size:.65rem;color:var(--warning);">Pastas <b>${p.ptPasta}</b></span>
           <span style="font-size:.65rem;color:var(--info);">Vendas <b>${p.ptVenda}</b></span>
           <span style="font-size:.65rem;color:var(--purple);">945 <b>${p.pt945}</b></span>
         </div>
@@ -1980,7 +1993,7 @@ function renderRanking() {
   html += `<div style="margin-top:14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:.65rem;color:var(--textL);line-height:1.8;">
     <strong style="color:#fff;">Sistema de Pontos:</strong><br>
     Check-in: antes 9:30 = +5 | 9:30-10:00 = +3 | 10:00-10:30 = +1 | após 10:30 = 0 | 3+ atrasos = -3/dia | ausência = -5<br>
-    Agendamento: +3 | Atendimento confirmado: +5 | Venda: +20 | Consórcio: +10 | 945: +2 (não fez: -2)<br>
+    Agendamento: +3 | Atendimento confirmado: +5 | Pasta subida: +8 | Consórcio: +10 | Venda: +20 | 945: +2 (não fez: -2)<br>
     <strong style="color:var(--gold);">Pontos resetam todo mês comercial.</strong>
   </div>`;
 
