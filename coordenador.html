@@ -81,7 +81,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .cal-day.today{background:rgba(100,255,218,.08);color:var(--accent);font-weight:800;}
 .cal-day.selected{background:rgba(100,255,218,.15);color:var(--accent);font-weight:800;border:1px solid var(--accent);}
 .cal-day.has-event::after{content:'';width:5px;height:5px;background:var(--gold);border-radius:50%;position:absolute;bottom:4px;}
-.cal-count{position:absolute;top:2px;right:3px;background:var(--gold);color:#000;font-size:.5rem;font-weight:800;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;}
+.day-counter{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:20px;text-align:center;margin-bottom:16px;}
+.day-counter-num{font-size:3.5rem;font-weight:900;color:var(--gold);line-height:1;}
+.day-counter-label{font-size:.75rem;color:var(--textL);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+.day-counter-date{font-size:.8rem;color:var(--text);margin-top:6px;font-weight:600;}
 .cal-day.other-month{opacity:.3;}
 .cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .cal-nav-btn{background:none;border:1px solid var(--border);color:var(--textL);padding:4px 10px;border-radius:6px;font-size:.7rem;cursor:pointer;}
@@ -170,6 +173,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       </div>
     </div>
     <div class="col-right">
+      <div id="dayCounter" class="day-counter" style="display:none;">
+        <div class="day-counter-num" id="dayCounterNum">0</div>
+        <div class="day-counter-label" id="dayCounterLabel">agendamentos</div>
+        <div class="day-counter-date" id="dayCounterDate"></div>
+      </div>
       <div class="section-title">Calendario da Equipe</div>
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="changeMonth(-1)">&lt;</button>
@@ -496,23 +504,13 @@ function renderCalendario() {
     html += '<div class="cal-day other-month" onclick="selectDay(\'' + ds + '\')">' + d + '</div>';
   }
 
-  // Contar agendamentos por dia
-  const contagemDia = {};
-  agenda.forEach(a => {
-    const dt = a.DATA instanceof Date ? a.DATA.toISOString().substring(0,10) : String(a.DATA || '').substring(0,10);
-    contagemDia[dt] = (contagemDia[dt] || 0) + 1;
-  });
-
   for (let d = 1; d <= ultimoDia; d++) {
     const ds = CAL_ANO + '-' + String(CAL_MES + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
     let cls = 'cal-day';
     if (ds === hoje) cls += ' today';
     if (ds === DIA_SELECIONADO) cls += ' selected';
     if (diasComEvento.has(ds)) cls += ' has-event';
-    const qtd = contagemDia[ds] || 0;
-    html += '<div class="' + cls + '" onclick="selectDay(\'' + ds + '\')">' + d;
-    if (qtd > 0) html += '<span class="cal-count">' + qtd + '</span>';
-    html += '</div>';
+    html += '<div class="' + cls + '" onclick="selectDay(\'' + ds + '\')">' + d + '</div>';
   }
 
   const totalCells = diaInicio + ultimoDia;
@@ -540,9 +538,11 @@ function changeMonth(dir) {
 }
 
 function renderDayAgenda() {
+  const counter = document.getElementById('dayCounter');
   if (!DIA_SELECIONADO) {
     document.getElementById('dayTitle').textContent = '';
     document.getElementById('dayAgenda').innerHTML = '';
+    counter.style.display = 'none';
     return;
   }
 
@@ -553,6 +553,12 @@ function renderDayAgenda() {
     const dt = a.DATA instanceof Date ? a.DATA.toISOString().substring(0,10) : String(a.DATA || '').substring(0,10);
     return dt === DIA_SELECIONADO;
   });
+
+  // Contador grande
+  counter.style.display = 'block';
+  document.getElementById('dayCounterNum').textContent = agenda.length;
+  document.getElementById('dayCounterLabel').textContent = agenda.length === 1 ? 'agendamento' : 'agendamentos';
+  document.getElementById('dayCounterDate').textContent = p[2] + '/' + p[1] + '/' + p[0];
 
   agenda.sort((a, b) => {
     const ha = fmtHora(a.HORA);
