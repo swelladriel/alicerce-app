@@ -1746,6 +1746,11 @@ function renderDiaDetalhe(dataStr) {
 async function marcarAtendido(idx) {
   const a = AGENDA[idx];
   if (!a) return;
+  if (a.ATENDIDO === 'SIM') return; // Impedir duplicado
+
+  // Desabilitar botão pra evitar cliques múltiplos
+  const btn = event && event.target ? event.target : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'SALVANDO...'; }
 
   a.ATENDIDO = 'SIM';
 

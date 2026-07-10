@@ -1831,6 +1831,24 @@ function renderRanking() {
   const INICIO_MES_COMERCIAL = '2026-07-03';
   const INICIO_CHECKIN_945 = '2026-07-11'; // Check-in e 945 valem só a partir desta data
 
+  // Helper: converte qualquer formato de data pra YYYY-MM-DD
+  // Aceita ISO ("2026-07-03T..."), formato HTTP ("Wed, 24 Jun 2026"), ou string curta ("2026-07-03")
+  function parseDataISO(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    // Já é ISO ou YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+    // Formato tipo "Wed, 24 Jun 2026" ou "24 Jun 2026"
+    const parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) {
+      const y = parsed.getFullYear();
+      const m = String(parsed.getMonth() + 1).padStart(2, '0');
+      const d = String(parsed.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return null;
+  }
+
   // Excluir coordenadores e gerente do ranking
   const EXCLUIDOS = ['Glauco Ribeiro', 'Edvan Silva', 'Marcelo Arouca', 'Adriel Duarte'];
   const corretoresAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && !EXCLUIDOS.includes(c.NOME));
@@ -1856,16 +1874,18 @@ function renderRanking() {
 
   // Helper: verificar se é sábado ou domingo
   function isFimDeSemana(dataStr) {
-    const dt = new Date(dataStr + 'T12:00:00');
+    const iso = parseDataISO(dataStr);
+    if (!iso) return false;
+    const dt = new Date(iso + 'T12:00:00');
     return dt.getDay() === 0 || dt.getDay() === 6;
   }
 
   // === CHECK-IN: pontuar por horário (só a partir de INICIO_CHECKIN_945) ===
   const checkinsPorCorretorDia = {};
-  REGISTROS.filter(r => r.TIPO === 'checkin' && String(r.DATA || '').substring(0, 10) >= INICIO_CHECKIN_945).forEach(r => {
+  REGISTROS.filter(r => r.TIPO === 'checkin' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
-    const dia = String(r.DATA || '').substring(0, 10);
+    const dia = parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10);
     const hora = fmtHora(r.HORA);
     const [h, m] = hora.split(':').map(Number);
     const minutos = h * 60 + m;
@@ -1894,7 +1914,7 @@ function renderRanking() {
 
   // === AGENDAMENTOS: +3 (desde INICIO_MES_COMERCIAL) ===
   const agendaMes = (typeof AGENDA_PLAT !== 'undefined' ? AGENDA_PLAT : []).filter(a => {
-    const dt = String(a.DATA || '').substring(0, 10);
+    const dt = parseDataISO(a.DATA) || '';
     return dt >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente';
   });
   agendaMes.forEach(a => {
@@ -1904,18 +1924,33 @@ function renderRanking() {
     pontuacao[nome].ptAgenda += 3;
   });
 
-  // === ATENDIMENTOS: +5 (desde INICIO_MES_COMERCIAL) ===
-  const atendMes = REGISTROS.filter(r => r.TIPO === 'atendimento-confirmado' && String(r.DATA || '').substring(0, 10) >= INICIO_MES_COMERCIAL);
+  // === ATENDIMENTOS: +5 (desde INICIO_MES_COMERCIAL, deduplicado por CORRETOR+CLIENTE+DATA, sem "teste") ===
+  const atendMes = REGISTROS.filter(r => {
+    if (r.TIPO !== 'atendimento-confirmado') return false;
+    const dt = parseDataISO(r.DATA) || '';
+    if (dt < INICIO_MES_COMERCIAL) return false;
+    // Filtrar entradas de teste
+    const cliente = String(r.CLIENTE || r.CLIENTES || '').toLowerCase();
+    const obs = String(r.OBSERVACOES || r.OBSERVACAO || '').toLowerCase();
+    if (cliente.includes('teste') || obs.includes('teste')) return false;
+    return true;
+  });
+  const atendDedup = new Set();
   atendMes.forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
+    const dia = parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10);
+    const cliente = String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase();
+    const chave = `${nome}|${cliente}|${dia}`;
+    if (atendDedup.has(chave)) return;
+    atendDedup.add(chave);
     pontuacao[nome].atendimentos++;
     pontuacao[nome].ptAtend += 5;
   });
 
   // === PASTAS: +8 (desde INICIO_MES_COMERCIAL) ===
   CLIENTES.filter(c => {
-    const dt = String(c['DATA CRIAÇÃO'] || c['DATA CRIACAO'] || '').substring(0, 10);
+    const dt = parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '';
     return dt >= INICIO_MES_COMERCIAL;
   }).forEach(c => {
     const corrNome = (c.CORRETOR || '');
@@ -1937,11 +1972,11 @@ function renderRanking() {
 
   // === 945: +2 fez, -2 não fez (só a partir de INICIO_CHECKIN_945, sem penalizar sáb/dom) ===
   const diasCom945 = {};
-  REGISTROS.filter(r => r.TIPO === '945-individual' && String(r.DATA || '').substring(0, 10) >= INICIO_CHECKIN_945).forEach(r => {
+  REGISTROS.filter(r => r.TIPO === '945-individual' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
     if (!diasCom945[nome]) diasCom945[nome] = new Set();
-    diasCom945[nome].add(String(r.DATA || '').substring(0, 10));
+    diasCom945[nome].add(parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10));
   });
   Object.values(pontuacao).forEach(p => {
     const todosDias = diasCom945[p.nome] ? diasCom945[p.nome] : new Set();
