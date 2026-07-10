@@ -81,6 +81,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .cal-day.today{background:rgba(100,255,218,.08);color:var(--accent);font-weight:800;}
 .cal-day.selected{background:rgba(100,255,218,.15);color:var(--accent);font-weight:800;border:1px solid var(--accent);}
 .cal-day.has-event::after{content:'';width:5px;height:5px;background:var(--gold);border-radius:50%;position:absolute;bottom:4px;}
+.cal-count{position:absolute;top:2px;right:3px;background:var(--gold);color:#000;font-size:.5rem;font-weight:800;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;}
 .cal-day.other-month{opacity:.3;}
 .cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .cal-nav-btn{background:none;border:1px solid var(--border);color:var(--textL);padding:4px 10px;border-radius:6px;font-size:.7rem;cursor:pointer;}
@@ -495,13 +496,23 @@ function renderCalendario() {
     html += '<div class="cal-day other-month" onclick="selectDay(\'' + ds + '\')">' + d + '</div>';
   }
 
+  // Contar agendamentos por dia
+  const contagemDia = {};
+  agenda.forEach(a => {
+    const dt = a.DATA instanceof Date ? a.DATA.toISOString().substring(0,10) : String(a.DATA || '').substring(0,10);
+    contagemDia[dt] = (contagemDia[dt] || 0) + 1;
+  });
+
   for (let d = 1; d <= ultimoDia; d++) {
     const ds = CAL_ANO + '-' + String(CAL_MES + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
     let cls = 'cal-day';
     if (ds === hoje) cls += ' today';
     if (ds === DIA_SELECIONADO) cls += ' selected';
     if (diasComEvento.has(ds)) cls += ' has-event';
-    html += '<div class="' + cls + '" onclick="selectDay(\'' + ds + '\')">' + d + '</div>';
+    const qtd = contagemDia[ds] || 0;
+    html += '<div class="' + cls + '" onclick="selectDay(\'' + ds + '\')">' + d;
+    if (qtd > 0) html += '<span class="cal-count">' + qtd + '</span>';
+    html += '</div>';
   }
 
   const totalCells = diaInicio + ultimoDia;
