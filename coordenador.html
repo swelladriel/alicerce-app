@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0f14">
+<title>Alicerce — Painel do Coordenador</title>
+<style>
+:root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:10px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;}
+.login-screen.hidden{display:none;}
+.login-logo{font-size:2.2rem;font-weight:900;color:#fff;letter-spacing:3px;margin-bottom:4px;}
+.login-sub{font-size:.8rem;color:var(--textL);margin-bottom:10px;letter-spacing:.5px;}
+.login-question{font-size:1.1rem;color:var(--text);margin-bottom:24px;font-weight:600;}
+.login-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:400px;}
+.login-btn{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:18px 16px;color:var(--text);font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center;}
+.login-btn:hover{border-color:var(--accent);background:rgba(100,255,218,.04);}
+.login-btn .role{font-size:.65rem;color:var(--textL);margin-top:4px;font-weight:400;}
+.login-btn.gerente{grid-column:1/3;border-color:var(--gold);background:rgba(255,215,0,.04);}
+.login-btn.gerente:hover{background:rgba(255,215,0,.08);}
+.login-btn.gerente .role{color:var(--gold);}
+
+.app-shell{display:none;flex-direction:column;min-height:100vh;}
+.app-shell.active{display:flex;}
+
+.top-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;}
+.top-bar-left{display:flex;align-items:center;gap:12px;}
+.top-bar-title{font-size:1rem;font-weight:900;color:#fff;letter-spacing:1px;}
+.top-bar-sep{color:var(--border);font-weight:300;}
+.top-bar-label{font-size:.8rem;color:var(--textL);}
+.top-bar-right{display:flex;align-items:center;gap:14px;}
+.top-bar-user{font-size:.85rem;font-weight:700;color:var(--accent);}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--textL);padding:5px 12px;border-radius:6px;font-size:.7rem;cursor:pointer;transition:all .2s;}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+
+.main{display:grid;grid-template-columns:60% 40%;gap:0;flex:1;overflow:hidden;}
+.col-left{padding:20px;overflow-y:auto;max-height:calc(100vh - 52px);border-right:1px solid var(--border);}
+.col-right{padding:20px;overflow-y:auto;max-height:calc(100vh - 52px);}
+
+.section-title{font-size:.75rem;font-weight:800;color:var(--textL);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+
+.tabs{display:flex;gap:6px;margin-bottom:16px;}
+.tab-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:.75rem;font-weight:600;color:var(--textL);cursor:pointer;transition:all .15s;}
+.tab-btn.active{background:rgba(100,255,218,.08);border-color:var(--accent);color:var(--accent);}
+
+.group-header{font-size:.8rem;font-weight:800;color:var(--accent);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px;margin-top:16px;display:flex;justify-content:space-between;align-items:center;}
+.group-header:first-of-type{margin-top:0;}
+.group-count{font-size:.65rem;color:var(--textL);font-weight:400;}
+
+.dem-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;margin-bottom:8px;transition:all .3s;position:relative;overflow:hidden;}
+.dem-card.concluded{opacity:.5;border-left-color:var(--success) !important;}
+.dem-card .desc{font-size:.82rem;color:#fff;line-height:1.5;margin-bottom:8px;}
+.dem-card .client{font-size:.7rem;color:var(--gold);margin-bottom:8px;font-weight:600;}
+.dem-card .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.dem-card .bottom{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.dem-card .date{font-size:.62rem;color:var(--textL);}
+.tag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.6rem;font-weight:700;text-transform:uppercase;}
+.tag-alta{background:rgba(239,83,80,.12);color:var(--danger);border:1px solid rgba(239,83,80,.25);}
+.tag-media{background:rgba(255,167,38,.1);color:var(--warning);border:1px solid rgba(255,167,38,.2);}
+.tag-baixa{background:rgba(66,165,245,.1);color:var(--info);border:1px solid rgba(66,165,245,.2);}
+.tag-concluida{background:rgba(0,230,118,.1);color:var(--success);border:1px solid rgba(0,230,118,.2);}
+.tag-pendente{background:rgba(255,255,255,.05);color:var(--textL);border:1px solid rgba(255,255,255,.1);}
+
+.btn-concluir{background:var(--success);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;}
+.btn-concluir:hover{opacity:.85;}
+.btn-concluir:active{transform:scale(.96);}
+
+.foco-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+.foco-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:var(--rad);padding:14px;margin-bottom:8px;}
+.foco-corretor{font-size:.72rem;font-weight:800;color:var(--gold);margin-bottom:6px;}
+.foco-text{font-size:.82rem;color:#fff;line-height:1.4;margin-bottom:4px;}
+.foco-why{font-size:.72rem;color:var(--textL);line-height:1.3;font-style:italic;}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:16px;}
+.cal-header{text-align:center;font-size:.6rem;font-weight:700;color:var(--textL);padding:6px 0;text-transform:uppercase;}
+.cal-day{text-align:center;padding:8px 4px;font-size:.75rem;color:var(--textL);cursor:pointer;border-radius:6px;transition:all .15s;position:relative;min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.cal-day:hover{background:rgba(255,255,255,.04);}
+.cal-day.today{background:rgba(100,255,218,.08);color:var(--accent);font-weight:800;}
+.cal-day.selected{background:rgba(100,255,218,.15);color:var(--accent);font-weight:800;border:1px solid var(--accent);}
+.cal-day.has-event::after{content:'';width:5px;height:5px;background:var(--gold);border-radius:50%;position:absolute;bottom:4px;}
+.cal-day.other-month{opacity:.3;}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.cal-nav-btn{background:none;border:1px solid var(--border);color:var(--textL);padding:4px 10px;border-radius:6px;font-size:.7rem;cursor:pointer;}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.cal-month{font-size:.85rem;font-weight:700;color:#fff;}
+
+.agenda-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:12px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;}
+.agenda-hora{font-size:.85rem;font-weight:800;color:var(--accent);min-width:45px;}
+.agenda-info{flex:1;}
+.agenda-tipo{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.58rem;font-weight:700;text-transform:uppercase;margin-bottom:4px;}
+.tipo-cliente{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.2);}
+.tipo-reuniao{background:rgba(66,165,245,.1);color:var(--info);border:1px solid rgba(66,165,245,.2);}
+.tipo-alinhamento{background:rgba(171,71,188,.1);color:var(--purple);border:1px solid rgba(171,71,188,.2);}
+.tipo-meeting{background:rgba(0,230,118,.1);color:var(--success);border:1px solid rgba(0,230,118,.2);}
+.agenda-cliente{font-size:.8rem;color:#fff;font-weight:600;margin-bottom:2px;}
+.agenda-corretor{font-size:.68rem;color:var(--textL);}
+.agenda-atendido{color:var(--success);font-size:.8rem;font-weight:800;}
+
+.empty{text-align:center;padding:30px 20px;color:var(--textL);font-size:.8rem;}
+
+.spinner-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,20,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner-text{margin-top:14px;font-size:.8rem;color:var(--textL);}
+
+.error-banner{background:rgba(239,83,80,.1);border:1px solid var(--danger);border-radius:var(--rad);padding:12px 16px;margin-bottom:16px;font-size:.78rem;color:var(--danger);display:none;}
+
+@keyframes fadeOutCard{
+  0%{background:var(--card);opacity:1;}
+  50%{background:rgba(0,230,118,.1);border-color:var(--success);}
+  100%{opacity:0;height:0;padding:0;margin:0;border:0;overflow:hidden;}
+}
+.dem-card.concluding{animation:fadeOutCard .8s ease forwards;}
+
+@media(max-width:768px){
+  .main{grid-template-columns:1fr;overflow:visible;}
+  .col-left{max-height:none;border-right:none;border-bottom:1px solid var(--border);}
+  .col-right{max-height:none;}
+  .login-grid{grid-template-columns:1fr;max-width:300px;}
+  .login-btn.gerente{grid-column:1;}
+  .top-bar{padding:12px 16px;}
+  .top-bar-label{display:none;}
+  .top-bar-sep{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">ALICERCE</div>
+  <div class="login-sub">Painel do Coordenador</div>
+  <div class="login-question">Quem e voce?</div>
+  <div class="login-grid">
+    <div class="login-btn" onclick="login('Glauco','Coordenador')">Glauco<div class="role">Coordenador</div></div>
+    <div class="login-btn" onclick="login('Edvan','Coordenador')">Edvan<div class="role">Coordenador</div></div>
+    <div class="login-btn" onclick="login('Marcelo Arouca','Coordenador')">Marcelo Arouca<div class="role">Coordenador</div></div>
+    <div class="login-btn gerente" onclick="login('Adriel Duarte','Gerente')">Adriel Duarte<div class="role">Gerente - ve todas as equipes</div></div>
+  </div>
+</div>
+
+<div class="app-shell" id="appShell">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-title">ALICERCE</span>
+      <span class="top-bar-sep">|</span>
+      <span class="top-bar-label">Painel do Coordenador</span>
+    </div>
+    <div class="top-bar-right">
+      <span class="top-bar-user" id="topBarUser"></span>
+      <button class="logout-btn" onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="col-left">
+      <div class="error-banner" id="errorBanner"></div>
+      <div class="section-title">Demandas da Equipe</div>
+      <div class="tabs" id="demTabs">
+        <div class="tab-btn active" data-tab="hoje" onclick="setTab('hoje')">Hoje</div>
+        <div class="tab-btn" data-tab="pendentes" onclick="setTab('pendentes')">Pendentes</div>
+        <div class="tab-btn" data-tab="concluidas" onclick="setTab('concluidas')">Concluidas</div>
+      </div>
+      <div id="demList"></div>
+      <div class="foco-section" id="focoSection">
+        <div class="section-title" style="display:flex;align-items:center;gap:8px;">A Unica Coisa <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Foco do dia</span></div>
+        <div id="focoList"></div>
+      </div>
+    </div>
+    <div class="col-right">
+      <div class="section-title">Calendario da Equipe</div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">&lt;</button>
+        <span class="cal-month" id="calMonth"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">&gt;</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="section-title" id="dayTitle" style="margin-top:16px;"></div>
+      <div id="dayAgenda"></div>
+    </div>
+  </div>
+</div>
+
+<div class="spinner-overlay" id="spinner" style="display:none;">
+  <div class="spinner"></div>
+  <div class="spinner-text">Carregando dados...</div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
+
+const EQUIPES = {
+  'Glauco': ['Dandara Campos','Caique Mendes','Isaac de Sa','Davi Ribeiro','Renato Ribeiro','William Bueno','Victor Pereira','Gabriel Souza'],
+  'Edvan': ['Gabriel Ribeiro','Cristiano Fernandes','Camila Craveiro','Bruna Pacheco','Maria Clara','Kerlly Martins'],
+  'Marcelo Arouca': ['Cristiane Ferreira','Felipe Guimaraes','Carlos Aurelio'],
+  'Adriel Duarte': ['Marcos Reis','Joyce Brisa','Kayque Nascimento','Josimar']
+};
+
+let COORD = null;
+let DADOS = {};
+let TAB_ATUAL = 'hoje';
+let CAL_MES = new Date().getMonth();
+let CAL_ANO = new Date().getFullYear();
+let DIA_SELECIONADO = toBrasilia(new Date()).toISOString().split('T')[0];
+let REFRESH_TIMER = null;
+
+function toBrasilia(d) {
+  const dt = d instanceof Date ? d : new Date(d);
+  return new Date(dt.getTime() - 3 * 60 * 60 * 1000);
+}
+
+function hojeStr() {
+  return toBrasilia(new Date()).toISOString().split('T')[0];
+}
+
+function fmtData(d) {
+  if (!d) return '';
+  const s = String(d).substring(0, 10);
+  if (!s.includes('-')) return s;
+  const p = s.split('-');
+  return p[2] + '/' + p[1];
+}
+
+function fmtHora(h) {
+  if (!h) return '';
+  const s = String(h);
+  if (s.includes('T')) {
+    const dt = new Date(s);
+    const br = toBrasilia(dt);
+    return br.getHours().toString().padStart(2,'0') + ':' + br.getMinutes().toString().padStart(2,'0');
+  }
+  if (s.includes(':')) {
+    const parts = s.split(':');
+    return parts[0].padStart(2,'0') + ':' + parts[1].padStart(2,'0');
+  }
+  return s;
+}
+
+function getMinhaEquipe() {
+  if (!COORD) return [];
+  if (COORD.cargo === 'Gerente') {
+    let todos = [];
+    Object.values(EQUIPES).forEach(e => todos = todos.concat(e));
+    Object.keys(EQUIPES).forEach(c => { if (c !== 'Adriel Duarte') todos.push(c); });
+    return todos;
+  }
+  return EQUIPES[COORD.nome] || [];
+}
+
+function normNome(n) {
+  return (n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+}
+
+function pertenceEquipe(nomeCorretor) {
+  if (!COORD) return false;
+  if (COORD.cargo === 'Gerente') return true;
+  const equipe = EQUIPES[COORD.nome] || [];
+  const norm = normNome(nomeCorretor);
+  return equipe.some(m => normNome(m) === norm || norm.includes(normNome(m)) || normNome(m).includes(norm));
+}
+
+function login(nome, cargo) {
+  COORD = { nome, cargo };
+  localStorage.setItem('coordenadorLogado', JSON.stringify(COORD));
+  mostrarApp();
+}
+
+function logout() {
+  COORD = null;
+  localStorage.removeItem('coordenadorLogado');
+  if (REFRESH_TIMER) clearInterval(REFRESH_TIMER);
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appShell').classList.remove('active');
+}
+
+function mostrarApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appShell').classList.add('active');
+  document.getElementById('topBarUser').textContent = COORD.nome;
+  carregarDados();
+  if (REFRESH_TIMER) clearInterval(REFRESH_TIMER);
+  REFRESH_TIMER = setInterval(carregarDadosSilencioso, 60000);
+}
+
+async function carregarDados() {
+  document.getElementById('spinner').style.display = 'flex';
+  document.getElementById('errorBanner').style.display = 'none';
+  try {
+    const res = await fetch(API_URL + '?acao=tudo');
+    DADOS = await res.json();
+    renderTudo();
+  } catch (e) {
+    document.getElementById('errorBanner').textContent = 'Erro ao carregar dados: ' + e.message;
+    document.getElementById('errorBanner').style.display = 'block';
+  }
+  document.getElementById('spinner').style.display = 'none';
+}
+
+async function carregarDadosSilencioso() {
+  try {
+    const res = await fetch(API_URL + '?acao=tudo');
+    DADOS = await res.json();
+    renderTudo();
+  } catch (e) {}
+}
+
+function renderTudo() {
+  renderDemandas();
+  renderFoco();
+  renderCalendario();
+  renderDayAgenda();
+}
+
+function setTab(tab) {
+  TAB_ATUAL = tab;
+  document.querySelectorAll('#demTabs .tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  renderDemandas();
+}
+
+function getDemandas() {
+  const demandas = (DADOS.demandas || []).filter(d => {
+    const tipo = (d.TIPO || '').toLowerCase();
+    return tipo === 'ia-refinada-v2';
+  });
+  return demandas.filter(d => pertenceEquipe(d.RESPONSAVEL));
+}
+
+function renderDemandas() {
+  const todas = getDemandas();
+  const hoje = hojeStr();
+
+  let lista;
+  if (TAB_ATUAL === 'hoje') {
+    lista = todas.filter(d => {
+      const dt = d.DATA instanceof Date ? d.DATA.toISOString().substring(0,10) : String(d.DATA || '').substring(0,10);
+      return dt === hoje;
+    });
+  } else if (TAB_ATUAL === 'pendentes') {
+    lista = todas.filter(d => !(d.STATUS || '').toLowerCase().includes('conclu'));
+  } else {
+    lista = todas.filter(d => (d.STATUS || '').toLowerCase().includes('conclu'));
+  }
+
+  const priorOrdem = {'Alta':1,'Media':2,'Media':2,'Baixa':3};
+  lista.sort((a, b) => {
+    const stA = (a.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    const stB = (b.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    if (stA !== stB) return stA - stB;
+    return (priorOrdem[a.PRIORIDADE] || 9) - (priorOrdem[b.PRIORIDADE] || 9);
+  });
+
+  const grouped = {};
+  lista.forEach(d => {
+    const key = d.RESPONSAVEL || 'Sem responsavel';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(d);
+  });
+
+  if (lista.length === 0) {
+    const msgs = {
+      'hoje': 'Nenhuma demanda para hoje.',
+      'pendentes': 'Nenhuma demanda pendente.',
+      'concluidas': 'Nenhuma demanda concluida.'
+    };
+    document.getElementById('demList').innerHTML = '<div class="empty">' + msgs[TAB_ATUAL] + '</div>';
+    return;
+  }
+
+  let html = '';
+  Object.keys(grouped).sort().forEach(corretor => {
+    const cards = grouped[corretor];
+    html += '<div class="group-header">' + corretor + '<span class="group-count">' + cards.length + ' demanda' + (cards.length > 1 ? 's' : '') + '</span></div>';
+    cards.forEach((d, i) => {
+      const isConcluida = (d.STATUS || '').toLowerCase().includes('conclu');
+      const prior = (d.PRIORIDADE || 'media').toLowerCase();
+      const borderColor = prior === 'alta' ? 'var(--danger)' : prior === 'baixa' ? 'var(--info)' : 'var(--warning)';
+      const tagClass = prior === 'alta' ? 'tag-alta' : prior === 'baixa' ? 'tag-baixa' : 'tag-media';
+      const demResp = (d.RESPONSAVEL || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const demDesc = (d.DESCRICAO || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const demData = String(d.DATA || '').substring(0, 10);
+      const cardId = 'dem-' + corretor.replace(/\s/g,'') + '-' + i;
+
+      html += '<div class="dem-card' + (isConcluida ? ' concluded' : '') + '" id="' + cardId + '" style="border-left:4px solid ' + (isConcluida ? 'var(--success)' : borderColor) + ';">';
+      html += '<div class="desc">' + (d.DESCRICAO || '-') + '</div>';
+      if (d.CLIENTE) html += '<div class="client">' + d.CLIENTE + '</div>';
+      html += '<div class="meta">';
+      html += '<span class="tag ' + tagClass + '">' + (d.PRIORIDADE || 'Media') + '</span>';
+      if (isConcluida) html += '<span class="tag tag-concluida">CONCLUIDA</span>';
+      html += '</div>';
+      html += '<div class="bottom">';
+      html += '<span class="date">' + fmtData(demData) + '</span>';
+      if (!isConcluida) {
+        html += '<button class="btn-concluir" onclick="concluir(\'' + demResp + '\',\'' + demDesc + '\',\'' + demData + '\',\'' + cardId + '\')">&#10003; CONCLUIDO</button>';
+      } else {
+        html += '<span style="font-size:.65rem;color:var(--success);font-weight:600;">Concluida</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+  });
+
+  document.getElementById('demList').innerHTML = html;
+}
+
+async function concluir(resp, desc, data, cardId) {
+  const el = document.getElementById(cardId);
+  if (!el) return;
+
+  const params = new URLSearchParams({
+    acao: 'concluir',
+    resp: resp.replace(/&quot;/g, '"'),
+    desc: desc.replace(/&quot;/g, '"'),
+    data: data,
+    por: COORD.nome
+  });
+
+  try {
+    const r = await fetch(API_URL + '?' + params.toString());
+    const res = await r.json();
+
+    if (res.sucesso) {
+      el.classList.add('concluding');
+      const d = (DADOS.demandas || []).find(dm =>
+        (dm.RESPONSAVEL || '') === resp.replace(/\\'/g, "'").replace(/&quot;/g, '"') &&
+        (dm.DESCRICAO || '') === desc.replace(/\\'/g, "'").replace(/&quot;/g, '"') &&
+        String(dm.DATA || '').substring(0, 10) === data
+      );
+      if (d) d.STATUS = 'Concluida';
+      setTimeout(() => renderDemandas(), 850);
+    } else {
+      alert('Erro: ' + (res.erro || 'Erro desconhecido'));
+    }
+  } catch (e) {
+    alert('Erro de conexao: ' + e.message);
+  }
+}
+
+function renderFoco() {
+  const unicaCoisa = (DADOS.unicaCoisa || []).filter(u => pertenceEquipe(u.CORRETOR));
+  const hoje = hojeStr();
+  const focoHoje = unicaCoisa.filter(u => {
+    const dt = u.DATA instanceof Date ? u.DATA.toISOString().substring(0,10) : String(u.DATA || '').substring(0,10);
+    return dt === hoje;
+  });
+
+  if (focoHoje.length === 0) {
+    document.getElementById('focoList').innerHTML = '<div class="empty">Nenhum foco definido para hoje.</div>';
+    return;
+  }
+
+  let html = '';
+  focoHoje.forEach(u => {
+    html += '<div class="foco-card">';
+    html += '<div class="foco-corretor">' + (u.CORRETOR || '-') + '</div>';
+    html += '<div class="foco-text">' + (u.FOCO || '-') + '</div>';
+    if (u['POR QUE'] || u.POR_QUE) html += '<div class="foco-why">' + (u['POR QUE'] || u.POR_QUE || '') + '</div>';
+    html += '</div>';
+  });
+
+  document.getElementById('focoList').innerHTML = html;
+}
+
+function getAgendaEquipe() {
+  return (DADOS.agenda || []).filter(a => pertenceEquipe(a.CORRETOR));
+}
+
+function renderCalendario() {
+  const meses = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('calMonth').textContent = meses[CAL_MES] + ' ' + CAL_ANO;
+
+  const agenda = getAgendaEquipe();
+  const diasComEvento = new Set();
+  agenda.forEach(a => {
+    const dt = a.DATA instanceof Date ? a.DATA.toISOString().substring(0,10) : String(a.DATA || '').substring(0,10);
+    diasComEvento.add(dt);
+  });
+
+  const primeiro = new Date(CAL_ANO, CAL_MES, 1);
+  const ultimoDia = new Date(CAL_ANO, CAL_MES + 1, 0).getDate();
+  let diaInicio = primeiro.getDay();
+  const hoje = hojeStr();
+
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+  let html = '';
+  dias.forEach(d => { html += '<div class="cal-header">' + d + '</div>'; });
+
+  const mesAnteriorUltDia = new Date(CAL_ANO, CAL_MES, 0).getDate();
+  for (let i = diaInicio - 1; i >= 0; i--) {
+    const d = mesAnteriorUltDia - i;
+    const dt = new Date(CAL_ANO, CAL_MES - 1, d);
+    const ds = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    html += '<div class="cal-day other-month" onclick="selectDay(\'' + ds + '\')">' + d + '</div>';
+  }
+
+  for (let d = 1; d <= ultimoDia; d++) {
+    const ds = CAL_ANO + '-' + String(CAL_MES + 1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    let cls = 'cal-day';
+    if (ds === hoje) cls += ' today';
+    if (ds === DIA_SELECIONADO) cls += ' selected';
+    if (diasComEvento.has(ds)) cls += ' has-event';
+    html += '<div class="' + cls + '" onclick="selectDay(\'' + ds + '\')">' + d + '</div>';
+  }
+
+  const totalCells = diaInicio + ultimoDia;
+  const resto = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let d = 1; d <= resto; d++) {
+    const dt = new Date(CAL_ANO, CAL_MES + 1, d);
+    const ds = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    html += '<div class="cal-day other-month" onclick="selectDay(\'' + ds + '\')">' + d + '</div>';
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function selectDay(ds) {
+  DIA_SELECIONADO = ds;
+  renderCalendario();
+  renderDayAgenda();
+}
+
+function changeMonth(dir) {
+  CAL_MES += dir;
+  if (CAL_MES > 11) { CAL_MES = 0; CAL_ANO++; }
+  if (CAL_MES < 0) { CAL_MES = 11; CAL_ANO--; }
+  renderCalendario();
+}
+
+function renderDayAgenda() {
+  if (!DIA_SELECIONADO) {
+    document.getElementById('dayTitle').textContent = '';
+    document.getElementById('dayAgenda').innerHTML = '';
+    return;
+  }
+
+  const p = DIA_SELECIONADO.split('-');
+  document.getElementById('dayTitle').textContent = 'Agenda - ' + p[2] + '/' + p[1];
+
+  const agenda = getAgendaEquipe().filter(a => {
+    const dt = a.DATA instanceof Date ? a.DATA.toISOString().substring(0,10) : String(a.DATA || '').substring(0,10);
+    return dt === DIA_SELECIONADO;
+  });
+
+  agenda.sort((a, b) => {
+    const ha = fmtHora(a.HORA);
+    const hb = fmtHora(b.HORA);
+    return ha.localeCompare(hb);
+  });
+
+  if (agenda.length === 0) {
+    document.getElementById('dayAgenda').innerHTML = '<div class="empty">Nenhum agendamento neste dia.</div>';
+    return;
+  }
+
+  let html = '';
+  agenda.forEach(a => {
+    const tipo = (a.TIPO || '').toLowerCase();
+    let tipoClass = 'tipo-cliente';
+    let tipoLabel = a.TIPO || 'Cliente';
+    if (tipo.includes('reuniao') || tipo.includes('reunião')) { tipoClass = 'tipo-reuniao'; }
+    else if (tipo.includes('alinhamento')) { tipoClass = 'tipo-alinhamento'; }
+    else if (tipo.includes('meeting')) { tipoClass = 'tipo-meeting'; }
+
+    const atendido = a.ATENDIDO && String(a.ATENDIDO).toLowerCase() !== 'false' && a.ATENDIDO !== '';
+
+    html += '<div class="agenda-card">';
+    html += '<div class="agenda-hora">' + fmtHora(a.HORA) + '</div>';
+    html += '<div class="agenda-info">';
+    html += '<div class="agenda-tipo ' + tipoClass + '">' + tipoLabel + '</div>';
+    if (a.CLIENTE) html += '<div class="agenda-cliente">' + a.CLIENTE + '</div>';
+    html += '<div class="agenda-corretor">' + (a.CORRETOR || '-') + '</div>';
+    html += '</div>';
+    if (atendido) html += '<div class="agenda-atendido">&#10003;</div>';
+    html += '</div>';
+  });
+
+  document.getElementById('dayAgenda').innerHTML = html;
+}
+
+(function init() {
+  const saved = localStorage.getItem('coordenadorLogado');
+  if (saved) {
+    try {
+      COORD = JSON.parse(saved);
+      if (COORD && COORD.nome) {
+        mostrarApp();
+        return;
+      }
+    } catch(e) {}
+  }
+  document.getElementById('loginScreen').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>
