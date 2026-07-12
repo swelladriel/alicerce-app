@@ -1912,14 +1912,19 @@ function renderRanking() {
     if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3;
   });
 
-  // === AGENDAMENTOS: +3 (desde INICIO_MES_COMERCIAL) ===
+  // === AGENDAMENTOS: +3 (desde INICIO_MES_COMERCIAL, deduplicado por CORRETOR+CLIENTE no mês) ===
   const agendaMes = (typeof AGENDA_PLAT !== 'undefined' ? AGENDA_PLAT : []).filter(a => {
     const dt = parseDataISO(a.DATA) || '';
     return dt >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente';
   });
+  const agendaDedup = new Set();
   agendaMes.forEach(a => {
     const nome = a.CORRETOR;
     if (!pontuacao[nome]) return;
+    const cliente = String(a.CLIENTE || '').trim().toUpperCase();
+    const chave = `${nome}|${cliente}`;
+    if (agendaDedup.has(chave)) return;
+    agendaDedup.add(chave);
     pontuacao[nome].agendamentos++;
     pontuacao[nome].ptAgenda += 3;
   });
@@ -1939,9 +1944,8 @@ function renderRanking() {
   atendMes.forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
-    const dia = parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10);
     const cliente = String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase();
-    const chave = `${nome}|${cliente}|${dia}`;
+    const chave = `${nome}|${cliente}`;
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
     pontuacao[nome].atendimentos++;

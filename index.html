@@ -1917,6 +1917,10 @@ async function confirmarAgendamento() {
     alert('Preencha o nome do cliente.');
     return;
   }
+  if (tipo === 'Cliente' && cliente.split(/\s+/).filter(p => p.length > 0).length < 2) {
+    alert('Coloque nome E sobrenome do cliente.\nEx: João Silva');
+    return;
+  }
 
   const btn = document.getElementById('ag-confirmar');
   btn.disabled = true;
