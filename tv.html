@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alicerce — TV</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #0a0a0f;
+  --card: #12121a;
+  --card-border: rgba(255,255,255,0.06);
+  --gold: #d4a843;
+  --gold-glow: rgba(212,168,67,0.3);
+  --silver: #a8b2c1;
+  --bronze: #cd7f32;
+  --text: #ffffff;
+  --text-dim: rgba(255,255,255,0.5);
+  --green: #22c55e;
+  --blue: #3b82f6;
+  --purple: #a855f7;
+  --red: #ef4444;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* HEADER */
+.tv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 36px;
+  position: relative;
+  z-index: 10;
+}
+
+.tv-logo { display: flex; align-items: center; gap: 16px; }
+
+.tv-logo-icon {
+  width: 40px; height: 40px; background: white; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 900; color: #0a0a0f;
+}
+
+.tv-logo-text { font-size: 20px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+.tv-logo-sub { font-size: 11px; color: var(--text-dim); letter-spacing: 4px; text-transform: uppercase; }
+
+.tv-clock { text-align: right; }
+.tv-clock-time { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: 2px; }
+.tv-clock-date { font-size: 12px; color: var(--text-dim); letter-spacing: 1px; }
+
+/* TAB BAR */
+.tv-tab-bar { display: flex; justify-content: center; gap: 10px; padding: 0 36px 8px; }
+
+.tv-tab {
+  padding: 5px 22px; border-radius: 100px; font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; transition: all 0.5s ease;
+  background: transparent; color: var(--text-dim); border: 1px solid transparent;
+}
+
+.tv-tab.active { background: rgba(212,168,67,0.15); color: var(--gold); border-color: rgba(212,168,67,0.3); }
+
+/* PROGRESS */
+.tv-progress { width: 100%; height: 2px; background: rgba(255,255,255,0.05); }
+.tv-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), #f0d78c); width: 0%; transition: width 0.1s linear; }
+
+/* PAGES */
+.tv-page {
+  position: absolute; top: 110px; left: 0; right: 0; bottom: 0;
+  padding: 10px 36px; opacity: 0; transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
+  overflow: hidden;
+}
+
+.tv-page.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ============ RANKING ============ */
+.ranking-podium { display: flex; gap: 12px; justify-content: center; align-items: flex-end; padding-bottom: 8px; }
+
+.podium-card {
+  flex: 1; max-width: 300px; background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 12px; padding: 12px; text-align: center; position: relative; overflow: hidden;
+}
+
+.podium-card.first { border-color: rgba(212,168,67,0.4); background: linear-gradient(180deg, rgba(212,168,67,0.12) 0%, var(--card) 100%); transform: scale(1.03); order: 2; }
+.podium-card.second { border-color: rgba(168,178,193,0.3); background: linear-gradient(180deg, rgba(168,178,193,0.08) 0%, var(--card) 100%); order: 1; }
+.podium-card.third { border-color: rgba(205,127,50,0.3); background: linear-gradient(180deg, rgba(205,127,50,0.08) 0%, var(--card) 100%); order: 3; }
+
+.podium-pos { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
+.podium-card.first .podium-pos { color: var(--gold); }
+.podium-card.second .podium-pos { color: var(--silver); }
+.podium-card.third .podium-pos { color: var(--bronze); }
+
+.podium-medal { font-size: 24px; margin-bottom: 2px; }
+.podium-name { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+.podium-pts { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.podium-card.first .podium-pts { color: var(--gold); }
+.podium-card.second .podium-pts { color: var(--silver); }
+.podium-card.third .podium-pts { color: var(--bronze); }
+.podium-label { font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+
+.podium-cats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; margin-top: 6px; text-align: left; }
+.podium-cat { font-size: 10px; color: var(--text-dim); display: flex; justify-content: space-between; padding: 1px 4px; background: rgba(255,255,255,0.03); border-radius: 3px; }
+.podium-cat-val { color: var(--text); font-weight: 700; }
+.podium-cat-pts { color: var(--gold); font-weight: 600; font-size: 9px; }
+
+/* RANKING REST */
+.ranking-rest { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+
+.rank-row {
+  display: flex; align-items: center; gap: 8px; background: var(--card);
+  border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px;
+}
+
+.rank-pos { font-size: 14px; font-weight: 900; color: var(--text-dim); min-width: 24px; text-align: center; }
+.rank-name { font-size: 13px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-pts { font-size: 16px; font-weight: 900; color: var(--gold); text-align: right; }
+.rank-pts-label { font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-align: right; }
+
+.rank-cats { display: none; }
+.rank-cat-val { color: var(--text); font-weight: 700; }
+.rank-cat-pts { color: var(--gold); font-weight: 700; font-size: 10px; }
+.rank-cat-neg { color: var(--red); font-weight: 700; font-size: 10px; }
+
+/* ============ CALENDÁRIO ============ */
+.cal-container { display: flex; flex-direction: column; height: calc(100vh - 140px); }
+.cal-titulo { font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.cal-mes-label { font-size: 16px; font-weight: 900; color: var(--text); letter-spacing: 1px; }
+.cal-total { background: rgba(212,168,67,0.15); color: var(--gold); padding: 2px 10px; border-radius: 100px; font-size: 11px; font-weight: 800; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; flex: 1; grid-auto-rows: 1fr; }
+.cal-header-cell { text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 1px; padding: 2px 0; display: flex; align-items: center; justify-content: center; }
+
+.cal-cell { background: var(--card); border: 1px solid var(--card-border); border-radius: 6px; padding: 2px 4px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.cal-cell.empty { background: transparent; border-color: transparent; }
+.cal-cell.hoje { border-color: var(--gold); border-width: 2px; background: rgba(212,168,67,0.08); }
+.cal-cell.tem-agenda { border-color: rgba(212,168,67,0.25); }
+
+.cal-dia { font-size: 12px; font-weight: 800; margin-bottom: 1px; flex-shrink: 0; }
+.cal-cell.hoje .cal-dia { color: var(--gold); }
+
+.cal-nomes { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
+.cal-nome { font-size: 9px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0px 3px; border-radius: 2px; background: rgba(212,168,67,0.1); border-left: 2px solid var(--gold); line-height: 1.4; }
+.cal-nome.reuniao { background: rgba(59,130,246,0.1); border-left-color: var(--blue); color: var(--blue); }
+.cal-nome.alinhamento { background: rgba(168,85,247,0.1); border-left-color: var(--purple); color: var(--purple); }
+.cal-nome.meeting { background: rgba(34,197,94,0.1); border-left-color: var(--green); color: var(--green); }
+.cal-mais { font-size: 8px; color: var(--gold); font-weight: 700; }
+
+/* ============ AGENDA DO DIA ============ */
+.agenda-container { height: calc(100vh - 140px); overflow: hidden; }
+.agenda-hoje-titulo { font-size: 14px; font-weight: 700; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+.agenda-hoje-count { background: rgba(212,168,67,0.15); color: var(--gold); padding: 3px 12px; border-radius: 100px; font-size: 12px; font-weight: 800; }
+
+.agenda-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 6px; }
+.agenda-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; }
+.agenda-card.atendido { border-color: rgba(34,197,94,0.3); background: linear-gradient(90deg, rgba(34,197,94,0.08) 0%, var(--card) 40%); }
+
+.agenda-hora { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; min-width: 60px; text-align: center; color: var(--gold); }
+.agenda-divider { width: 2px; height: 36px; background: rgba(212,168,67,0.3); border-radius: 10px; }
+.agenda-card.atendido .agenda-divider { background: rgba(34,197,94,0.4); }
+
+.agenda-info { flex: 1; }
+.agenda-cliente { font-size: 14px; font-weight: 800; margin-bottom: 1px; }
+.agenda-corretor { font-size: 11px; color: var(--text-dim); font-weight: 600; }
+
+.agenda-badge { padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+.agenda-badge.cliente { background: rgba(212,168,67,0.15); color: var(--gold); }
+.agenda-badge.reuniao { background: rgba(59,130,246,0.15); color: var(--blue); }
+.agenda-badge.alinhamento { background: rgba(168,85,247,0.15); color: var(--purple); }
+.agenda-badge.meeting { background: rgba(34,197,94,0.15); color: var(--green); }
+.agenda-badge.atendido { background: rgba(34,197,94,0.2); color: var(--green); }
+
+/* ============ EMPTY ============ */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60%; color: var(--text-dim); font-size: 20px; font-weight: 600; }
+.empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.3; }
+
+/* ============ CELEBRATION ============ */
+.celebration { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.88); opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+.celebration.show { opacity: 1; pointer-events: auto; }
+.celebration-icon { font-size: 100px; transform: scale(0); }
+.celebration.show .celebration-icon { animation: celebPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.celebration-text { font-size: 36px; font-weight: 900; margin-top: 20px; text-transform: uppercase; letter-spacing: 4px; opacity: 0; }
+.celebration.show .celebration-text { animation: celebFadeIn 0.4s ease 0.3s forwards; }
+.celebration-sub { font-size: 20px; color: var(--gold); margin-top: 10px; font-weight: 700; opacity: 0; }
+.celebration.show .celebration-sub { animation: celebFadeIn 0.4s ease 0.5s forwards; }
+.celebration-detail { font-size: 16px; color: var(--text-dim); margin-top: 8px; font-weight: 600; opacity: 0; }
+.celebration.show .celebration-detail { animation: celebFadeIn 0.4s ease 0.7s forwards; }
+.celebration-glow { position: absolute; width: 400px; height: 400px; border-radius: 50%; filter: blur(120px); opacity: 0; pointer-events: none; }
+.celebration.show .celebration-glow { animation: glowPulse 2s ease-in-out infinite; }
+
+@keyframes celebPop { 0% { transform: scale(0) rotate(-15deg); } 60% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0deg); } }
+@keyframes celebFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes glowPulse { 0%, 100% { opacity: 0.15; transform: scale(0.8); } 50% { opacity: 0.3; transform: scale(1.2); } }
+
+/* CONFETTI */
+.confetti-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 101; overflow: hidden; }
+.confetti { position: absolute; width: 10px; height: 10px; top: -20px; animation: confettiFall linear forwards; }
+@keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+/* BACKGROUND */
+.bg-glow { position: fixed; width: 600px; height: 600px; border-radius: 50%; filter: blur(200px); opacity: 0.07; pointer-events: none; z-index: 0; }
+.bg-glow-1 { top: -200px; right: -100px; background: var(--gold); }
+.bg-glow-2 { bottom: -200px; left: -100px; background: var(--blue); }
+
+/* LOADING */
+.loading { display: flex; align-items: center; justify-content: center; height: 100vh; font-size: 20px; color: var(--text-dim); gap: 12px; }
+.loading-spin { width: 24px; height: 24px; border: 3px solid var(--card-border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SPLASH FULLSCREEN */
+.splash {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200;
+  background: var(--bg); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer;
+}
+.splash-logo { font-size: 80px; font-weight: 900; color: white; margin-bottom: 16px; }
+.splash-title { font-size: 32px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 8px; }
+.splash-sub { font-size: 14px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 40px; }
+.splash-btn {
+  background: var(--gold); color: #0a0a0f; border: none; padding: 16px 48px;
+  font-size: 18px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;
+  border-radius: 12px; cursor: pointer; transition: transform 0.2s;
+}
+.splash-btn:hover { transform: scale(1.05); }
+.splash-hint { font-size: 11px; color: var(--text-dim); margin-top: 16px; letter-spacing: 1px; }
+
+/* ANIMATIONS */
+.rank-row, .agenda-card, .podium-card, .cal-cell:not(.empty) { animation: fadeInUp 0.4s ease forwards; opacity: 0; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<!-- SPLASH: clique pra entrar fullscreen -->
+<div class="splash" id="splash" onclick="entrarFullscreen()">
+  <div class="splash-logo">A</div>
+  <div class="splash-title">Alicerce</div>
+  <div class="splash-sub">Swell Consultoria</div>
+  <button class="splash-btn">ENTRAR</button>
+  <div class="splash-hint">Clique em qualquer lugar para iniciar em tela cheia</div>
+</div>
+
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<div id="loading" class="loading" style="display:none;"><div class="loading-spin"></div>Carregando dados...</div>
+
+<div id="app" style="display:none;">
+  <div class="tv-header">
+    <div class="tv-logo">
+      <div class="tv-logo-icon">A</div>
+      <div>
+        <div class="tv-logo-text">Alicerce</div>
+        <div class="tv-logo-sub">Swell Consultoria</div>
+      </div>
+    </div>
+    <div class="tv-clock">
+      <div class="tv-clock-time" id="clock-time">00:00</div>
+      <div class="tv-clock-date" id="clock-date"></div>
+    </div>
+  </div>
+
+  <div class="tv-tab-bar">
+    <div class="tv-tab active" id="tab-ranking-btn">Ranking</div>
+    <div class="tv-tab" id="tab-cal-btn">Calendário</div>
+    <div class="tv-tab" id="tab-agenda-btn">Agenda do Dia</div>
+  </div>
+
+  <div class="tv-progress"><div class="tv-progress-bar" id="progress-bar"></div></div>
+
+  <!-- RANKING -->
+  <div class="tv-page active" id="page-ranking">
+    <div class="ranking-podium" id="podium"></div>
+    <div class="ranking-rest" id="ranking-rest"></div>
+  </div>
+
+  <!-- CALENDÁRIO -->
+  <div class="tv-page" id="page-calendario">
+    <div class="cal-container">
+      <div class="cal-titulo">
+        <span class="cal-mes-label" id="cal-mes-label"></span>
+        <span class="cal-total" id="cal-total">0 agendamentos</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <!-- AGENDA DO DIA -->
+  <div class="tv-page" id="page-agenda">
+    <div class="agenda-container">
+      <div class="agenda-hoje-titulo">
+        Agendamentos de Hoje <span class="agenda-hoje-count" id="agenda-count">0</span>
+      </div>
+      <div class="agenda-grid" id="agenda-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CELEBRATION -->
+<div class="celebration" id="celebration">
+  <div class="celebration-glow" style="background: var(--gold);"></div>
+  <div class="celebration-icon" id="celeb-icon"></div>
+  <div class="celebration-text" id="celeb-text"></div>
+  <div class="celebration-sub" id="celeb-sub"></div>
+  <div class="celebration-detail" id="celeb-detail"></div>
+</div>
+<div class="confetti-container" id="confetti-container"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
+
+const PAGINAS = [
+  { id: 'ranking',    tab: 'ranking', tempo: 20 },
+  { id: 'calendario', tab: 'cal',     tempo: 15 },
+  { id: 'agenda',     tab: 'agenda',  tempo: 15 },
+];
+
+const INICIO_MES_COMERCIAL = '2026-07-03';
+const INICIO_CHECKIN_945 = '2026-07-11';
+const COORDS_GERENTE = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
+
+let DADOS = null;
+let paginaIdx = 0;
+let paginaAtual = 'ranking';
+let elapsed = 0;
+let agendaAnterior = 0;
+let vendasAnterior = 0;
+let audioCtx = null;
+
+// ============================================
+// SONS
+// ============================================
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function somAgendamento() {
+  const ctx = getAudioCtx();
+  [523.25, 659.25, 783.99].forEach((freq, i) => {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.8);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 0.8);
+  });
+}
+
+function somVenda() {
+  const ctx = getAudioCtx();
+  [392, 523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'triangle'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 1.2);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(ctx.currentTime + i * 0.15); osc.stop(ctx.currentTime + i * 0.15 + 1.2);
+  });
+  setTimeout(() => {
+    [523.25, 659.25, 783.99, 1046.5].forEach(freq => {
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 2);
+    });
+  }, 800);
+}
+
+// ============================================
+// CONFETTI + CELEBRAÇÃO
+// ============================================
+function lancarConfetti() {
+  const container = document.getElementById('confetti-container');
+  const cores = ['#d4a843','#f0d78c','#ffffff','#22c55e','#3b82f6','#a855f7','#ef4444'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random() * 100 + '%';
+    el.style.width = (Math.random() * 8 + 6) + 'px';
+    el.style.height = (Math.random() * 8 + 6) + 'px';
+    el.style.background = cores[Math.floor(Math.random() * cores.length)];
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    el.style.animationDelay = (Math.random() * 1) + 's';
+    container.appendChild(el);
+  }
+  setTimeout(() => { container.innerHTML = ''; }, 5000);
+}
+
+function celebrar(icon, texto, sub, detail, tipo) {
+  const el = document.getElementById('celebration');
+  document.getElementById('celeb-icon').textContent = icon;
+  document.getElementById('celeb-text').textContent = texto;
+  document.getElementById('celeb-sub').textContent = sub;
+  document.getElementById('celeb-detail').textContent = detail || '';
+  el.classList.add('show');
+  lancarConfetti();
+  if (tipo === 'venda') somVenda(); else somAgendamento();
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+// ============================================
+// RELÓGIO
+// ============================================
+function atualizarRelogio() {
+  const agora = new Date();
+  document.getElementById('clock-time').textContent = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('clock-date').textContent = `${dias[agora.getDay()]}, ${agora.getDate()} de ${meses[agora.getMonth()]}`;
+}
+
+// ============================================
+// PARSE
+// ============================================
+function parseDataISO(val) {
+  if (!val) return '';
+  const s = String(val);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+  const d = new Date(s);
+  if (!isNaN(d)) return d.toISOString().substring(0, 10);
+  return '';
+}
+
+function parseHora(val) {
+  if (!val) return '—';
+  const s = String(val);
+  // Formato texto puro HH:MM
+  if (/^\d{2}:\d{2}$/.test(s.trim())) return s.trim();
+  if (/^\d{1,2}:\d{2}/.test(s)) return s.substring(0, 5);
+  // Formato ISO
+  const m = s.match(/T(\d{2}):(\d{2})/);
+  if (m) {
+    let h = parseInt(m[1]) - 3;
+    if (h < 0) h += 24;
+    return String(h).padStart(2,'0') + ':' + m[2];
+  }
+  return '—';
+}
+
+// ============================================
+// CALCULAR RANKING (lógica idêntica à plataforma 3.0)
+// ============================================
+function calcularRanking() {
+  if (!DADOS) return [];
+
+  const corretores = (DADOS.corretores || []).filter(c => !COORDS_GERENTE.includes(c.NOME));
+  const pontuacao = {};
+
+  corretores.forEach(c => {
+    pontuacao[c.NOME] = {
+      nome: c.NOME, total: 0, agendamentos: 0, atendimentos: 0, pastas: 0,
+      vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, atrasos: 0
+    };
+  });
+
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().substring(0, 10);
+
+  const diasUteis = [];
+  const d = new Date(INICIO_CHECKIN_945 + 'T12:00:00');
+  while (d <= hoje) {
+    const ds = d.toISOString().substring(0, 10);
+    if (ds <= hojeStr && d.getDay() >= 1 && d.getDay() <= 5) diasUteis.push(ds);
+    d.setDate(d.getDate() + 1);
+  }
+
+  const REGISTROS = DADOS.registros || [];
+  const CLIENTES = DADOS.clientes || [];
+  const VENDAS = DADOS.vendas || [];
+  const AGENDA = DADOS.agenda || [];
+  const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
+
+  function isFds(dataStr) {
+    const dt = new Date(dataStr + 'T12:00:00');
+    return dt.getDay() === 0 || dt.getDay() === 6;
+  }
+
+  // CHECK-INS (lógica idêntica à plataforma)
+  const checkinsPorCorretorDia = {};
+  REGISTROS.filter(r => r.TIPO === 'checkin' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
+    const nome = r.CORRETOR;
+    if (!pontuacao[nome]) return;
+    const dia = parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10);
+    const hora = parseHora(r.HORA || r.DATA);
+    const [h, m] = hora.split(':').map(Number);
+    const minutos = h * 60 + m;
+    const fds = isFds(dia);
+    const multiplicador = fds ? 2 : 1;
+
+    let pts = 0;
+    if (minutos < 570) pts = 5 * multiplicador;
+    else if (minutos < 600) pts = 3 * multiplicador;
+    else if (minutos < 630) pts = 1 * multiplicador;
+    else if (!fds) { pontuacao[nome].atrasos++; }
+
+    pontuacao[nome].ptCheckin += pts;
+    pontuacao[nome].checkins++;
+    if (!checkinsPorCorretorDia[nome]) checkinsPorCorretorDia[nome] = new Set();
+    checkinsPorCorretorDia[nome].add(dia);
+  });
+
+  Object.values(pontuacao).forEach(p => {
+    const diasComCheckin = checkinsPorCorretorDia[p.nome] ? [...checkinsPorCorretorDia[p.nome]].filter(d => !isFds(d)).length : 0;
+    const ausencias = Math.max(0, diasUteis.length - diasComCheckin);
+    p.ptCheckin += ausencias * -5;
+    if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3;
+  });
+
+  // AGENDAMENTOS +3 (dedup corretor+cliente no mês)
+  const agendaDedup = new Set();
+  AGENDA.filter(a => (parseDataISO(a.DATA) || '') >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente').forEach(a => {
+    if (!pontuacao[a.CORRETOR]) return;
+    const chave = `${a.CORRETOR}|${String(a.CLIENTE || '').trim().toUpperCase()}`;
+    if (agendaDedup.has(chave)) return;
+    agendaDedup.add(chave);
+    pontuacao[a.CORRETOR].agendamentos++;
+  });
+
+  // ATENDIMENTOS +5 (dedup corretor+cliente no mês)
+  const atendDedup = new Set();
+  REGISTROS.filter(r => {
+    if (r.TIPO !== 'atendimento-confirmado') return false;
+    if ((parseDataISO(r.DATA) || '') < INICIO_MES_COMERCIAL) return false;
+    const cl = String(r.CLIENTE || r.CLIENTES || '').toLowerCase();
+    return !cl.includes('teste');
+  }).forEach(r => {
+    if (!pontuacao[r.CORRETOR]) return;
+    const chave = `${r.CORRETOR}|${String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase()}`;
+    if (atendDedup.has(chave)) return;
+    atendDedup.add(chave);
+    pontuacao[r.CORRETOR].atendimentos++;
+  });
+
+  // PASTAS +8 (match fuzzy igual plataforma)
+  CLIENTES.filter(c => (parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '') >= INICIO_MES_COMERCIAL).forEach(c => {
+    const corrNome = (c.CORRETOR || '');
+    const corr = corretores.find(ca => ca.NOME === corrNome || corrNome.toUpperCase().includes(ca.NOME.toUpperCase()) || ca.NOME.toUpperCase().includes(corrNome.toUpperCase()));
+    if (corr && pontuacao[corr.NOME]) pontuacao[corr.NOME].pastas++;
+  });
+
+  // VENDAS +20, CONSÓRCIO +10
+  VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
+    let cn = (v.CORRETOR || '').trim().toUpperCase();
+    if (!cn || !v.CLIENTE) return;
+    const corr = corretores.find(c => cn.includes(c.NOME.toUpperCase()) || c.NOME.toUpperCase().includes(cn));
+    if (!corr || !pontuacao[corr.NOME]) return;
+    if ((v.STATUS_VENDA || '').includes('CONSORCIO')) pontuacao[corr.NOME].consorcios++;
+    else pontuacao[corr.NOME].vendas++;
+  });
+
+  // 945
+  const diasCom945 = {};
+  REGISTROS.filter(r => r.TIPO === '945-individual' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
+    if (!pontuacao[r.CORRETOR]) return;
+    if (!diasCom945[r.CORRETOR]) diasCom945[r.CORRETOR] = new Set();
+    diasCom945[r.CORRETOR].add(parseDataISO(r.DATA));
+  });
+  Object.values(pontuacao).forEach(p => {
+    const s = diasCom945[p.nome] || new Set();
+    p.dias945 = s.size;
+    p.pt945 = (s.size * 2) + (diasUteis.filter(d => !s.has(d)).length * -2);
+  });
+
+  // TOTAL
+  Object.values(pontuacao).forEach(p => {
+    p.total = p.ptCheckin + (p.agendamentos * 3) + (p.atendimentos * 5) + (p.pastas * 8) + (p.vendas * 20) + (p.consorcios * 10) + p.pt945;
+  });
+
+  return Object.values(pontuacao).sort((a, b) => b.total - a.total);
+}
+
+// ============================================
+// RENDER RANKING
+// ============================================
+function renderRanking() {
+  const ranking = calcularRanking();
+  if (!ranking.length) return;
+
+  const top3 = ranking.slice(0, 3);
+  const rest = ranking.slice(3);
+  const medals = ['🥇', '🥈', '🥉'];
+  const classes = ['first', 'second', 'third'];
+  const labels = ['1º LUGAR', '2º LUGAR', '3º LUGAR'];
+
+  function fmtPts(val) { return val > 0 ? '+' + val : val < 0 ? String(val) : '0'; }
+  function ptClass(val) { return val < 0 ? 'rank-cat-neg' : 'rank-cat-pts'; }
+
+  document.getElementById('podium').innerHTML = top3.map((p, i) => `
+    <div class="podium-card ${classes[i]}" style="animation-delay: ${i * 0.1}s">
+      <div class="podium-pos">${labels[i]}</div>
+      <div class="podium-medal">${medals[i]}</div>
+      <div class="podium-name">${p.nome.split(' ')[0]}</div>
+      <div class="podium-pts">${p.total}</div>
+      <div class="podium-label">pontos</div>
+      <div class="podium-cats">
+        <div class="podium-cat"><span>📋 Agend.</span> <span><span class="podium-cat-val">${p.agendamentos}x</span> <span class="podium-cat-pts">${fmtPts(p.agendamentos * 3)}</span></span></div>
+        <div class="podium-cat"><span>✅ Atend.</span> <span><span class="podium-cat-val">${p.atendimentos}x</span> <span class="podium-cat-pts">${fmtPts(p.atendimentos * 5)}</span></span></div>
+        <div class="podium-cat"><span>📁 Pastas</span> <span><span class="podium-cat-val">${p.pastas}x</span> <span class="podium-cat-pts">${fmtPts(p.pastas * 8)}</span></span></div>
+        <div class="podium-cat"><span>🏆 Vendas</span> <span><span class="podium-cat-val">${p.vendas}x</span> <span class="podium-cat-pts">${fmtPts(p.vendas * 20)}</span></span></div>
+        <div class="podium-cat"><span>⏰ Check-in</span> <span class="${ptClass(p.ptCheckin)}">${fmtPts(p.ptCheckin)}</span></div>
+        <div class="podium-cat"><span>🎙 945</span> <span class="${ptClass(p.pt945)}">${fmtPts(p.pt945)}</span></div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('ranking-rest').innerHTML = rest.map((p, i) => `
+    <div class="rank-row" style="animation-delay: ${(i + 3) * 0.05}s">
+      <div class="rank-pos">${i + 4}º</div>
+      <div class="rank-name">${p.nome}</div>
+      <div class="rank-cats">
+        <div class="rank-cat">📋 <span class="rank-cat-val">${p.agendamentos}x</span> <span class="rank-cat-pts">${fmtPts(p.agendamentos * 3)}</span></div>
+        <div class="rank-cat">✅ <span class="rank-cat-val">${p.atendimentos}x</span> <span class="rank-cat-pts">${fmtPts(p.atendimentos * 5)}</span></div>
+        <div class="rank-cat">📁 <span class="rank-cat-val">${p.pastas}x</span> <span class="rank-cat-pts">${fmtPts(p.pastas * 8)}</span></div>
+        <div class="rank-cat">🏆 <span class="rank-cat-val">${p.vendas}x</span> <span class="rank-cat-pts">${fmtPts(p.vendas * 20)}</span></div>
+        <div class="rank-cat">⏰ <span class="${ptClass(p.ptCheckin)}">${fmtPts(p.ptCheckin)}</span></div>
+        <div class="rank-cat">🎙 <span class="${ptClass(p.pt945)}">${fmtPts(p.pt945)}</span></div>
+      </div>
+      <div>
+        <div class="rank-pts">${p.total}</div>
+        <div class="rank-pts-label">pontos</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// RENDER AGENDA DO DIA
+// ============================================
+function renderAgenda() {
+  if (!DADOS) return 0;
+
+  const hoje = new Date().toISOString().substring(0, 10);
+  const agenda = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === hoje);
+  agenda.sort((a, b) => parseHora(a.HORA || a.DATA).localeCompare(parseHora(b.HORA || b.DATA)));
+
+  document.getElementById('agenda-count').textContent = agenda.length;
+
+  if (!agenda.length) {
+    document.getElementById('agenda-grid').innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">📅</div>Nenhum agendamento para hoje
+      </div>`;
+    return 0;
+  }
+
+  document.getElementById('agenda-grid').innerHTML = agenda.map((a, i) => {
+    const tipo = (a.TIPO || 'Cliente').toLowerCase();
+    const atendido = a.ATENDIDO === 'sim' || a.ATENDIDO === true;
+    let bc = 'cliente', bt = 'Cliente';
+    if (tipo.includes('reuni')) { bc = 'reuniao'; bt = 'Reunião'; }
+    else if (tipo.includes('alinh')) { bc = 'alinhamento'; bt = 'Alinhamento'; }
+    else if (tipo.includes('meet')) { bc = 'meeting'; bt = 'Meeting'; }
+    if (atendido) { bc = 'atendido'; bt = '✓ Atendido'; }
+
+    return `
+      <div class="agenda-card ${atendido ? 'atendido' : ''}" style="animation-delay: ${i * 0.05}s">
+        <div class="agenda-hora">${parseHora(a.HORA || a.DATA)}</div>
+        <div class="agenda-divider"></div>
+        <div class="agenda-info">
+          <div class="agenda-cliente">${a.CLIENTE || a.TIPO || '—'}</div>
+          <div class="agenda-corretor">${a.CORRETOR || '—'}</div>
+        </div>
+        <div class="agenda-badge ${bc}">${bt}</div>
+      </div>`;
+  }).join('');
+
+  return agenda.length;
+}
+
+// ============================================
+// RENDER CALENDÁRIO
+// ============================================
+function renderCalendario() {
+  if (!DADOS) return;
+
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = agora.getMonth();
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  document.getElementById('cal-mes-label').textContent = meses[mes] + ' ' + ano;
+
+  const agenda = DADOS.agenda || [];
+  const hojeStr = agora.toISOString().substring(0, 10);
+
+  const porDia = {};
+  let totalMes = 0;
+  agenda.forEach(a => {
+    const dt = parseDataISO(a.DATA);
+    if (!dt) return;
+    const [y, m] = dt.split('-');
+    if (parseInt(y) === ano && parseInt(m) === mes + 1) {
+      if (!porDia[dt]) porDia[dt] = [];
+      porDia[dt].push(a);
+      totalMes++;
+    }
+  });
+
+  document.getElementById('cal-total').textContent = totalMes + ' agendamentos';
+
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+
+  let html = diasSemana.map(d => `<div class="cal-header-cell">${d}</div>`).join('');
+
+  for (let i = 0; i < primeiroDia; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const diaStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const isHoje = diaStr === hojeStr;
+    const agendaDia = porDia[diaStr] || [];
+    const temAgenda = agendaDia.length > 0;
+
+    let nomes = '';
+    if (temAgenda) {
+      const maxNomes = 3;
+      const visiveis = agendaDia.slice(0, maxNomes);
+      const restantes = agendaDia.length - maxNomes;
+
+      nomes = '<div class="cal-nomes">';
+      visiveis.forEach(a => {
+        const tipo = (a.TIPO || 'Cliente').toLowerCase();
+        let nomeClass = '', label = '';
+        if (tipo.includes('reuni')) { nomeClass = 'reuniao'; label = a.TIPO || 'Reunião'; }
+        else if (tipo.includes('alinh')) { nomeClass = 'alinhamento'; label = a.TIPO || 'Alinhamento'; }
+        else if (tipo.includes('meet')) { nomeClass = 'meeting'; label = a.TIPO || 'Meeting'; }
+        else {
+          const corretor = (a.CORRETOR || '').split(' ')[0];
+          label = corretor + ': ' + (a.CLIENTE || '—');
+        }
+        nomes += `<div class="cal-nome ${nomeClass}">${label}</div>`;
+      });
+      if (restantes > 0) nomes += `<div class="cal-mais">+${restantes} mais</div>`;
+      nomes += '</div>';
+    }
+
+    html += `
+      <div class="cal-cell ${isHoje ? 'hoje' : ''} ${temAgenda ? 'tem-agenda' : ''}" style="animation-delay: ${dia * 0.02}s">
+        <div class="cal-dia">${dia}</div>
+        ${nomes}
+      </div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+// ============================================
+// ALTERNAR PÁGINAS
+// ============================================
+function alternarPagina() {
+  const atual = PAGINAS[paginaIdx];
+  document.getElementById('page-' + atual.id).classList.remove('active');
+  document.getElementById('tab-' + atual.tab + '-btn').classList.remove('active');
+
+  paginaIdx = (paginaIdx + 1) % PAGINAS.length;
+  const prox = PAGINAS[paginaIdx];
+  paginaAtual = prox.id;
+
+  document.getElementById('page-' + prox.id).classList.add('active');
+  document.getElementById('tab-' + prox.tab + '-btn').classList.add('active');
+}
+
+function iniciarTimer() {
+  setInterval(() => {
+    elapsed += 0.1;
+    const tempoTotal = PAGINAS[paginaIdx].tempo;
+    document.getElementById('progress-bar').style.width = (elapsed / tempoTotal * 100) + '%';
+
+    if (elapsed >= tempoTotal) {
+      elapsed = 0;
+      document.getElementById('progress-bar').style.width = '0%';
+      alternarPagina();
+    }
+  }, 100);
+}
+
+// ============================================
+// CARREGAR DADOS
+// ============================================
+async function carregarDados() {
+  try {
+    const resp = await fetch(API_URL + '?acao=tudo');
+    DADOS = await resp.json();
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    renderRanking();
+    agendaAnterior = renderAgenda() || 0;
+    renderCalendario();
+
+    const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
+    vendasAnterior = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
+
+    iniciarTimer();
+  } catch (e) {
+    document.getElementById('loading').innerHTML = '<div style="color: var(--red);">Erro ao carregar. Recarregando...</div>';
+    setTimeout(carregarDados, 5000);
+  }
+}
+
+async function atualizarDados() {
+  try {
+    const resp = await fetch(API_URL + '?acao=tudo');
+    DADOS = await resp.json();
+    renderRanking();
+    const qtdAgendaNova = renderAgenda() || 0;
+    renderCalendario();
+
+    if (qtdAgendaNova > agendaAnterior && agendaAnterior > 0) {
+      const hoje = new Date().toISOString().substring(0, 10);
+      const agendaHoje = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === hoje);
+      const ultimo = agendaHoje[agendaHoje.length - 1];
+      celebrar('📅', 'Novo Agendamento!', ultimo ? ultimo.CORRETOR : '', ultimo ? ultimo.CLIENTE : '', 'agendamento');
+    }
+    agendaAnterior = qtdAgendaNova;
+
+    const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
+    const vendasNova = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
+    if (vendasNova > vendasAnterior && vendasAnterior > 0) {
+      const vendas = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual);
+      const ultima = vendas[vendas.length - 1];
+      celebrar('🏆', 'VENDA FECHADA!', ultima ? ultima.CORRETOR : '', ultima ? ultima.CLIENTE : '', 'venda');
+    }
+    vendasAnterior = vendasNova;
+  } catch (e) {}
+}
+
+// ============================================
+// FULLSCREEN
+// ============================================
+function entrarFullscreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if (el.msRequestFullscreen) el.msRequestFullscreen();
+
+  // Esconder splash, mostrar loading, ativar áudio
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+  getAudioCtx();
+
+  // Iniciar tudo
+  atualizarRelogio();
+  setInterval(atualizarRelogio, 1000);
+  carregarDados();
+  setInterval(atualizarDados, 30000);
+}
+</script>
+</body>
+</html>
