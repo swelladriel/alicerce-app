@@ -794,7 +794,7 @@ function iniciarTimer() {
 // ============================================
 async function carregarDados() {
   try {
-    const resp = await fetch(API_URL + '?acao=tudo');
+    const resp = await fetch(API_URL + '?acao=tv');
     DADOS = await resp.json();
 
     document.getElementById('loading').style.display = 'none';
@@ -816,7 +816,7 @@ async function carregarDados() {
 
 async function atualizarDados() {
   try {
-    const resp = await fetch(API_URL + '?acao=tudo');
+    const resp = await fetch(API_URL + '?acao=tv');
     DADOS = await resp.json();
     renderRanking();
     const qtdAgendaNova = renderAgenda() || 0;
