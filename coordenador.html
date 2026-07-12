@@ -152,7 +152,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <span class="top-bar-sep">|</span>
       <span class="top-bar-label">Painel do Coordenador</span>
     </div>
-    <div class="top-bar-right">
+    <div class="top-bar-right" style="display:flex;align-items:center;gap:10px;">
+      <button onclick="abrirModalVenda()" style="background:var(--accent);color:#000;border:none;padding:6px 14px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;">+ Nova Venda</button>
       <span class="top-bar-user" id="topBarUser"></span>
       <button class="logout-btn" onclick="logout()">Sair</button>
     </div>
@@ -610,5 +611,191 @@ function renderDayAgenda() {
   document.getElementById('loginScreen').classList.remove('hidden');
 })();
 </script>
+<style>
+.mv-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;justify-content:center;align-items:center;padding:20px;}
+.mv-overlay.open{display:flex;}
+.mv-box{background:var(--card);border:1px solid var(--border);border-radius:12px;max-width:550px;width:100%;max-height:85vh;overflow-y:auto;}
+.mv-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.mv-header h3{font-size:.95rem;font-weight:700;color:#fff;}
+.mv-close{background:none;border:none;color:var(--textL);font-size:1.3rem;cursor:pointer;}
+.mv-body{padding:20px;}
+.mv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mv-group{display:flex;flex-direction:column;gap:3px;}
+.mv-label{font-size:.65rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+.mv-input{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:9px 11px;color:var(--text);font-size:.8rem;outline:none;font-family:inherit;}
+.mv-input:focus{border-color:var(--accent);}
+select.mv-input{cursor:pointer;}
+.mv-btn{background:var(--accent);color:#000;border:none;padding:11px 20px;border-radius:8px;font-size:.82rem;font-weight:800;cursor:pointer;margin-top:10px;width:100%;}
+.mv-btn:disabled{opacity:.4;cursor:not-allowed;}
+.mv-msg{padding:8px;border-radius:6px;font-size:.75rem;font-weight:600;margin-top:8px;display:none;}
+.mv-msg.ok{display:block;background:rgba(0,230,118,.1);color:var(--success);border:1px solid rgba(0,230,118,.2);}
+.mv-msg.erro{display:block;background:rgba(239,83,80,.1);color:var(--danger);border:1px solid rgba(239,83,80,.2);}
+</style>
+
+<div class="mv-overlay" id="modal-venda" onclick="if(event.target===this)fecharModalVenda()">
+  <div class="mv-box">
+    <div class="mv-header">
+      <h3>Registrar Nova Venda</h3>
+      <button class="mv-close" onclick="fecharModalVenda()">&times;</button>
+    </div>
+    <div class="mv-body">
+      <div class="mv-grid">
+        <div class="mv-group">
+          <label class="mv-label">Mês Comercial</label>
+          <input type="month" class="mv-input" id="nv-mes" value="2026-07">
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">Data da Venda</label>
+          <input type="date" class="mv-input" id="nv-data">
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">Cliente</label>
+          <input type="text" class="mv-input" id="nv-cliente" placeholder="Nome completo">
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">CPF</label>
+          <input type="text" class="mv-input" id="nv-cpf" placeholder="000.000.000-00">
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">Corretor</label>
+          <select class="mv-input" id="nv-corretor">
+            <option value="">Selecione...</option>
+            <option>DANDARA CAMPUS</option>
+            <option>CAIQUE MENDES</option>
+            <option>ISAAC DE SÁ</option>
+            <option>DAVI RIBEIRO</option>
+            <option>RENATO RIBEIRO</option>
+            <option>WILIAN BUENO</option>
+            <option>VICTOR PEREIRA</option>
+            <option>GABRIEL SOUZA</option>
+            <option>GABRIEL RIBEIRO</option>
+            <option>CRISTIANO FERNANDES</option>
+            <option>CAMILA CRAVEIRO</option>
+            <option>BRUNA PACHECO</option>
+            <option>MARIA CLARA</option>
+            <option>KERLLY MARTINS</option>
+            <option>SUZY FRANKLYN</option>
+            <option>CRISTIANE FERREIRA</option>
+            <option>FELIPE GUIMARAES</option>
+            <option>CARLOS AURELIO</option>
+            <option>MARCOS REIS</option>
+            <option>JOYCE BRISA</option>
+            <option>KAYQUE NASCIMENTO</option>
+            <option>JOSIMAR MACHADO</option>
+            <option>ADRIEL DUARTE</option>
+            <option>MARCELO AROUCA</option>
+            <option>GLAUCO RIBEIRO</option>
+            <option>EDVAM SILVA</option>
+          </select>
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">Coordenador</label>
+          <select class="mv-input" id="nv-coordenador">
+            <option value="">Sem coordenador</option>
+            <option>GLAUCO RIBEIRO</option>
+            <option>EDVAM SILVA</option>
+            <option>MARCELO AROUCA</option>
+          </select>
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">Empreendimento</label>
+          <input type="text" class="mv-input" id="nv-empreendimento" placeholder="Ex: BOSQUE JACAREPAGUÁ" list="dl-emp">
+          <datalist id="dl-emp">
+            <option value="VIVA VIDA RECANTO CLUBE"><option value="BOSQUE JACAREPAGUÁ"><option value="SOUL TAQUÁ"><option value="MAGALU"><option value="PARQUE HOTENCIA"><option value="PORTO LIMA"><option value="MY LIFE"><option value="MY MOOD"><option value="ESTAÇÃO RIO"><option value="PORTO VALENCIA"><option value="AGUAS DO ATLANTICO"><option value="CONQUISTA NORTE CLUBE"><option value="ELEVTO BONSSUCESSO"><option value="MADRI"><option value="ITANHANGÁ BOSQUE">
+          </datalist>
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">Construtora</label>
+          <input type="text" class="mv-input" id="nv-construtora" placeholder="Ex: TENDA" list="dl-const">
+          <datalist id="dl-const">
+            <option value="TENDA"><option value="DIRECIONAL"><option value="CURY"><option value="MAGALU"><option value="VIC"><option value="MRV"><option value="CELTA"><option value="CANOPUS"><option value="NOVOLAR"><option value="LIVING"><option value="RIVA"><option value="EMCAMP"><option value="HABITTA">
+          </datalist>
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">VGV (Valor)</label>
+          <input type="number" class="mv-input" id="nv-vgv" placeholder="Ex: 270100" step="0.01">
+        </div>
+        <div class="mv-group">
+          <label class="mv-label">Status da Venda</label>
+          <select class="mv-input" id="nv-status">
+            <option value="Aguardando Assinatura Caixa">Aguardando Assinatura Caixa</option>
+            <option value="Repassado na CEF">Repassado na CEF</option>
+            <option value="CONSORCIO">Consórcio</option>
+            <option value="Distrato Realizado">Distrato Realizado</option>
+          </select>
+        </div>
+      </div>
+      <button class="mv-btn" id="nv-btn" onclick="salvarNovaVenda()">REGISTRAR VENDA</button>
+      <div class="mv-msg" id="nv-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_VENDA = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
+
+function abrirModalVenda() {
+  document.getElementById('modal-venda').classList.add('open');
+  const hoje = new Date(); hoje.setHours(hoje.getHours() - 3);
+  document.getElementById('nv-data').value = hoje.toISOString().substring(0, 10);
+  document.getElementById('nv-msg').className = 'mv-msg';
+}
+
+function fecharModalVenda() {
+  document.getElementById('modal-venda').classList.remove('open');
+}
+
+async function salvarNovaVenda() {
+  const mes = document.getElementById('nv-mes').value;
+  const data = document.getElementById('nv-data').value;
+  const cliente = document.getElementById('nv-cliente').value.trim();
+  const cpf = document.getElementById('nv-cpf').value.trim();
+  const corretor = document.getElementById('nv-corretor').value;
+  const coordenador = document.getElementById('nv-coordenador').value;
+  const empreendimento = document.getElementById('nv-empreendimento').value.trim();
+  const construtora = document.getElementById('nv-construtora').value.trim();
+  const vgv = document.getElementById('nv-vgv').value;
+  const status = document.getElementById('nv-status').value;
+  const msg = document.getElementById('nv-msg');
+
+  if (!mes || !data || !cliente || !corretor || !empreendimento || !vgv) {
+    msg.className = 'mv-msg erro'; msg.textContent = 'Preencha todos os campos obrigatórios.'; return;
+  }
+
+  const btn = document.getElementById('nv-btn');
+  btn.disabled = true; btn.textContent = 'SALVANDO...';
+
+  try {
+    const resp = await fetch(API_VENDA, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'adicionar_venda', vendas: [{
+        MES_COMERCIAL: mes, DATA_VENDA: data, CLIENTE: cliente.toUpperCase(),
+        CPF: cpf, STATUS_VENDA: status, EMPREENDIMENTO: empreendimento.toUpperCase(),
+        CONSTRUTORA: construtora.toUpperCase(), VGV: parseFloat(vgv),
+        COORDENADOR: coordenador, CORRETOR: corretor
+      }]})
+    });
+    const result = await resp.json();
+    if (result.sucesso) {
+      msg.className = 'mv-msg ok'; msg.textContent = 'Venda registrada com sucesso!';
+      document.getElementById('nv-cliente').value = '';
+      document.getElementById('nv-cpf').value = '';
+      document.getElementById('nv-empreendimento').value = '';
+      document.getElementById('nv-construtora').value = '';
+      document.getElementById('nv-vgv').value = '';
+      document.getElementById('nv-corretor').value = '';
+      document.getElementById('nv-coordenador').value = '';
+      setTimeout(() => fecharModalVenda(), 1500);
+    } else {
+      msg.className = 'mv-msg erro'; msg.textContent = 'Erro: ' + (result.erro || 'Falha.');
+    }
+  } catch(e) {
+    msg.className = 'mv-msg erro'; msg.textContent = 'Erro de conexão. Tente novamente.';
+  }
+  btn.disabled = false; btn.textContent = 'REGISTRAR VENDA';
+}
+</script>
+
 </body>
 </html>

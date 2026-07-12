@@ -155,6 +155,23 @@ tr:hover{background:rgba(100,255,218,.02);}
 .emp-card-name{font-size:.82rem;font-weight:700;color:#fff;}
 .emp-card-details{font-size:.72rem;color:var(--textL);margin-top:3px;}
 .emp-card-valor{font-size:.85rem;font-weight:800;color:var(--accent);margin-top:4px;}
+
+/* FORMULÁRIOS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:.7rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+.form-input{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-size:.82rem;outline:none;transition:border .2s;font-family:inherit;}
+.form-input:focus{border-color:var(--accent);}
+.form-input::placeholder{color:rgba(255,255,255,.25);}
+select.form-input{cursor:pointer;}
+.form-btn{background:var(--accent);color:#000;border:none;padding:12px 24px;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;letter-spacing:.5px;transition:opacity .2s;margin-top:8px;}
+.form-btn:hover{opacity:.85;}
+.form-btn:disabled{opacity:.4;cursor:not-allowed;}
+.form-msg{padding:10px;border-radius:6px;font-size:.78rem;font-weight:600;margin-top:8px;display:none;}
+.form-msg.ok{display:block;background:rgba(0,230,118,.1);color:var(--success);border:1px solid rgba(0,230,118,.2);}
+.form-msg.erro{display:block;background:rgba(239,83,80,.1);color:var(--danger);border:1px solid rgba(239,83,80,.2);}
+.btn-nova-venda{background:var(--accent);color:#000;border:none;padding:8px 18px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.5px;}
 .emp-none{text-align:center;padding:20px;color:var(--textL);font-size:.8rem;}
 
 /* URGENCIAS */
@@ -379,6 +396,7 @@ tr:hover{background:rgba(100,255,218,.02);}
         <h2>Vendas</h2>
         <span class="topbar-info">Planilha de vendas da equipe — mês comercial</span>
       </div>
+      <button class="btn-nova-venda" onclick="abrirModalVenda()">+ Nova Venda</button>
     </div>
     <div class="kpi-grid" id="kpi-vendas"></div>
     <div class="filters">
@@ -437,6 +455,7 @@ tr:hover{background:rgba(100,255,218,.02);}
         <h2>Equipe</h2>
         <span class="topbar-info">Corretores ativos e performance</span>
       </div>
+      <button class="btn-nova-venda" onclick="abrirModalCorretor()">+ Novo Corretor</button>
     </div>
     <div class="kpi-grid" id="kpi-corretores"></div>
     <div class="corr-grid" id="corr-grid"></div>
@@ -1034,21 +1053,22 @@ function togglePipeline(grupo, abrir) {
 function renderCorretores() {
   const ativos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO !== 'Gerente');
   const licenca = CORRETORES.filter(c => c.STATUS === 'Licenca');
-  const equipes = { Glauco: [], Edivan: [], Adriel: [] };
-  ativos.forEach(c => { if (equipes[c.EQUIPE]) equipes[c.EQUIPE].push(c); });
+  const equipes = { Glauco: [], Edivan: [], 'Marcelo ': [], Adriel: [] };
+  ativos.forEach(c => { if (equipes[c.EQUIPE] !== undefined) equipes[c.EQUIPE].push(c); });
 
   document.getElementById('kpi-corretores').innerHTML = `
     <div class="kpi blue"><div class="v">${ativos.length}</div><div class="l">Corretores Ativos</div></div>
     <div class="kpi yellow"><div class="v">${licenca.length}</div><div class="l">Em Licença</div></div>
     <div class="kpi green"><div class="v">${equipes.Glauco.length}</div><div class="l">Eq. Glauco</div></div>
-    <div class="kpi green"><div class="v">${equipes.Edivan.length}</div><div class="l">Eq. Edivan</div></div>
+    <div class="kpi green"><div class="v">${equipes.Edivan.length}</div><div class="l">Eq. Edvan</div></div>
+    <div class="kpi green"><div class="v">${equipes['Marcelo '].length}</div><div class="l">Eq. Marcelo</div></div>
     <div class="kpi green"><div class="v">${equipes.Adriel.length}</div><div class="l">Eq. Adriel</div></div>
   `;
 
   let html = '';
   Object.entries(equipes).forEach(([eq, membros]) => {
-    const cor = eq === 'Glauco' ? '#5c9cff' : eq === 'Edivan' ? '#00e676' : '#ffd700';
-    const bgCor = eq === 'Glauco' ? 'rgba(92,156,255,.08)' : eq === 'Edivan' ? 'rgba(0,230,118,.06)' : 'rgba(255,215,0,.06)';
+    const cor = eq === 'Glauco' ? '#5c9cff' : eq === 'Edivan' ? '#00e676' : eq.trim() === 'Marcelo' ? '#ab47bc' : '#ffd700';
+    const bgCor = eq === 'Glauco' ? 'rgba(92,156,255,.08)' : eq === 'Edivan' ? 'rgba(0,230,118,.06)' : eq.trim() === 'Marcelo' ? 'rgba(171,71,188,.06)' : 'rgba(255,215,0,.06)';
 
     membros.forEach(c => {
       const clientes = CLIENTES.filter(cl => {
@@ -1062,7 +1082,10 @@ function renderCorretores() {
       html += `<div class="corr-card" style="border-left:3px solid ${cor};background:${bgCor};">
         <div class="corr-card-header">
           <span class="corr-card-name">${c.NOME} ${cargoTag}</span>
-          ${eqTagHTML(eq)}
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${eqTagHTML(eq)}
+            <button onclick="desativarCorretor('${c.NOME}')" style="background:rgba(239,83,80,.15);color:var(--danger);border:1px solid rgba(239,83,80,.25);padding:3px 8px;border-radius:4px;font-size:.6rem;font-weight:700;cursor:pointer;">DESATIVAR</button>
+          </div>
         </div>
         <div class="corr-card-stat">
           <div class="corr-stat"><div class="csv">${clientes.length}</div><div class="csl">Clientes</div></div>
@@ -2527,6 +2550,199 @@ function iniciarMonitorAgenda() {
 }
 
 // ============================================
+// ============================================
+// MODAL NOVA VENDA
+// ============================================
+function abrirModalVenda() {
+  document.getElementById('modal-venda').classList.add('open');
+  // Setar data de hoje como padrão
+  const hoje = new Date();
+  hoje.setHours(hoje.getHours() - 3);
+  document.getElementById('nv-data').value = hoje.toISOString().substring(0, 10);
+  document.getElementById('nv-msg').className = 'form-msg';
+  document.getElementById('nv-msg').textContent = '';
+}
+
+function fecharModalVenda() {
+  document.getElementById('modal-venda').classList.remove('open');
+}
+
+async function salvarNovaVenda() {
+  const mes = document.getElementById('nv-mes').value;
+  const data = document.getElementById('nv-data').value;
+  const cliente = document.getElementById('nv-cliente').value.trim();
+  const cpf = document.getElementById('nv-cpf').value.trim();
+  const corretor = document.getElementById('nv-corretor').value;
+  const coordenador = document.getElementById('nv-coordenador').value;
+  const empreendimento = document.getElementById('nv-empreendimento').value.trim();
+  const construtora = document.getElementById('nv-construtora').value.trim();
+  const vgv = document.getElementById('nv-vgv').value;
+  const status = document.getElementById('nv-status').value;
+
+  const msg = document.getElementById('nv-msg');
+
+  // Validações
+  if (!mes || !data || !cliente || !corretor || !empreendimento || !vgv) {
+    msg.className = 'form-msg erro';
+    msg.textContent = 'Preencha todos os campos obrigatórios (mês, data, cliente, corretor, empreendimento, VGV).';
+    return;
+  }
+
+  const btn = document.getElementById('nv-btn');
+  btn.disabled = true;
+  btn.textContent = 'SALVANDO...';
+
+  const venda = {
+    MES_COMERCIAL: mes,
+    DATA_VENDA: data,
+    CLIENTE: cliente.toUpperCase(),
+    CPF: cpf,
+    STATUS_VENDA: status,
+    EMPREENDIMENTO: empreendimento.toUpperCase(),
+    CONSTRUTORA: construtora.toUpperCase(),
+    VGV: parseFloat(vgv),
+    COORDENADOR: coordenador,
+    CORRETOR: corretor
+  };
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'adicionar_venda', vendas: [venda] })
+    });
+    const result = await resp.json();
+    if (result.sucesso) {
+      msg.className = 'form-msg ok';
+      msg.textContent = 'Venda registrada com sucesso!';
+      // Limpar campos
+      document.getElementById('nv-cliente').value = '';
+      document.getElementById('nv-cpf').value = '';
+      document.getElementById('nv-empreendimento').value = '';
+      document.getElementById('nv-construtora').value = '';
+      document.getElementById('nv-vgv').value = '';
+      document.getElementById('nv-corretor').value = '';
+      document.getElementById('nv-coordenador').value = '';
+      // Recarregar dados após 1.5s
+      setTimeout(() => { fecharModalVenda(); carregarDados(); }, 1500);
+    } else {
+      msg.className = 'form-msg erro';
+      msg.textContent = 'Erro: ' + (result.erro || 'Falha ao salvar.');
+    }
+  } catch(e) {
+    msg.className = 'form-msg erro';
+    msg.textContent = 'Erro de conexão. Tente novamente.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'REGISTRAR VENDA';
+}
+
+// ============================================
+// MODAL NOVO CORRETOR
+// ============================================
+function abrirModalCorretor() {
+  document.getElementById('modal-corretor').classList.add('open');
+  const hoje = new Date(); hoje.setHours(hoje.getHours() - 3);
+  document.getElementById('nc-data').value = hoje.toISOString().substring(0, 10);
+  document.getElementById('nc-msg').className = 'form-msg';
+  document.getElementById('nc-msg').textContent = '';
+}
+
+function fecharModalCorretor() {
+  document.getElementById('modal-corretor').classList.remove('open');
+}
+
+async function salvarNovoCorretor() {
+  const nome = document.getElementById('nc-nome').value.trim();
+  const nomeCompleto = document.getElementById('nc-nome-completo').value.trim();
+  const equipe = document.getElementById('nc-equipe').value;
+  const cargo = document.getElementById('nc-cargo').value;
+  const email = document.getElementById('nc-email').value.trim();
+  const telefone = document.getElementById('nc-telefone').value.trim();
+  const status = document.getElementById('nc-status').value;
+  const dataEntrada = document.getElementById('nc-data').value;
+  const obs = document.getElementById('nc-obs').value.trim();
+  const msg = document.getElementById('nc-msg');
+
+  if (!nome || !equipe) {
+    msg.className = 'form-msg erro';
+    msg.textContent = 'Preencha pelo menos Nome e Equipe.';
+    return;
+  }
+
+  const btn = document.getElementById('nc-btn');
+  btn.disabled = true;
+  btn.textContent = 'SALVANDO...';
+
+  const corretor = {
+    NOME: nome,
+    'NOME COMPLETO': nomeCompleto || nome,
+    EQUIPE: equipe,
+    CARGO: cargo,
+    STATUS: status,
+    EMAIL: email,
+    TELEFONE: telefone,
+    'DATA ENTRADA': dataEntrada,
+    OBSERVACOES: obs,
+    SENHA: 1234
+  };
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'adicionar_corretor', corretores: [corretor] })
+    });
+    const result = await resp.json();
+    if (result.sucesso) {
+      msg.className = 'form-msg ok';
+      msg.textContent = 'Corretor cadastrado com sucesso!';
+      document.getElementById('nc-nome').value = '';
+      document.getElementById('nc-nome-completo').value = '';
+      document.getElementById('nc-email').value = '';
+      document.getElementById('nc-telefone').value = '';
+      document.getElementById('nc-obs').value = '';
+      document.getElementById('nc-equipe').value = '';
+      setTimeout(() => { fecharModalCorretor(); carregarDados(); }, 1500);
+    } else {
+      msg.className = 'form-msg erro';
+      msg.textContent = 'Erro: ' + (result.erro || 'Falha ao salvar.');
+    }
+  } catch(e) {
+    msg.className = 'form-msg erro';
+    msg.textContent = 'Erro de conexão. Tente novamente.';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'CADASTRAR CORRETOR';
+}
+
+// ============================================
+// DESATIVAR CORRETOR
+// ============================================
+async function desativarCorretor(nome) {
+  if (!confirm(`Desativar o corretor "${nome}"?\n\nEle não aparecerá mais no ranking e no app.`)) return;
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_corretor', nome: nome, campos: { STATUS: 'Inativo' } })
+    });
+    const result = await resp.json();
+    if (result.sucesso) {
+      alert('Corretor desativado com sucesso!');
+      carregarDados();
+    } else {
+      alert('Erro: ' + (result.erro || 'Falha ao desativar.'));
+    }
+  } catch(e) {
+    alert('Erro de conexão. Tente novamente.');
+  }
+}
+
+// ============================================
 // INIT
 // ============================================
 carregarDados();
@@ -2548,6 +2764,197 @@ iniciarMonitorAgenda();
       <input type="time" id="remarcar-plat-hora" style="width:100%;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:#fff;font-size:.85rem;">
     </div>
     <button onclick="confirmarRemarcarPlat()" style="width:100%;padding:12px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;">CONFIRMAR REMARCAÇÃO</button>
+  </div>
+</div>
+
+<!-- MODAL: NOVA VENDA -->
+<div class="modal-overlay" id="modal-venda" onclick="if(event.target===this)fecharModalVenda()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Registrar Nova Venda</h3>
+      <button class="modal-close" onclick="fecharModalVenda()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Mês Comercial</label>
+          <input type="month" class="form-input" id="nv-mes" value="2026-07">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data da Venda</label>
+          <input type="date" class="form-input" id="nv-data">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <input type="text" class="form-input" id="nv-cliente" placeholder="Nome completo do cliente">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF</label>
+          <input type="text" class="form-input" id="nv-cpf" placeholder="000.000.000-00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Corretor</label>
+          <select class="form-input" id="nv-corretor">
+            <option value="">Selecione...</option>
+            <option>DANDARA CAMPUS</option>
+            <option>CAIQUE MENDES</option>
+            <option>ISAAC DE SÁ</option>
+            <option>DAVI RIBEIRO</option>
+            <option>RENATO RIBEIRO</option>
+            <option>WILIAN BUENO</option>
+            <option>VICTOR PEREIRA</option>
+            <option>GABRIEL SOUZA</option>
+            <option>GABRIEL RIBEIRO</option>
+            <option>CRISTIANO FERNANDES</option>
+            <option>CAMILA CRAVEIRO</option>
+            <option>BRUNA PACHECO</option>
+            <option>MARIA CLARA</option>
+            <option>KERLLY MARTINS</option>
+            <option>SUZY FRANKLYN</option>
+            <option>CRISTIANE FERREIRA</option>
+            <option>FELIPE GUIMARAES</option>
+            <option>CARLOS AURELIO</option>
+            <option>MARCOS REIS</option>
+            <option>JOYCE BRISA</option>
+            <option>KAYQUE NASCIMENTO</option>
+            <option>JOSIMAR MACHADO</option>
+            <option>ADRIEL DUARTE</option>
+            <option>MARCELO AROUCA</option>
+            <option>GLAUCO RIBEIRO</option>
+            <option>EDVAM SILVA</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Coordenador</label>
+          <select class="form-input" id="nv-coordenador">
+            <option value="">Sem coordenador</option>
+            <option>GLAUCO RIBEIRO</option>
+            <option>EDVAM SILVA</option>
+            <option>MARCELO AROUCA</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Empreendimento</label>
+          <input type="text" class="form-input" id="nv-empreendimento" placeholder="Ex: BOSQUE JACAREPAGUÁ" list="list-empreendimentos">
+          <datalist id="list-empreendimentos">
+            <option value="VIVA VIDA RECANTO CLUBE">
+            <option value="BOSQUE JACAREPAGUÁ">
+            <option value="SOUL TAQUÁ">
+            <option value="MAGALU">
+            <option value="PARQUE HOTENCIA">
+            <option value="PORTO LIMA">
+            <option value="MY LIFE">
+            <option value="MY MOOD">
+            <option value="ESTAÇÃO RIO">
+            <option value="PORTO VALENCIA">
+            <option value="AGUAS DO ATLANTICO">
+            <option value="CONQUISTA NORTE CLUBE">
+            <option value="ELEVTO BONSSUCESSO">
+            <option value="MADRI">
+            <option value="ITANHANGÁ BOSQUE">
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Construtora</label>
+          <input type="text" class="form-input" id="nv-construtora" placeholder="Ex: TENDA" list="list-construtoras">
+          <datalist id="list-construtoras">
+            <option value="TENDA">
+            <option value="DIRECIONAL">
+            <option value="CURY">
+            <option value="MAGALU">
+            <option value="VIC">
+            <option value="MRV">
+            <option value="CELTA">
+            <option value="CANOPUS">
+            <option value="NOVOLAR">
+            <option value="LIVING">
+            <option value="RIVA">
+            <option value="EMCAMP">
+            <option value="HABITTA">
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">VGV (Valor)</label>
+          <input type="number" class="form-input" id="nv-vgv" placeholder="Ex: 270100" step="0.01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status da Venda</label>
+          <select class="form-input" id="nv-status">
+            <option value="Aguardando Assinatura Caixa">Aguardando Assinatura Caixa</option>
+            <option value="Repassado na CEF">Repassado na CEF</option>
+            <option value="CONSORCIO">Consórcio</option>
+            <option value="Distrato Realizado">Distrato Realizado</option>
+          </select>
+        </div>
+      </div>
+      <button class="form-btn" id="nv-btn" onclick="salvarNovaVenda()">REGISTRAR VENDA</button>
+      <div class="form-msg" id="nv-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NOVO CORRETOR -->
+<div class="modal-overlay" id="modal-corretor" onclick="if(event.target===this)fecharModalCorretor()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Cadastrar Novo Corretor</h3>
+      <button class="modal-close" onclick="fecharModalCorretor()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input type="text" class="form-input" id="nc-nome" placeholder="Ex: João Silva">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input type="text" class="form-input" id="nc-nome-completo" placeholder="Ex: João da Silva Santos">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Equipe</label>
+          <select class="form-input" id="nc-equipe">
+            <option value="">Selecione...</option>
+            <option value="Glauco">Glauco</option>
+            <option value="Edivan">Edvan</option>
+            <option value="Marcelo ">Marcelo</option>
+            <option value="Adriel">Adriel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cargo</label>
+          <select class="form-input" id="nc-cargo">
+            <option value="Corretor">Corretor</option>
+            <option value="Coordenador">Coordenador</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="nc-email" placeholder="email@gmail.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          <input type="tel" class="form-input" id="nc-telefone" placeholder="(21) 99999-9999">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="nc-status">
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+            <option value="Licença">Licença</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de Entrada</label>
+          <input type="date" class="form-input" id="nc-data">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Observações</label>
+          <input type="text" class="form-input" id="nc-obs" placeholder="Opcional">
+        </div>
+      </div>
+      <button class="form-btn" id="nc-btn" onclick="salvarNovoCorretor()">CADASTRAR CORRETOR</button>
+      <div class="form-msg" id="nc-msg"></div>
+    </div>
   </div>
 </div>
 
