@@ -105,7 +105,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 
 .empty{text-align:center;padding:30px 20px;color:var(--textL);font-size:.8rem;}
 
-.vendas-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+.main-tabs{display:flex;gap:0;background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;}
+.main-tab{padding:12px 24px;font-size:.8rem;font-weight:700;color:var(--textL);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.5px;}
+.main-tab:hover{color:var(--text);}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
 .vendas-resumo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
 .vendas-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;text-align:center;}
 .vendas-kpi-num{font-size:1.6rem;font-weight:900;color:var(--gold);line-height:1;}
@@ -181,6 +185,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <button class="logout-btn" onclick="logout()">Sair</button>
     </div>
   </div>
+  <div class="main-tabs" id="mainTabs">
+    <div class="main-tab active" data-view="demandas" onclick="setMainView('demandas')">Demandas</div>
+    <div class="main-tab" data-view="vendas" onclick="setMainView('vendas')">Vendas</div>
+  </div>
+  <div class="view-demandas" id="viewDemandas">
   <div class="main">
     <div class="col-left">
       <div class="error-banner" id="errorBanner"></div>
@@ -194,12 +203,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="foco-section" id="focoSection">
         <div class="section-title" style="display:flex;align-items:center;gap:8px;">A Unica Coisa <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Foco do dia</span></div>
         <div id="focoList"></div>
-      </div>
-      <div class="vendas-section" id="vendasSection">
-        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Vendas da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Mes comercial</span></div>
-        <div id="vendasResumo" class="vendas-resumo"></div>
-        <div id="vendasRanking"></div>
-        <div id="vendasLista"></div>
       </div>
     </div>
     <div class="col-right">
@@ -217,6 +220,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="cal-grid" id="calGrid"></div>
       <div class="section-title" id="dayTitle" style="margin-top:16px;"></div>
       <div id="dayAgenda"></div>
+    </div>
+  </div>
+  </div>
+  <div class="view-vendas" id="viewVendas" style="display:none;">
+    <div style="padding:20px;max-width:900px;margin:0 auto;">
+      <div class="error-banner" id="errorBannerV" style="display:none;"></div>
+      <div class="section-title" style="display:flex;align-items:center;gap:8px;">Vendas da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Mes comercial atual</span></div>
+      <div id="vendasResumo" class="vendas-resumo"></div>
+      <div id="vendasRanking"></div>
+      <div id="vendasLista"></div>
     </div>
   </div>
 </div>
@@ -342,6 +355,17 @@ async function carregarDadosSilencioso() {
     DADOS = await res.json();
     renderTudo();
   } catch (e) {}
+}
+
+let MAIN_VIEW = 'demandas';
+
+function setMainView(view) {
+  MAIN_VIEW = view;
+  document.querySelectorAll('#mainTabs .main-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+  document.getElementById('viewDemandas').style.display = view === 'demandas' ? '' : 'none';
+  document.getElementById('viewVendas').style.display = view === 'vendas' ? '' : 'none';
 }
 
 function renderTudo() {
