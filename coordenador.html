@@ -105,6 +105,29 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 
 .empty{text-align:center;padding:30px 20px;color:var(--textL);font-size:.8rem;}
 
+.vendas-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+.vendas-resumo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.vendas-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;text-align:center;}
+.vendas-kpi-num{font-size:1.6rem;font-weight:900;color:var(--gold);line-height:1;}
+.vendas-kpi-label{font-size:.62rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+.rank-podium{display:flex;gap:8px;margin-bottom:14px;align-items:flex-end;justify-content:center;}
+.rank-item{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:12px 10px;text-align:center;flex:1;max-width:140px;position:relative;}
+.rank-item.top1{border-color:var(--gold);background:rgba(255,215,0,.04);order:2;}
+.rank-item.top2{order:1;opacity:.9;}
+.rank-item.top3{order:3;opacity:.85;}
+.rank-pos{font-size:.65rem;font-weight:800;color:var(--gold);margin-bottom:4px;}
+.rank-nome{font-size:.75rem;font-weight:700;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-vendas{font-size:1.1rem;font-weight:900;color:var(--accent);line-height:1;}
+.rank-vgv{font-size:.6rem;color:var(--textL);margin-top:2px;}
+.venda-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:var(--rad);padding:12px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.venda-info{flex:1;min-width:0;}
+.venda-cliente{font-size:.78rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.venda-detalhe{font-size:.65rem;color:var(--textL);margin-top:2px;}
+.venda-corretor{font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;}
+.venda-vgv{font-size:.9rem;font-weight:800;color:var(--gold);text-align:right;min-width:90px;}
+.venda-status{font-size:.55rem;color:var(--textL);text-align:right;}
+.vendas-sem{text-align:center;padding:20px;color:var(--textL);font-size:.78rem;}
+
 .spinner-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,20,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;}
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -171,6 +194,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="foco-section" id="focoSection">
         <div class="section-title" style="display:flex;align-items:center;gap:8px;">A Unica Coisa <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Foco do dia</span></div>
         <div id="focoList"></div>
+      </div>
+      <div class="vendas-section" id="vendasSection">
+        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Vendas da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Mes comercial</span></div>
+        <div id="vendasResumo" class="vendas-resumo"></div>
+        <div id="vendasRanking"></div>
+        <div id="vendasLista"></div>
       </div>
     </div>
     <div class="col-right">
@@ -318,6 +347,7 @@ async function carregarDadosSilencioso() {
 function renderTudo() {
   renderDemandas();
   renderFoco();
+  renderVendas();
   renderCalendario();
   renderDayAgenda();
 }
@@ -595,6 +625,128 @@ function renderDayAgenda() {
   });
 
   document.getElementById('dayAgenda').innerHTML = html;
+}
+
+const NOMES_VENDAS = {
+  'DANDARA CAMPUS': 'Dandara Campos',
+  'WILIAN BUENO': 'William Bueno',
+  'EDVAM SILVA': 'Edvan Silva',
+  'FELIPE GUIMARAES': 'Felipe Guimarães'
+};
+
+const INICIO_MES_COMERCIAL = '2026-07-03';
+
+function mapNomeVenda(nomeVenda) {
+  if (!nomeVenda) return '';
+  const upper = nomeVenda.toUpperCase().trim();
+  if (NOMES_VENDAS[upper]) return NOMES_VENDAS[upper];
+  const equipeAll = [];
+  Object.values(EQUIPES).forEach(e => e.forEach(m => equipeAll.push(m)));
+  const match = equipeAll.find(m => normNome(m) === normNome(nomeVenda));
+  return match || nomeVenda;
+}
+
+function fmtVGV(v) {
+  const num = parseFloat(v) || 0;
+  if (num >= 1000000) return 'R$ ' + (num / 1000000).toFixed(2).replace('.', ',') + 'M';
+  if (num >= 1000) return 'R$ ' + (num / 1000).toFixed(1).replace('.', ',') + 'k';
+  return 'R$ ' + num.toFixed(0);
+}
+
+function fmtVGVFull(v) {
+  const num = parseFloat(v) || 0;
+  return 'R$ ' + num.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function renderVendas() {
+  const vendas = (DADOS.vendas || []).filter(v => {
+    const dataVenda = String(v.DATA_VENDA || '').substring(0, 10);
+    if (dataVenda < INICIO_MES_COMERCIAL) return false;
+    const status = (v.STATUS_VENDA || '').toLowerCase();
+    if (status.includes('distrato')) return false;
+    const corretorMapped = mapNomeVenda(v.CORRETOR);
+    return pertenceEquipe(corretorMapped);
+  });
+
+  // KPIs
+  const totalVendas = vendas.length;
+  const totalVGV = vendas.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+
+  document.getElementById('vendasResumo').innerHTML =
+    '<div class="vendas-kpi"><div class="vendas-kpi-num">' + totalVendas + '</div><div class="vendas-kpi-label">Vendas no mes</div></div>' +
+    '<div class="vendas-kpi"><div class="vendas-kpi-num">' + fmtVGV(totalVGV) + '</div><div class="vendas-kpi-label">VGV Total</div></div>';
+
+  if (totalVendas === 0) {
+    document.getElementById('vendasRanking').innerHTML = '';
+    document.getElementById('vendasLista').innerHTML = '<div class="vendas-sem">Nenhuma venda no mes comercial atual.</div>';
+    return;
+  }
+
+  // Ranking por corretor
+  const porCorretor = {};
+  vendas.forEach(v => {
+    const nome = mapNomeVenda(v.CORRETOR);
+    if (!porCorretor[nome]) porCorretor[nome] = { vendas: 0, vgv: 0 };
+    porCorretor[nome].vendas++;
+    porCorretor[nome].vgv += (parseFloat(v.VGV) || 0);
+  });
+
+  const ranking = Object.entries(porCorretor)
+    .map(([nome, d]) => ({ nome, vendas: d.vendas, vgv: d.vgv }))
+    .sort((a, b) => b.vendas - a.vendas || b.vgv - a.vgv);
+
+  // Podium top 3
+  let podiumHtml = '<div class="rank-podium">';
+  ranking.slice(0, 3).forEach((r, i) => {
+    const cls = i === 0 ? 'top1' : i === 1 ? 'top2' : 'top3';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+    podiumHtml += '<div class="rank-item ' + cls + '">';
+    podiumHtml += '<div class="rank-pos">' + medal + ' ' + (i + 1) + 'º</div>';
+    podiumHtml += '<div class="rank-nome">' + r.nome.split(' ')[0] + '</div>';
+    podiumHtml += '<div class="rank-vendas">' + r.vendas + '</div>';
+    podiumHtml += '<div class="rank-vgv">' + fmtVGV(r.vgv) + '</div>';
+    podiumHtml += '</div>';
+  });
+  podiumHtml += '</div>';
+
+  // Resto do ranking (4+)
+  if (ranking.length > 3) {
+    podiumHtml += '<div style="margin-bottom:14px;">';
+    ranking.slice(3).forEach((r, i) => {
+      podiumHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid var(--border);font-size:.75rem;">';
+      podiumHtml += '<span style="color:var(--textL);font-weight:600;">' + (i + 4) + 'º ' + r.nome + '</span>';
+      podiumHtml += '<span style="color:var(--text);">' + r.vendas + ' venda' + (r.vendas > 1 ? 's' : '') + ' · ' + fmtVGV(r.vgv) + '</span>';
+      podiumHtml += '</div>';
+    });
+    podiumHtml += '</div>';
+  }
+
+  document.getElementById('vendasRanking').innerHTML = podiumHtml;
+
+  // Lista de vendas
+  let listaHtml = '<div style="font-size:.65rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Detalhes das vendas</div>';
+  const vendasOrdenadas = [...vendas].sort((a, b) => {
+    const da = String(a.DATA_VENDA || '').substring(0, 10);
+    const db = String(b.DATA_VENDA || '').substring(0, 10);
+    return db.localeCompare(da);
+  });
+
+  vendasOrdenadas.forEach(v => {
+    const corretorNome = mapNomeVenda(v.CORRETOR);
+    listaHtml += '<div class="venda-card">';
+    listaHtml += '<div class="venda-info">';
+    listaHtml += '<div class="venda-cliente">' + (v.CLIENTE || '-') + '</div>';
+    listaHtml += '<div class="venda-detalhe">' + (v.EMPREENDIMENTO || '-') + ' · ' + (v.CONSTRUTORA || '') + ' · ' + fmtData(v.DATA_VENDA) + '</div>';
+    listaHtml += '<div class="venda-corretor">' + corretorNome + '</div>';
+    listaHtml += '</div>';
+    listaHtml += '<div>';
+    listaHtml += '<div class="venda-vgv">' + fmtVGVFull(v.VGV) + '</div>';
+    listaHtml += '<div class="venda-status">' + (v.STATUS_VENDA || '') + '</div>';
+    listaHtml += '</div>';
+    listaHtml += '</div>';
+  });
+
+  document.getElementById('vendasLista').innerHTML = listaHtml;
 }
 
 (function init() {
