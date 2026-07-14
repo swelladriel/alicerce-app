@@ -109,7 +109,7 @@ body {
 .podium-card.third .podium-pts { color: var(--bronze); }
 .podium-label { font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
 
-.podium-cats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; margin-top: 6px; text-align: left; }
+.podium-cats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; margin-top: 6px; text-align: left; }
 .podium-cat { font-size: 10px; color: var(--text-dim); display: flex; justify-content: space-between; padding: 1px 4px; background: rgba(255,255,255,0.03); border-radius: 3px; }
 .podium-cat-val { color: var(--text); font-weight: 700; }
 .podium-cat-pts { color: var(--gold); font-weight: 600; font-size: 9px; }
@@ -603,7 +603,7 @@ function renderRanking() {
     <div class="podium-card ${classes[i]}" style="animation-delay: ${i * 0.1}s">
       <div class="podium-pos">${labels[i]}</div>
       <div class="podium-medal">${medals[i]}</div>
-      <div class="podium-name">${p.nome.split(' ')[0]}</div>
+      <div class="podium-name">${p.nome}</div>
       <div class="podium-pts">${p.total}</div>
       <div class="podium-label">pontos</div>
       <div class="podium-cats">
@@ -611,6 +611,7 @@ function renderRanking() {
         <div class="podium-cat"><span>✅ Atend.</span> <span><span class="podium-cat-val">${p.atendimentos}x</span> <span class="podium-cat-pts">${fmtPts(p.atendimentos * 5)}</span></span></div>
         <div class="podium-cat"><span>📁 Pastas</span> <span><span class="podium-cat-val">${p.pastas}x</span> <span class="podium-cat-pts">${fmtPts(p.pastas * 8)}</span></span></div>
         <div class="podium-cat"><span>🏆 Vendas</span> <span><span class="podium-cat-val">${p.vendas}x</span> <span class="podium-cat-pts">${fmtPts(p.vendas * 20)}</span></span></div>
+        <div class="podium-cat"><span>📜 Consórcio</span> <span><span class="podium-cat-val">${p.consorcios}x</span> <span class="podium-cat-pts">${fmtPts(p.consorcios * 10)}</span></span></div>
         <div class="podium-cat"><span>⏰ Check-in</span> <span class="${ptClass(p.ptCheckin)}">${fmtPts(p.ptCheckin)}</span></div>
         <div class="podium-cat"><span>🎙 945</span> <span class="${ptClass(p.pt945)}">${fmtPts(p.pt945)}</span></div>
       </div>
