@@ -6,8 +6,10 @@
 <title>Plataforma Alicerce 3.0 — Swell Consultoria</title>
 <style>
 :root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:10px;}
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{touch-action:manipulation;}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+button,a,.sidebar-item,.tab-btn,.cal-day,.card{touch-action:manipulation;-webkit-user-select:none;user-select:none;}
 
 /* SIDEBAR */
 .sidebar{width:240px;background:linear-gradient(180deg,#0d1117,#0b0f14);position:fixed;top:0;left:0;bottom:0;border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;z-index:100;}

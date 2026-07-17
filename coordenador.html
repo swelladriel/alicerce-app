@@ -7,8 +7,10 @@
 <title>Alicerce — Painel do Coordenador</title>
 <style>
 :root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:10px;}
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{touch-action:manipulation;}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manipulation;-webkit-user-select:none;user-select:none;}
 
 .login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;}
 .login-screen.hidden{display:none;}
