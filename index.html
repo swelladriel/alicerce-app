@@ -1730,10 +1730,10 @@ function renderDiaDetalhe(dataStr) {
         ${tipo === 'Cliente' && podVerContato && a.CONTATO ? `<div class="cal-card-contato">${a.CONTATO}</div>` : ''}
         <div class="cal-card-corretor">${a.CORRETOR || '-'}</div>
         ${!atendido && !bolo ? `${podVerContato ? `<button onclick="marcarAtendido(${idxAgenda})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>` : ''}
-        <div style="display:flex;gap:6px;margin-top:6px;">
+        ${(a.CORRETOR === USUARIO.NOME || podVerContato) ? `<div style="display:flex;gap:6px;margin-top:6px;">
           <button onclick="marcarBolo(${idxAgenda})" style="flex:1;background:#f44336;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">🍰 BOLO</button>
           <button onclick="abrirRemarcar(${idxAgenda})" style="flex:1;background:rgba(255,255,255,.08);color:var(--gold);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;font-size:.68rem;font-weight:600;cursor:pointer;">📅 REMARCAR</button>
-        </div>` : ''}
+        </div>` : ''}` : ''}
       </div>`;
     });
     html += '</div>';
