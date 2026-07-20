@@ -2008,27 +2008,45 @@ function iniciarRelogio() {
   tick();
   setInterval(tick, 30000);
 
-  // Verificar se já fez check-in hoje
+  // Verificar se já fez check-in hoje (localStorage)
   const hoje = new Date().toISOString().split('T')[0];
   const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
   const jaFez = checkins.find(c => c.data === hoje);
   if (jaFez) {
     document.getElementById('checkin-btn').className = 'checkin-btn feito';
     document.getElementById('checkin-btn').textContent = 'PRESENÇA REGISTRADA';
+    document.getElementById('checkin-btn').disabled = true;
+    document.getElementById('checkin-btn').style.pointerEvents = 'none';
     const localTag = jaFez.noEscritorio ? `📍 ${jaFez.nomeLocal || jaFez.local || 'No local'}` : '⚠️ Fora do local';
     const distTxt = jaFez.distancia ? ` (${Math.round(jaFez.distancia)}m)` : '';
     document.getElementById('checkin-status').textContent = `Check-in às ${jaFez.hora} — ${localTag}${distTxt}`;
   }
+  // Verificar também na planilha (caso localStorage foi limpo)
+  if (!jaFez && typeof DADOS_TUDO !== 'undefined' && DADOS_TUDO && DADOS_TUDO.registros) {
+    const checkinPlanilha = DADOS_TUDO.registros.find(r => r.TIPO === 'checkin' && r.CORRETOR === USUARIO.NOME && String(r.DATA || '').substring(0,10) === hoje);
+    if (checkinPlanilha) {
+      document.getElementById('checkin-btn').className = 'checkin-btn feito';
+      document.getElementById('checkin-btn').textContent = 'PRESENÇA REGISTRADA';
+      document.getElementById('checkin-btn').disabled = true;
+      document.getElementById('checkin-btn').style.pointerEvents = 'none';
+      document.getElementById('checkin-status').textContent = 'Check-in já registrado hoje';
+    }
+  }
 }
 
+let checkinEmAndamento = false;
 function fazerCheckin() {
+  if (checkinEmAndamento) return;
   const hoje = new Date().toISOString().split('T')[0];
   const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
   if (checkins.find(c => c.data === hoje)) return;
 
+  checkinEmAndamento = true;
   const btn = document.getElementById('checkin-btn');
   btn.textContent = 'OBTENDO LOCALIZAÇÃO...';
   btn.disabled = true;
+  btn.style.pointerEvents = 'none';
+  btn.style.opacity = '0.5';
 
   if (!navigator.geolocation) {
     registrarCheckin(null, null);
@@ -2099,7 +2117,8 @@ function registrarCheckin(lat, lng) {
   const btn = document.getElementById('checkin-btn');
   btn.className = 'checkin-btn feito';
   btn.textContent = 'PRESENÇA REGISTRADA';
-  btn.disabled = false;
+  btn.disabled = true;
+  btn.style.pointerEvents = 'none';
 
   const localTag = noLocal ? `📍 ${nomeLocal}` : (lat === null ? '⚠️ GPS negado' : '⚠️ Fora do local');
   const distTxt = distancia !== null ? ` (${Math.round(distancia)}m)` : '';
