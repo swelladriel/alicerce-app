@@ -1826,6 +1826,30 @@ async function marcarBolo(idx) {
     });
   } catch(e) {}
 
+  // Criar demanda automática de reagendamento
+  try {
+    const demBolo = {
+      acao: 'adicionar_demanda',
+      demandas: [{
+        DATA: new Date().toISOString().split('T')[0],
+        RESPONSAVEL: a.CORRETOR || '',
+        DESCRICAO: (a.CLIENTE || '').toUpperCase() + ' — Cliente deu BOLO no atendimento de ' + (a.HORA || '') + '. AÇÃO: Entrar em contato por WhatsApp/telefone imediatamente. Reagendar para o mais breve possível. Confirmar presença no dia anterior.',
+        TIPO: 'ia-refinada-v2',
+        PRIORIDADE: 'Alta',
+        CLIENTE: (a.CLIENTE || '').toUpperCase(),
+        STATUS: 'Pendente',
+        'DATA CONCLUSAO': '',
+        OBSERVACOES: 'Gerada automaticamente por BOLO'
+      }]
+    };
+    fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(demBolo)
+    }).catch(() => {});
+  } catch(e) {}
+
   renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
   mostrarConfirmacao('🍰 BOLO REGISTRADO');
 }

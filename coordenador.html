@@ -190,6 +190,7 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   <div class="main-tabs" id="mainTabs">
     <div class="main-tab active" data-view="demandas" onclick="setMainView('demandas')">Demandas</div>
     <div class="main-tab" data-view="presenca" onclick="setMainView('presenca')">Presenca</div>
+    <div class="main-tab" data-view="performance" onclick="setMainView('performance')">Performance</div>
     <div class="main-tab" data-view="vendas" onclick="setMainView('vendas')">Vendas</div>
   </div>
   <div class="view-demandas" id="viewDemandas">
@@ -229,13 +230,31 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   <div class="view-presenca" id="viewPresenca" style="display:none;">
     <div class="main">
       <div class="col-left">
-        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Presenca da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Hoje</span></div>
+        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Presenca da Equipe</div>
+        <div class="tabs" id="presencaTabs">
+          <div class="tab-btn active" data-ptab="hoje" onclick="setPresencaTab('hoje')">Hoje</div>
+          <div class="tab-btn" data-ptab="semana" onclick="setPresencaTab('semana')">Semana</div>
+          <div class="tab-btn" data-ptab="mes" onclick="setPresencaTab('mes')">Mes</div>
+        </div>
         <div id="presencaResumo" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;"></div>
         <div id="presencaFizeram" style="margin-top:16px;"></div>
       </div>
       <div class="col-right">
-        <div class="section-title" style="color:var(--danger);">Pendentes</div>
+        <div class="section-title" id="presencaRightTitle" style="color:var(--danger);">Pendentes</div>
         <div id="presencaPendentes"></div>
+      </div>
+    </div>
+  </div>
+  <div class="view-performance" id="viewPerformance" style="display:none;">
+    <div class="main">
+      <div class="col-left">
+        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Performance da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Mes comercial</span></div>
+        <div id="perfResumo" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:20px;"></div>
+        <div id="perfTabela"></div>
+      </div>
+      <div class="col-right">
+        <div class="section-title">Destaques</div>
+        <div id="perfDestaques"></div>
       </div>
     </div>
   </div>
@@ -387,6 +406,7 @@ function setMainView(view) {
   });
   document.getElementById('viewDemandas').style.display = view === 'demandas' ? '' : 'none';
   document.getElementById('viewPresenca').style.display = view === 'presenca' ? '' : 'none';
+  document.getElementById('viewPerformance').style.display = view === 'performance' ? '' : 'none';
   document.getElementById('viewVendas').style.display = view === 'vendas' ? '' : 'none';
 }
 
@@ -395,23 +415,58 @@ function renderTudo() {
   renderFoco();
   renderVendas();
   renderPresenca();
+  renderPerformance();
   renderCalendario();
   renderDayAgenda();
 }
 
+let PRESENCA_TAB = 'hoje';
+
+function setPresencaTab(tab) {
+  PRESENCA_TAB = tab;
+  document.querySelectorAll('#presencaTabs .tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.ptab === tab);
+  });
+  renderPresenca();
+}
+
+function nomeMatchP(membro, listaNomes) {
+  const nm = normNome(membro);
+  return listaNomes.some(n => n === nm || n.includes(nm) || nm.includes(n));
+}
+
+function getDiasUteis(inicio, fim) {
+  const dias = [];
+  const d = new Date(inicio + 'T12:00:00');
+  const fimD = new Date(fim + 'T12:00:00');
+  while (d <= fimD) {
+    dias.push(d.toISOString().substring(0, 10));
+    d.setDate(d.getDate() + 1);
+  }
+  return dias;
+}
+
 function renderPresenca() {
+  if (PRESENCA_TAB === 'hoje') {
+    renderPresencaHoje();
+  } else if (PRESENCA_TAB === 'semana') {
+    renderPresencaPeriodo('semana');
+  } else {
+    renderPresencaPeriodo('mes');
+  }
+}
+
+function renderPresencaHoje() {
   const hoje = hojeStr();
   const registros = DADOS.registros || [];
   const membros = getMinhaEquipe();
   const coordsNomes = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
-
   const corretores = membros.filter(m => !coordsNomes.some(c => normNome(c) === normNome(m)));
 
   const checkinsHoje = registros.filter(r => {
     const dt = String(r.DATA || '').substring(0, 10);
     return dt === hoje && (r.TIPO || '').toLowerCase() === 'checkin' && pertenceEquipe(r.CORRETOR);
   });
-
   const noveqHoje = registros.filter(r => {
     const dt = String(r.DATA || '').substring(0, 10);
     return dt === hoje && (r.TIPO || '') === '945-individual' && pertenceEquipe(r.CORRETOR);
@@ -420,82 +475,167 @@ function renderPresenca() {
   const checkinNomes = checkinsHoje.map(c => normNome(c.CORRETOR));
   const noveqNomes = noveqHoje.map(n => normNome(n.CORRETOR));
 
-  function nomeMatch(membro, listaNomes) {
-    const nm = normNome(membro);
-    return listaNomes.some(n => n === nm || n.includes(nm) || nm.includes(n));
-  }
+  const fezCheckin = corretores.filter(m => nomeMatchP(m, checkinNomes));
+  const fez945 = corretores.filter(m => nomeMatchP(m, noveqNomes));
+  const fezNada = corretores.filter(m => !nomeMatchP(m, checkinNomes) && !nomeMatchP(m, noveqNomes));
 
-  const fezCheckin = corretores.filter(m => nomeMatch(m, checkinNomes));
-  const fez945 = corretores.filter(m => nomeMatch(m, noveqNomes));
-  const fezNada = corretores.filter(m => !nomeMatch(m, checkinNomes) && !nomeMatch(m, noveqNomes));
-
-  // KPIs
   document.getElementById('presencaResumo').innerHTML = `
-    <div class="vendas-kpi">
-      <div class="vendas-kpi-num" style="color:var(--success);">${fezCheckin.length}/${corretores.length}</div>
-      <div class="vendas-kpi-label">Check-in</div>
-    </div>
-    <div class="vendas-kpi">
-      <div class="vendas-kpi-num" style="color:var(--accent);">${fez945.length}/${corretores.length}</div>
-      <div class="vendas-kpi-label">945</div>
-    </div>
-    <div class="vendas-kpi">
-      <div class="vendas-kpi-num" style="color:${fezNada.length > 0 ? 'var(--danger)' : 'var(--success)'};">${fezNada.length}</div>
-      <div class="vendas-kpi-label">Nao fez nada</div>
-    </div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--success);">${fezCheckin.length}/${corretores.length}</div><div class="vendas-kpi-label">Check-in</div></div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--accent);">${fez945.length}/${corretores.length}</div><div class="vendas-kpi-label">945</div></div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:${fezNada.length > 0 ? 'var(--danger)' : 'var(--success)'};">${fezNada.length}</div><div class="vendas-kpi-label">Nao fez nada</div></div>
   `;
 
-  // Função pra montar card de corretor
-  function cardCorretor(m) {
-    const temCheckin = nomeMatch(m, checkinNomes);
-    const tem945 = nomeMatch(m, noveqNomes);
-    const checkinIcon = temCheckin ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
-    const noveqIcon = tem945 ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
-
-    let horaCheckin = '';
-    if (temCheckin) {
+  function cardHoje(m) {
+    const temC = nomeMatchP(m, checkinNomes), tem9 = nomeMatchP(m, noveqNomes);
+    const ci = temC ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
+    const ni = tem9 ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
+    let hora = '';
+    if (temC) {
       const nm = normNome(m);
       const reg = checkinsHoje.find(c => { const cn = normNome(c.CORRETOR); return cn === nm || cn.includes(nm) || nm.includes(cn); });
-      if (reg) {
-        const h = reg.HORA || '';
-        horaCheckin = typeof h === 'string' && /\d{2}:\d{2}/.test(h) ? h : '';
-      }
+      if (reg) { const h = reg.HORA || ''; hora = typeof h === 'string' && /\d{2}:\d{2}/.test(h) ? h : ''; }
     }
-
-    const borderColor = (!temCheckin && !tem945) ? 'var(--danger)' : (temCheckin && tem945) ? 'var(--success)' : 'var(--warning)';
-
-    return `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${borderColor};border-radius:var(--rad);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-size:.85rem;font-weight:700;color:#fff;">${m}</div>
-        ${horaCheckin ? '<div style="font-size:.65rem;color:var(--textL);margin-top:2px;">Check-in ' + horaCheckin + '</div>' : ''}
-      </div>
+    const bc = (!temC && !tem9) ? 'var(--danger)' : (temC && tem9) ? 'var(--success)' : 'var(--warning)';
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${bc};border-radius:var(--rad);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-size:.85rem;font-weight:700;color:#fff;">${m}</div>${hora ? '<div style="font-size:.65rem;color:var(--textL);margin-top:2px;">Check-in ' + hora + '</div>' : ''}</div>
       <div style="display:flex;gap:16px;align-items:center;">
-        <div style="text-align:center;"><div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">CHECK-IN</div>${checkinIcon}</div>
-        <div style="text-align:center;"><div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">945</div>${noveqIcon}</div>
-      </div>
-    </div>`;
+        <div style="text-align:center;"><div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">CHECK-IN</div>${ci}</div>
+        <div style="text-align:center;"><div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">945</div>${ni}</div>
+      </div></div>`;
   }
 
-  // Coluna esquerda: quem fez pelo menos 1
-  const fizeram = corretores.filter(m => nomeMatch(m, checkinNomes) || nomeMatch(m, noveqNomes));
+  const fizeram = corretores.filter(m => nomeMatchP(m, checkinNomes) || nomeMatchP(m, noveqNomes));
   fizeram.sort((a, b) => {
-    const sA = (nomeMatch(a, checkinNomes) ? 1 : 0) + (nomeMatch(a, noveqNomes) ? 1 : 0);
-    const sB = (nomeMatch(b, checkinNomes) ? 1 : 0) + (nomeMatch(b, noveqNomes) ? 1 : 0);
+    const sA = (nomeMatchP(a, checkinNomes) ? 1 : 0) + (nomeMatchP(a, noveqNomes) ? 1 : 0);
+    const sB = (nomeMatchP(b, checkinNomes) ? 1 : 0) + (nomeMatchP(b, noveqNomes) ? 1 : 0);
     return sB - sA;
   });
   let htmlFez = `<div class="section-title" style="color:var(--success);">Presentes (${fizeram.length})</div><div style="display:grid;gap:6px;">`;
-  fizeram.forEach(m => { htmlFez += cardCorretor(m); });
-  if (fizeram.length === 0) htmlFez += '<div class="empty">Ninguem fez check-in ou 945 ainda.</div>';
+  fizeram.forEach(m => { htmlFez += cardHoje(m); });
+  if (!fizeram.length) htmlFez += '<div class="empty">Ninguem fez check-in ou 945 ainda.</div>';
   htmlFez += '</div>';
   document.getElementById('presencaFizeram').innerHTML = htmlFez;
 
-  // Coluna direita: quem não fez nada
+  document.getElementById('presencaRightTitle').textContent = 'Pendentes';
+  document.getElementById('presencaRightTitle').style.color = 'var(--danger)';
   fezNada.sort((a, b) => normNome(a).localeCompare(normNome(b)));
-  let htmlPend = '<div style="display:grid;gap:6px;">';
-  fezNada.forEach(m => { htmlPend += cardCorretor(m); });
-  if (fezNada.length === 0) htmlPend += '<div class="empty" style="color:var(--success);">Todos fizeram pelo menos check-in ou 945!</div>';
-  htmlPend += '</div>';
-  document.getElementById('presencaPendentes').innerHTML = htmlPend;
+  let htmlP = '<div style="display:grid;gap:6px;">';
+  fezNada.forEach(m => { htmlP += cardHoje(m); });
+  if (!fezNada.length) htmlP += '<div class="empty" style="color:var(--success);">Todos presentes!</div>';
+  htmlP += '</div>';
+  document.getElementById('presencaPendentes').innerHTML = htmlP;
+}
+
+function renderPresencaPeriodo(tipo) {
+  const registros = DADOS.registros || [];
+  const membros = getMinhaEquipe();
+  const coordsNomes = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
+  const corretores = membros.filter(m => !coordsNomes.some(c => normNome(c) === normNome(m)));
+
+  const hoje = new Date(hojeStr() + 'T12:00:00');
+  let inicio, fim;
+  if (tipo === 'semana') {
+    // Semana: quarta a terça
+    const dow = hoje.getDay(); // 0=dom
+    // Achar última quarta (ou hoje se quarta)
+    let diffQua = dow >= 3 ? dow - 3 : dow + 4;
+    inicio = new Date(hoje);
+    inicio.setDate(hoje.getDate() - diffQua);
+    fim = hoje;
+  } else {
+    // Mês comercial: desde INICIO_MES_COMERCIAL
+    inicio = new Date(INICIO_MES_COMERCIAL + 'T12:00:00');
+    fim = hoje;
+  }
+
+  const inicioStr = inicio.toISOString().substring(0, 10);
+  const fimStr = fim.toISOString().substring(0, 10);
+  const dias = getDiasUteis(inicioStr, fimStr);
+
+  // Montar dados por corretor e dia
+  const dados = {};
+  corretores.forEach(m => {
+    dados[m] = { checkin: 0, n945: 0, diasCheckin: 0, dias945: 0, totalDias: dias.length };
+  });
+
+  dias.forEach(dia => {
+    const checksNoDia = registros.filter(r => String(r.DATA || '').substring(0, 10) === dia && (r.TIPO || '').toLowerCase() === 'checkin' && pertenceEquipe(r.CORRETOR));
+    const n945NoDia = registros.filter(r => String(r.DATA || '').substring(0, 10) === dia && (r.TIPO || '') === '945-individual' && pertenceEquipe(r.CORRETOR));
+    const cNomes = checksNoDia.map(c => normNome(c.CORRETOR));
+    const nNomes = n945NoDia.map(n => normNome(n.CORRETOR));
+    corretores.forEach(m => {
+      if (nomeMatchP(m, cNomes)) dados[m].diasCheckin++;
+      if (nomeMatchP(m, nNomes)) dados[m].dias945++;
+    });
+  });
+
+  // KPIs médios
+  const totalCorr = corretores.length;
+  const mediaCheckin = totalCorr ? Math.round(corretores.reduce((s, m) => s + dados[m].diasCheckin, 0) / totalCorr * 100 / (dias.length || 1)) : 0;
+  const media945 = totalCorr ? Math.round(corretores.reduce((s, m) => s + dados[m].dias945, 0) / totalCorr * 100 / (dias.length || 1)) : 0;
+  const periodo = tipo === 'semana' ? 'Semana (qua-ter)' : 'Mes comercial';
+
+  document.getElementById('presencaResumo').innerHTML = `
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--success);">${mediaCheckin}%</div><div class="vendas-kpi-label">Media Check-in</div></div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--accent);">${media945}%</div><div class="vendas-kpi-label">Media 945</div></div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--textL);">${dias.length}</div><div class="vendas-kpi-label">Dias (${periodo})</div></div>
+  `;
+
+  // Tabela por corretor
+  corretores.sort((a, b) => {
+    const pctA = (dados[a].diasCheckin + dados[a].dias945) / (dias.length * 2 || 1);
+    const pctB = (dados[b].diasCheckin + dados[b].dias945) / (dias.length * 2 || 1);
+    return pctB - pctA;
+  });
+
+  let html = '<div style="display:grid;gap:6px;">';
+  corretores.forEach(m => {
+    const d = dados[m];
+    const pctC = dias.length ? Math.round(d.diasCheckin / dias.length * 100) : 0;
+    const pct9 = dias.length ? Math.round(d.dias945 / dias.length * 100) : 0;
+    const media = Math.round((pctC + pct9) / 2);
+    const bc = media >= 70 ? 'var(--success)' : media >= 40 ? 'var(--warning)' : 'var(--danger)';
+
+    html += `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${bc};border-radius:var(--rad);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:.85rem;font-weight:700;color:#fff;">${m}</div>
+        <div style="font-size:.65rem;color:var(--textL);margin-top:2px;">${d.diasCheckin}/${dias.length} check-ins · ${d.dias945}/${dias.length} 945s</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:2px;">CHECK-IN</div><div style="font-size:1rem;font-weight:800;color:${pctC >= 70 ? 'var(--success)' : pctC >= 40 ? 'var(--warning)' : 'var(--danger)'};">${pctC}%</div></div>
+        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:2px;">945</div><div style="font-size:1rem;font-weight:800;color:${pct9 >= 70 ? 'var(--success)' : pct9 >= 40 ? 'var(--warning)' : 'var(--danger)'};">${pct9}%</div></div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('presencaFizeram').innerHTML = html;
+
+  // Coluna direita: piores (abaixo de 40%)
+  document.getElementById('presencaRightTitle').textContent = 'Criticos (abaixo de 40%)';
+  document.getElementById('presencaRightTitle').style.color = 'var(--danger)';
+  const criticos = corretores.filter(m => {
+    const d = dados[m];
+    const media = dias.length ? Math.round(((d.diasCheckin + d.dias945) / (dias.length * 2)) * 100) : 0;
+    return media < 40;
+  });
+
+  let htmlCrit = '<div style="display:grid;gap:6px;">';
+  if (criticos.length === 0) {
+    htmlCrit += '<div class="empty" style="color:var(--success);">Nenhum corretor abaixo de 40%!</div>';
+  } else {
+    criticos.forEach(m => {
+      const d = dados[m];
+      const pctC = dias.length ? Math.round(d.diasCheckin / dias.length * 100) : 0;
+      const pct9 = dias.length ? Math.round(d.dias945 / dias.length * 100) : 0;
+      htmlCrit += `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid var(--danger);border-radius:var(--rad);padding:12px 14px;">
+        <div style="font-size:.85rem;font-weight:700;color:#fff;margin-bottom:4px;">${m}</div>
+        <div style="font-size:.75rem;color:var(--danger);">Check-in: ${pctC}% · 945: ${pct9}%</div>
+        <div style="font-size:.65rem;color:var(--textL);margin-top:2px;">${d.diasCheckin} de ${dias.length} dias com check-in</div>
+      </div>`;
+    });
+  }
+  htmlCrit += '</div>';
+  document.getElementById('presencaPendentes').innerHTML = htmlCrit;
 }
 
 function setTab(tab) {
@@ -802,6 +942,165 @@ function fmtVGV(v) {
 function fmtVGVFull(v) {
   const num = parseFloat(v) || 0;
   return 'R$ ' + num.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function renderPerformance() {
+  const registros = DADOS.registros || [];
+  const agenda = DADOS.agenda || [];
+  const clientes = DADOS.clientes || [];
+  const vendas = DADOS.vendas || [];
+  const membros = getMinhaEquipe();
+  const coordsNomes = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
+  const corretores = membros.filter(m => !coordsNomes.some(c => normNome(c) === normNome(m)));
+
+  const inicio = INICIO_MES_COMERCIAL;
+
+  // Dados por corretor
+  const perf = {};
+  corretores.forEach(m => {
+    perf[m] = { agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, vgv: 0, pontos: 0 };
+  });
+
+  // Agendamentos (aba Agenda, desde inicio mês)
+  agenda.filter(a => {
+    const dt = String(a.DATA || '').substring(0, 10);
+    return dt >= inicio && (a.TIPO || '').toLowerCase() === 'cliente' && pertenceEquipe(a.CORRETOR);
+  }).forEach(a => {
+    const match = corretores.find(m => {
+      const nm = normNome(m), cn = normNome(a.CORRETOR);
+      return nm === cn || nm.includes(cn) || cn.includes(nm);
+    });
+    if (match) {
+      perf[match].agendamentos++;
+      if ((a.ATENDIDO || '').toLowerCase() === 'sim' || (a.ATENDIDO || '').toLowerCase() === 'true') {
+        perf[match].atendimentos++;
+      }
+    }
+  });
+
+  // Pastas (clientes com status contendo "pasta" ou "aprovad", desde início mês)
+  clientes.filter(c => {
+    const dt = String(c['DATA CRIAÇÃO'] || c['DATA ATUALIZAÇÃO'] || '').substring(0, 10);
+    const status = (c.STATUS || '').toUpperCase();
+    return dt >= inicio && (status.includes('APROVAD') || status.includes('PASTA') || status.includes('COMPROU')) && pertenceEquipe(c.CORRETOR);
+  }).forEach(c => {
+    const match = corretores.find(m => {
+      const nm = normNome(m), cn = normNome(c.CORRETOR);
+      return nm === cn || nm.includes(cn) || cn.includes(nm);
+    });
+    if (match) perf[match].pastas++;
+  });
+
+  // Vendas
+  vendas.filter(v => {
+    const dt = String(v.DATA_VENDA || '').substring(0, 10);
+    if (dt < inicio) return false;
+    const status = (v.STATUS_VENDA || '').toLowerCase();
+    if (status.includes('distrato')) return false;
+    const cn = mapNomeVenda(v.CORRETOR);
+    return pertenceEquipe(cn);
+  }).forEach(v => {
+    const cn = mapNomeVenda(v.CORRETOR);
+    const match = corretores.find(m => {
+      const nm = normNome(m), vn = normNome(cn);
+      return nm === vn || nm.includes(vn) || vn.includes(nm);
+    });
+    if (match) {
+      perf[match].vendas++;
+      perf[match].vgv += (parseFloat(v.VGV) || 0);
+    }
+  });
+
+  // Calcular pontos simplificados
+  corretores.forEach(m => {
+    const p = perf[m];
+    p.pontos = (p.agendamentos * 3) + (p.atendimentos * 5) + (p.pastas * 8) + (p.vendas * 20);
+  });
+
+  // KPIs totais
+  const totAg = corretores.reduce((s, m) => s + perf[m].agendamentos, 0);
+  const totAt = corretores.reduce((s, m) => s + perf[m].atendimentos, 0);
+  const totPa = corretores.reduce((s, m) => s + perf[m].pastas, 0);
+  const totVe = corretores.reduce((s, m) => s + perf[m].vendas, 0);
+
+  document.getElementById('perfResumo').innerHTML = `
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--accent);">${totAg}</div><div class="vendas-kpi-label">Agendamentos</div></div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--success);">${totAt}</div><div class="vendas-kpi-label">Atendimentos</div></div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--info);">${totPa}</div><div class="vendas-kpi-label">Pastas</div></div>
+    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--gold);">${totVe}</div><div class="vendas-kpi-label">Vendas</div></div>
+  `;
+
+  // Tabela ordenada por pontos
+  corretores.sort((a, b) => perf[b].pontos - perf[a].pontos);
+
+  let html = '<div style="display:grid;gap:6px;">';
+  corretores.forEach((m, i) => {
+    const p = perf[m];
+    const bc = i < 3 ? 'var(--gold)' : p.pontos > 0 ? 'var(--accent)' : 'var(--danger)';
+    const medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : '';
+
+    html += `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${bc};border-radius:var(--rad);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:.85rem;font-weight:700;color:#fff;">${medal}${m}</div>
+        <div style="font-size:.65rem;color:var(--textL);margin-top:2px;">${p.pontos} pts</div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">AGEND</div><div style="font-size:.9rem;font-weight:800;color:var(--accent);">${p.agendamentos}</div></div>
+        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">ATEND</div><div style="font-size:.9rem;font-weight:800;color:var(--success);">${p.atendimentos}</div></div>
+        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">PASTAS</div><div style="font-size:.9rem;font-weight:800;color:var(--info);">${p.pastas}</div></div>
+        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">VENDAS</div><div style="font-size:.9rem;font-weight:800;color:var(--gold);">${p.vendas}</div></div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('perfTabela').innerHTML = html;
+
+  // Coluna direita: destaques
+  let destHtml = '<div style="display:grid;gap:8px;">';
+
+  // Melhor vendedor
+  const melhorVenda = corretores.filter(m => perf[m].vendas > 0).sort((a, b) => perf[b].vendas - perf[a].vendas)[0];
+  if (melhorVenda) {
+    destHtml += `<div style="background:var(--card);border:1px solid var(--gold);border-radius:var(--rad);padding:14px;">
+      <div style="font-size:.65rem;color:var(--gold);font-weight:700;margin-bottom:4px;">TOP VENDEDOR</div>
+      <div style="font-size:1rem;font-weight:800;color:#fff;">${melhorVenda}</div>
+      <div style="font-size:.8rem;color:var(--gold);margin-top:2px;">${perf[melhorVenda].vendas} venda${perf[melhorVenda].vendas > 1 ? 's' : ''} · ${fmtVGV(perf[melhorVenda].vgv)}</div>
+    </div>`;
+  }
+
+  // Mais agendamentos
+  const melhorAg = corretores.filter(m => perf[m].agendamentos > 0).sort((a, b) => perf[b].agendamentos - perf[a].agendamentos)[0];
+  if (melhorAg) {
+    destHtml += `<div style="background:var(--card);border:1px solid var(--accent);border-radius:var(--rad);padding:14px;">
+      <div style="font-size:.65rem;color:var(--accent);font-weight:700;margin-bottom:4px;">MAIS AGENDAMENTOS</div>
+      <div style="font-size:1rem;font-weight:800;color:#fff;">${melhorAg}</div>
+      <div style="font-size:.8rem;color:var(--accent);margin-top:2px;">${perf[melhorAg].agendamentos} agendamentos</div>
+    </div>`;
+  }
+
+  // Sem atividade
+  const inativos = corretores.filter(m => perf[m].pontos === 0);
+  if (inativos.length > 0) {
+    destHtml += `<div style="background:var(--card);border:1px solid var(--danger);border-radius:var(--rad);padding:14px;">
+      <div style="font-size:.65rem;color:var(--danger);font-weight:700;margin-bottom:4px;">SEM ATIVIDADE NO MES</div>
+      <div style="font-size:.85rem;color:#fff;">${inativos.join(', ')}</div>
+    </div>`;
+  }
+
+  // Funil
+  if (totAg > 0) {
+    const txConv = totVe > 0 && totAg > 0 ? Math.round(totVe / totAg * 100) : 0;
+    destHtml += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;">
+      <div style="font-size:.65rem;color:var(--textL);font-weight:700;margin-bottom:8px;">FUNIL DO MES</div>
+      <div style="font-size:.78rem;color:var(--accent);margin-bottom:4px;">Agendamentos: ${totAg}</div>
+      <div style="font-size:.78rem;color:var(--success);margin-bottom:4px;">Atendimentos: ${totAt} (${totAg ? Math.round(totAt/totAg*100) : 0}%)</div>
+      <div style="font-size:.78rem;color:var(--info);margin-bottom:4px;">Pastas: ${totPa}</div>
+      <div style="font-size:.78rem;color:var(--gold);">Vendas: ${totVe} (${txConv}% conversao)</div>
+    </div>`;
+  }
+
+  destHtml += '</div>';
+  document.getElementById('perfDestaques').innerHTML = destHtml;
 }
 
 function renderVendas() {
