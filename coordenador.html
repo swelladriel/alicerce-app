@@ -190,7 +190,6 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   <div class="main-tabs" id="mainTabs">
     <div class="main-tab active" data-view="demandas" onclick="setMainView('demandas')">Demandas</div>
     <div class="main-tab" data-view="presenca" onclick="setMainView('presenca')">Presenca</div>
-    <div class="main-tab" data-view="performance" onclick="setMainView('performance')">Performance</div>
     <div class="main-tab" data-view="vendas" onclick="setMainView('vendas')">Vendas</div>
   </div>
   <div class="view-demandas" id="viewDemandas">
@@ -242,19 +241,6 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
       <div class="col-right">
         <div class="section-title" id="presencaRightTitle" style="color:var(--danger);">Pendentes</div>
         <div id="presencaPendentes"></div>
-      </div>
-    </div>
-  </div>
-  <div class="view-performance" id="viewPerformance" style="display:none;">
-    <div class="main">
-      <div class="col-left">
-        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Performance da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Mes comercial</span></div>
-        <div id="perfResumo" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:20px;"></div>
-        <div id="perfTabela"></div>
-      </div>
-      <div class="col-right">
-        <div class="section-title">Destaques</div>
-        <div id="perfDestaques"></div>
       </div>
     </div>
   </div>
@@ -406,7 +392,6 @@ function setMainView(view) {
   });
   document.getElementById('viewDemandas').style.display = view === 'demandas' ? '' : 'none';
   document.getElementById('viewPresenca').style.display = view === 'presenca' ? '' : 'none';
-  document.getElementById('viewPerformance').style.display = view === 'performance' ? '' : 'none';
   document.getElementById('viewVendas').style.display = view === 'vendas' ? '' : 'none';
 }
 
@@ -415,7 +400,6 @@ function renderTudo() {
   renderFoco();
   renderVendas();
   renderPresenca();
-  renderPerformance();
   renderCalendario();
   renderDayAgenda();
 }
@@ -943,166 +927,6 @@ function fmtVGVFull(v) {
   const num = parseFloat(v) || 0;
   return 'R$ ' + num.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
-
-function renderPerformance() {
-  const registros = DADOS.registros || [];
-  const agenda = DADOS.agenda || [];
-  const clientes = DADOS.clientes || [];
-  const vendas = DADOS.vendas || [];
-  const membros = getMinhaEquipe();
-  const coordsNomes = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
-  const corretores = membros.filter(m => !coordsNomes.some(c => normNome(c) === normNome(m)));
-
-  const inicio = INICIO_MES_COMERCIAL;
-
-  // Dados por corretor
-  const perf = {};
-  corretores.forEach(m => {
-    perf[m] = { agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, vgv: 0, pontos: 0 };
-  });
-
-  // Agendamentos (aba Agenda, desde inicio mês)
-  agenda.filter(a => {
-    const dt = String(a.DATA || '').substring(0, 10);
-    return dt >= inicio && (a.TIPO || '').toLowerCase() === 'cliente' && pertenceEquipe(a.CORRETOR);
-  }).forEach(a => {
-    const match = corretores.find(m => {
-      const nm = normNome(m), cn = normNome(a.CORRETOR);
-      return nm === cn || nm.includes(cn) || cn.includes(nm);
-    });
-    if (match) {
-      perf[match].agendamentos++;
-      if ((a.ATENDIDO || '').toLowerCase() === 'sim' || (a.ATENDIDO || '').toLowerCase() === 'true') {
-        perf[match].atendimentos++;
-      }
-    }
-  });
-
-  // Pastas (clientes com status contendo "pasta" ou "aprovad", desde início mês)
-  clientes.filter(c => {
-    const dt = String(c['DATA CRIAÇÃO'] || c['DATA ATUALIZAÇÃO'] || '').substring(0, 10);
-    const status = (c.STATUS || '').toUpperCase();
-    return dt >= inicio && (status.includes('APROVAD') || status.includes('PASTA') || status.includes('COMPROU')) && pertenceEquipe(c.CORRETOR);
-  }).forEach(c => {
-    const match = corretores.find(m => {
-      const nm = normNome(m), cn = normNome(c.CORRETOR);
-      return nm === cn || nm.includes(cn) || cn.includes(nm);
-    });
-    if (match) perf[match].pastas++;
-  });
-
-  // Vendas
-  vendas.filter(v => {
-    const dt = String(v.DATA_VENDA || '').substring(0, 10);
-    if (dt < inicio) return false;
-    const status = (v.STATUS_VENDA || '').toLowerCase();
-    if (status.includes('distrato')) return false;
-    const cn = mapNomeVenda(v.CORRETOR);
-    return pertenceEquipe(cn);
-  }).forEach(v => {
-    const cn = mapNomeVenda(v.CORRETOR);
-    const match = corretores.find(m => {
-      const nm = normNome(m), vn = normNome(cn);
-      return nm === vn || nm.includes(vn) || vn.includes(nm);
-    });
-    if (match) {
-      perf[match].vendas++;
-      perf[match].vgv += (parseFloat(v.VGV) || 0);
-    }
-  });
-
-  // Calcular pontos simplificados
-  corretores.forEach(m => {
-    const p = perf[m];
-    p.pontos = (p.agendamentos * 3) + (p.atendimentos * 5) + (p.pastas * 8) + (p.vendas * 20);
-  });
-
-  // KPIs totais
-  const totAg = corretores.reduce((s, m) => s + perf[m].agendamentos, 0);
-  const totAt = corretores.reduce((s, m) => s + perf[m].atendimentos, 0);
-  const totPa = corretores.reduce((s, m) => s + perf[m].pastas, 0);
-  const totVe = corretores.reduce((s, m) => s + perf[m].vendas, 0);
-
-  document.getElementById('perfResumo').innerHTML = `
-    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--accent);">${totAg}</div><div class="vendas-kpi-label">Agendamentos</div></div>
-    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--success);">${totAt}</div><div class="vendas-kpi-label">Atendimentos</div></div>
-    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--info);">${totPa}</div><div class="vendas-kpi-label">Pastas</div></div>
-    <div class="vendas-kpi"><div class="vendas-kpi-num" style="color:var(--gold);">${totVe}</div><div class="vendas-kpi-label">Vendas</div></div>
-  `;
-
-  // Tabela ordenada por pontos
-  corretores.sort((a, b) => perf[b].pontos - perf[a].pontos);
-
-  let html = '<div style="display:grid;gap:6px;">';
-  corretores.forEach((m, i) => {
-    const p = perf[m];
-    const bc = i < 3 ? 'var(--gold)' : p.pontos > 0 ? 'var(--accent)' : 'var(--danger)';
-    const medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : '';
-
-    html += `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${bc};border-radius:var(--rad);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-size:.85rem;font-weight:700;color:#fff;">${medal}${m}</div>
-        <div style="font-size:.65rem;color:var(--textL);margin-top:2px;">${p.pontos} pts</div>
-      </div>
-      <div style="display:flex;gap:14px;align-items:center;">
-        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">AGEND</div><div style="font-size:.9rem;font-weight:800;color:var(--accent);">${p.agendamentos}</div></div>
-        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">ATEND</div><div style="font-size:.9rem;font-weight:800;color:var(--success);">${p.atendimentos}</div></div>
-        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">PASTAS</div><div style="font-size:.9rem;font-weight:800;color:var(--info);">${p.pastas}</div></div>
-        <div style="text-align:center;"><div style="font-size:.55rem;color:var(--textL);margin-bottom:1px;">VENDAS</div><div style="font-size:.9rem;font-weight:800;color:var(--gold);">${p.vendas}</div></div>
-      </div>
-    </div>`;
-  });
-  html += '</div>';
-  document.getElementById('perfTabela').innerHTML = html;
-
-  // Coluna direita: destaques
-  let destHtml = '<div style="display:grid;gap:8px;">';
-
-  // Melhor vendedor
-  const melhorVenda = corretores.filter(m => perf[m].vendas > 0).sort((a, b) => perf[b].vendas - perf[a].vendas)[0];
-  if (melhorVenda) {
-    destHtml += `<div style="background:var(--card);border:1px solid var(--gold);border-radius:var(--rad);padding:14px;">
-      <div style="font-size:.65rem;color:var(--gold);font-weight:700;margin-bottom:4px;">TOP VENDEDOR</div>
-      <div style="font-size:1rem;font-weight:800;color:#fff;">${melhorVenda}</div>
-      <div style="font-size:.8rem;color:var(--gold);margin-top:2px;">${perf[melhorVenda].vendas} venda${perf[melhorVenda].vendas > 1 ? 's' : ''} · ${fmtVGV(perf[melhorVenda].vgv)}</div>
-    </div>`;
-  }
-
-  // Mais agendamentos
-  const melhorAg = corretores.filter(m => perf[m].agendamentos > 0).sort((a, b) => perf[b].agendamentos - perf[a].agendamentos)[0];
-  if (melhorAg) {
-    destHtml += `<div style="background:var(--card);border:1px solid var(--accent);border-radius:var(--rad);padding:14px;">
-      <div style="font-size:.65rem;color:var(--accent);font-weight:700;margin-bottom:4px;">MAIS AGENDAMENTOS</div>
-      <div style="font-size:1rem;font-weight:800;color:#fff;">${melhorAg}</div>
-      <div style="font-size:.8rem;color:var(--accent);margin-top:2px;">${perf[melhorAg].agendamentos} agendamentos</div>
-    </div>`;
-  }
-
-  // Sem atividade
-  const inativos = corretores.filter(m => perf[m].pontos === 0);
-  if (inativos.length > 0) {
-    destHtml += `<div style="background:var(--card);border:1px solid var(--danger);border-radius:var(--rad);padding:14px;">
-      <div style="font-size:.65rem;color:var(--danger);font-weight:700;margin-bottom:4px;">SEM ATIVIDADE NO MES</div>
-      <div style="font-size:.85rem;color:#fff;">${inativos.join(', ')}</div>
-    </div>`;
-  }
-
-  // Funil
-  if (totAg > 0) {
-    const txConv = totVe > 0 && totAg > 0 ? Math.round(totVe / totAg * 100) : 0;
-    destHtml += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;">
-      <div style="font-size:.65rem;color:var(--textL);font-weight:700;margin-bottom:8px;">FUNIL DO MES</div>
-      <div style="font-size:.78rem;color:var(--accent);margin-bottom:4px;">Agendamentos: ${totAg}</div>
-      <div style="font-size:.78rem;color:var(--success);margin-bottom:4px;">Atendimentos: ${totAt} (${totAg ? Math.round(totAt/totAg*100) : 0}%)</div>
-      <div style="font-size:.78rem;color:var(--info);margin-bottom:4px;">Pastas: ${totPa}</div>
-      <div style="font-size:.78rem;color:var(--gold);">Vendas: ${totVe} (${txConv}% conversao)</div>
-    </div>`;
-  }
-
-  destHtml += '</div>';
-  document.getElementById('perfDestaques').innerHTML = destHtml;
-}
-
 function renderVendas() {
   const vendas = (DADOS.vendas || []).filter(v => {
     const dataVenda = String(v.DATA_VENDA || '').substring(0, 10);
