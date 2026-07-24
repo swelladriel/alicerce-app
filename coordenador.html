@@ -1005,9 +1005,14 @@ function mapStatusToColuna(status) {
 let draggedCard = null;
 
 function renderPipeline() {
-  const clientes = (DADOS.clientes || []).filter(c => pertenceEquipe(c.CORRETOR));
   const board = document.getElementById('kanbanBoard');
   if (!board) return;
+  const todosClientes = DADOS.clientes || [];
+  const clientes = todosClientes.filter(c => pertenceEquipe(c.CORRETOR));
+  if (clientes.length === 0) {
+    board.innerHTML = '<div style="padding:40px;text-align:center;color:var(--textL);">Total na API: ' + todosClientes.length + ' | Filtrados equipe: ' + clientes.length + '<br>Logado como: ' + (COORD ? COORD.nome + ' (' + COORD.cargo + ')' : 'ninguem') + '</div>';
+    return;
+  }
 
   let html = '';
   PIPELINE_COLUNAS.forEach(col => {
