@@ -1024,7 +1024,7 @@ function renderPipeline() {
     html += `<div class="kanban-col-header" style="color:${col.cor};border-top:3px solid ${col.cor};">${col.label} <span class="kanban-col-count">${cards.length}</span></div>`;
     html += `<div class="kanban-col-body">`;
     cards.forEach(c => {
-      const cpf = (c.CPF || '').trim();
+      const cpf = String(c.CPF || '').trim();
       const nome = c.CLIENTE || 'Sem nome';
       const corretor = c.CORRETOR || '';
       const tel = c.TELEFONE || '';
