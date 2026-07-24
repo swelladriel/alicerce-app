@@ -439,13 +439,13 @@ function setMainView(view) {
 }
 
 function renderTudo() {
-  renderDemandas();
-  renderFoco();
-  renderVendas();
-  renderPresenca();
-  renderPipeline();
-  renderCalendario();
-  renderDayAgenda();
+  try { renderDemandas(); } catch(e) { console.error('renderDemandas:', e); }
+  try { renderFoco(); } catch(e) { console.error('renderFoco:', e); }
+  try { renderCalendario(); } catch(e) { console.error('renderCalendario:', e); }
+  try { renderDayAgenda(); } catch(e) { console.error('renderDayAgenda:', e); }
+  try { renderPresenca(); } catch(e) { console.error('renderPresenca:', e); }
+  try { renderPipeline(); } catch(e) { console.error('renderPipeline:', e); }
+  try { renderVendas(); } catch(e) { console.error('renderVendas:', e); }
 }
 
 let PRESENCA_TAB = 'hoje';
