@@ -148,6 +148,22 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
 }
 .dem-card.concluding{animation:fadeOutCard .8s ease forwards;}
 
+.kanban-board{display:flex;gap:8px;padding:0 12px 12px;overflow-x:auto;height:calc(100vh - 110px);align-items:flex-start;}
+.kanban-col{min-width:200px;max-width:220px;flex-shrink:0;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);display:flex;flex-direction:column;max-height:100%;}
+.kanban-col-header{padding:10px 12px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:2;}
+.kanban-col-count{font-size:.65rem;font-weight:400;color:var(--textL);background:rgba(255,255,255,.06);padding:2px 7px;border-radius:10px;}
+.kanban-col-body{padding:6px;overflow-y:auto;flex:1;min-height:60px;}
+.kanban-card{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;cursor:grab;transition:all .15s;font-size:.75rem;}
+.kanban-card:hover{border-color:var(--accent);background:rgba(100,255,218,.03);}
+.kanban-card:active{cursor:grabbing;opacity:.8;}
+.kanban-card .kc-nome{font-weight:700;color:#fff;margin-bottom:3px;font-size:.78rem;}
+.kanban-card .kc-corretor{color:var(--accent);font-size:.65rem;font-weight:600;}
+.kanban-card .kc-info{color:var(--textL);font-size:.62rem;margin-top:3px;}
+.kanban-col.drag-over{background:rgba(100,255,218,.04);border-color:var(--accent);}
+.kanban-card.dragging{opacity:.4;transform:scale(.95);}
+
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;}
+
 @media(max-width:768px){
   .main{grid-template-columns:1fr;overflow:visible;}
   .col-left{max-height:none;border-right:none;border-bottom:1px solid var(--border);}
@@ -157,6 +173,7 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   .top-bar{padding:12px 16px;}
   .top-bar-label{display:none;}
   .top-bar-sep{display:none;}
+  .kanban-col{min-width:170px;max-width:170px;}
 }
 </style>
 </head>
@@ -190,6 +207,7 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   <div class="main-tabs" id="mainTabs">
     <div class="main-tab active" data-view="demandas" onclick="setMainView('demandas')">Demandas</div>
     <div class="main-tab" data-view="presenca" onclick="setMainView('presenca')">Presenca</div>
+    <div class="main-tab" data-view="pipeline" onclick="setMainView('pipeline')">Pipeline</div>
     <div class="main-tab" data-view="vendas" onclick="setMainView('vendas')">Vendas</div>
   </div>
   <div class="view-demandas" id="viewDemandas">
@@ -244,6 +262,13 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
       </div>
     </div>
   </div>
+  <div class="view-pipeline" id="viewPipeline" style="display:none;">
+    <div style="padding:12px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <div class="section-title" style="margin:0;">Pipeline de Clientes</div>
+      <button onclick="abrirModalCliente()" style="background:var(--accent);color:#000;border:none;padding:8px 18px;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;">+ Novo Cliente</button>
+    </div>
+    <div class="kanban-board" id="kanbanBoard"></div>
+  </div>
   <div class="view-vendas" id="viewVendas" style="display:none;">
     <div class="main">
       <div class="col-left">
@@ -256,6 +281,23 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
         <div class="section-title">Detalhes das Vendas</div>
         <div id="vendasLista"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalCliente" style="display:none;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:420px;position:relative;">
+    <div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:16px;">Novo Cliente</div>
+    <button onclick="fecharModalCliente()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--textL);font-size:1.2rem;cursor:pointer;">&times;</button>
+    <div style="display:grid;gap:10px;">
+      <input id="crm-nome" placeholder="Nome e Sobrenome *" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;">
+      <input id="crm-cpf" placeholder="CPF *" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;">
+      <input id="crm-telefone" placeholder="Telefone com DDD *" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;">
+      <input id="crm-email" placeholder="Email *" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;">
+      <select id="crm-corretor" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;"></select>
+      <input id="crm-regiao" placeholder="Regiao de interesse" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;">
+      <div id="crm-erro" style="color:var(--danger);font-size:.75rem;display:none;"></div>
+      <button id="crm-btn-salvar" onclick="salvarClienteCRM()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:12px;font-size:.85rem;font-weight:700;cursor:pointer;">ADICIONAR CLIENTE</button>
     </div>
   </div>
 </div>
@@ -392,6 +434,7 @@ function setMainView(view) {
   });
   document.getElementById('viewDemandas').style.display = view === 'demandas' ? '' : 'none';
   document.getElementById('viewPresenca').style.display = view === 'presenca' ? '' : 'none';
+  document.getElementById('viewPipeline').style.display = view === 'pipeline' ? '' : 'none';
   document.getElementById('viewVendas').style.display = view === 'vendas' ? '' : 'none';
 }
 
@@ -400,6 +443,7 @@ function renderTudo() {
   renderFoco();
   renderVendas();
   renderPresenca();
+  renderPipeline();
   renderCalendario();
   renderDayAgenda();
 }
@@ -927,6 +971,223 @@ function fmtVGVFull(v) {
   const num = parseFloat(v) || 0;
   return 'R$ ' + num.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
+
+// ============================================
+// PIPELINE / KANBAN
+// ============================================
+const PIPELINE_COLUNAS = [
+  { id: 'PENDENTE', label: 'Lead', cor: 'var(--textL)' },
+  { id: 'AGENDADO', label: 'Agendado', cor: 'var(--accent)' },
+  { id: 'ATENDIDO', label: 'Atendido', cor: 'var(--info)' },
+  { id: 'PASTA', label: 'Pasta', cor: '#ab47bc' },
+  { id: 'APROVADO', label: 'Aprovado', cor: 'var(--success)' },
+  { id: 'BACEN', label: 'BACEN', cor: 'var(--gold)' },
+  { id: 'VENDA', label: 'Venda', cor: '#4caf50' },
+  { id: 'REPROVADO', label: 'Reprovado', cor: 'var(--danger)' },
+  { id: 'REMARKETING', label: 'Remarketing', cor: '#ff9800' },
+  { id: 'DISTRATO', label: 'Distrato', cor: '#795548' }
+];
+
+function mapStatusToColuna(status) {
+  const s = (status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  if (s.includes('COMPROU') || s.includes('VENDA')) return 'VENDA';
+  if (s.includes('BACEN')) return 'BACEN';
+  if (s.includes('APROVAD')) return 'APROVADO';
+  if (s.includes('PASTA')) return 'PASTA';
+  if (s.includes('ATENDID')) return 'ATENDIDO';
+  if (s.includes('AGENDAD')) return 'AGENDADO';
+  if (s.includes('REPROVAD') || s.includes('NEGAD')) return 'REPROVADO';
+  if (s.includes('REMARKETING') || s.includes('REMARKET')) return 'REMARKETING';
+  if (s.includes('DISTRATO')) return 'DISTRATO';
+  return 'PENDENTE';
+}
+
+let draggedCard = null;
+
+function renderPipeline() {
+  const clientes = (DADOS.clientes || []).filter(c => pertenceEquipe(c.CORRETOR));
+  const board = document.getElementById('kanbanBoard');
+  if (!board) return;
+
+  let html = '';
+  PIPELINE_COLUNAS.forEach(col => {
+    const cards = clientes.filter(c => mapStatusToColuna(c.STATUS) === col.id);
+    html += `<div class="kanban-col" data-coluna="${col.id}" ondragover="kanbanDragOver(event)" ondragleave="kanbanDragLeave(event)" ondrop="kanbanDrop(event)">`;
+    html += `<div class="kanban-col-header" style="color:${col.cor};border-top:3px solid ${col.cor};">${col.label} <span class="kanban-col-count">${cards.length}</span></div>`;
+    html += `<div class="kanban-col-body">`;
+    cards.forEach(c => {
+      const cpf = (c.CPF || '').trim();
+      const nome = c.CLIENTE || 'Sem nome';
+      const corretor = c.CORRETOR || '';
+      const tel = c.TELEFONE || '';
+      const email = c.EMAIL || '';
+      const regiao = c.REGIÃO || c['REGIÃO'] || '';
+      html += `<div class="kanban-card" draggable="true" data-cpf="${cpf}" ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">`;
+      html += `<div class="kc-nome">${nome}</div>`;
+      html += `<div class="kc-corretor">${corretor}</div>`;
+      if (tel) html += `<div class="kc-info">${tel}</div>`;
+      if (regiao) html += `<div class="kc-info">${regiao}</div>`;
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  });
+  board.innerHTML = html;
+}
+
+function kanbanDragStart(e) {
+  draggedCard = e.target;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', e.target.dataset.cpf);
+}
+
+function kanbanDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+  draggedCard = null;
+}
+
+function kanbanDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const col = e.target.closest('.kanban-col');
+  if (col) col.classList.add('drag-over');
+}
+
+function kanbanDragLeave(e) {
+  const col = e.target.closest('.kanban-col');
+  if (col) col.classList.remove('drag-over');
+}
+
+async function kanbanDrop(e) {
+  e.preventDefault();
+  const col = e.target.closest('.kanban-col');
+  if (!col || !draggedCard) return;
+  col.classList.remove('drag-over');
+
+  const cpf = draggedCard.dataset.cpf;
+  const novoStatus = col.dataset.coluna;
+  if (!cpf) return;
+
+  // Mover card visualmente
+  const body = col.querySelector('.kanban-col-body');
+  body.appendChild(draggedCard);
+
+  // Atualizar na planilha
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_cliente', cpf: cpf, campos: { STATUS: novoStatus } })
+    });
+  } catch(err) {}
+
+  // Atualizar contadores
+  document.querySelectorAll('.kanban-col').forEach(c => {
+    const count = c.querySelector('.kanban-col-body').children.length;
+    c.querySelector('.kanban-col-count').textContent = count;
+  });
+}
+
+// Modal novo cliente
+function abrirModalCliente() {
+  document.getElementById('modalCliente').style.display = 'flex';
+  document.getElementById('crm-erro').style.display = 'none';
+  document.getElementById('crm-nome').value = '';
+  document.getElementById('crm-cpf').value = '';
+  document.getElementById('crm-telefone').value = '';
+  document.getElementById('crm-email').value = '';
+  document.getElementById('crm-regiao').value = '';
+
+  // Preencher select de corretores
+  const sel = document.getElementById('crm-corretor');
+  const membros = getMinhaEquipe();
+  const coordsNomes = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
+  const corretores = membros.filter(m => !coordsNomes.some(c => normNome(c) === normNome(m)));
+  sel.innerHTML = '<option value="">Selecione o corretor *</option>';
+  corretores.forEach(m => { sel.innerHTML += `<option value="${m}">${m}</option>`; });
+}
+
+function fecharModalCliente() {
+  document.getElementById('modalCliente').style.display = 'none';
+}
+
+async function salvarClienteCRM() {
+  const nome = document.getElementById('crm-nome').value.trim();
+  const cpf = document.getElementById('crm-cpf').value.trim();
+  const tel = document.getElementById('crm-telefone').value.trim();
+  const email = document.getElementById('crm-email').value.trim();
+  const corretor = document.getElementById('crm-corretor').value;
+  const regiao = document.getElementById('crm-regiao').value.trim();
+  const erroEl = document.getElementById('crm-erro');
+
+  if (!nome || nome.split(/\s+/).length < 2) { erroEl.textContent = 'Nome e sobrenome obrigatorios'; erroEl.style.display = 'block'; return; }
+  if (!cpf) { erroEl.textContent = 'CPF obrigatorio'; erroEl.style.display = 'block'; return; }
+  if (!tel) { erroEl.textContent = 'Telefone obrigatorio'; erroEl.style.display = 'block'; return; }
+  if (!email) { erroEl.textContent = 'Email obrigatorio'; erroEl.style.display = 'block'; return; }
+  if (!corretor) { erroEl.textContent = 'Selecione o corretor'; erroEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('crm-btn-salvar');
+  btn.textContent = 'SALVANDO...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        acao: 'adicionar_cliente_crm',
+        CLIENTE: nome,
+        CPF: cpf,
+        TELEFONE: tel,
+        EMAIL: email,
+        CORRETOR: corretor,
+        REGIAO: regiao,
+        STATUS: 'PENDENTE'
+      })
+    });
+    const data = await res.json();
+    if (data.sucesso) {
+      fecharModalCliente();
+      carregarDadosSilencioso();
+    } else if (data.acao === 'duplicata_telefone' || data.acao === 'duplicata_nome') {
+      erroEl.textContent = data.msg;
+      erroEl.style.display = 'block';
+    } else {
+      erroEl.textContent = data.msg || data.erro || 'Erro ao salvar';
+      erroEl.style.display = 'block';
+    }
+  } catch(err) {
+    // no-cors fallback
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          acao: 'adicionar_cliente_crm',
+          CLIENTE: nome,
+          CPF: cpf,
+          TELEFONE: tel,
+          EMAIL: email,
+          CORRETOR: corretor,
+          REGIAO: regiao,
+          STATUS: 'PENDENTE'
+        })
+      });
+      fecharModalCliente();
+      setTimeout(() => carregarDadosSilencioso(), 2000);
+    } catch(e2) {
+      erroEl.textContent = 'Erro de conexao';
+      erroEl.style.display = 'block';
+    }
+  }
+
+  btn.textContent = 'ADICIONAR CLIENTE';
+  btn.disabled = false;
+}
+
 function renderVendas() {
   const vendas = (DADOS.vendas || []).filter(v => {
     const dataVenda = String(v.DATA_VENDA || '').substring(0, 10);
