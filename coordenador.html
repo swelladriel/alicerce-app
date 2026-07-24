@@ -391,7 +391,7 @@ function renderTudo() {
 function renderPresenca() {
   const hoje = hojeStr();
   const registros = DADOS.registros || [];
-  const membros = getEquipe();
+  const membros = getMinhaEquipe();
   const coordsNomes = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
 
   // Filtrar só corretores (sem coordenadores/gerente)
