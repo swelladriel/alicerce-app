@@ -1006,9 +1006,12 @@ let draggedCard = null;
 
 function renderPipeline() {
   const board = document.getElementById('kanbanBoard');
-  if (!board) return;
+  if (!board) { console.error('PIPELINE: board nao encontrado'); return; }
+  board.innerHTML = '<div style="padding:20px;color:yellow;">Carregando pipeline...</div>';
+  try {
   const todosClientes = DADOS.clientes || [];
   const clientes = todosClientes.filter(c => pertenceEquipe(c.CORRETOR));
+  board.innerHTML = '<div style="padding:20px;color:yellow;">Total: ' + todosClientes.length + ' | Equipe: ' + clientes.length + '</div>';
   if (clientes.length === 0) {
     board.innerHTML = '<div style="padding:40px;text-align:center;color:var(--textL);">Total na API: ' + todosClientes.length + ' | Filtrados equipe: ' + clientes.length + '<br>Logado como: ' + (COORD ? COORD.nome + ' (' + COORD.cargo + ')' : 'ninguem') + '</div>';
     return;
@@ -1037,6 +1040,7 @@ function renderPipeline() {
     html += `</div></div>`;
   });
   board.innerHTML = html;
+  } catch(err) { board.innerHTML = '<div style="padding:20px;color:red;">ERRO: ' + err.message + '</div>'; }
 }
 
 function kanbanDragStart(e) {
