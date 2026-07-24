@@ -267,7 +267,7 @@ const EQUIPES = {
   'Glauco': ['Glauco Ribeiro','Dandara Campos','Isaac de Sá','Davi Ribeiro','William Bueno','Victor Pereira','Gabriel Souza','Natã Oliveira'],
   'Edvan': ['Edvan Silva','Gabriel Ribeiro','Cristiano Fernandes','Camila Craveiro','Bruna Pacheco','Maria Clara','Kerlly Martins','Suzy Franklyn'],
   'Marcelo Arouca': ['Marcelo Arouca','Cristiane Ferreira','Felipe Guimarães','Carlos Aurelio'],
-  'Adriel Duarte': ['Marcos Reis','Joyce Brisa','Kayque Nascimento','Josimar','Erica Collins']
+  'Adriel Duarte': ['Marcos Reis','Joyce Brisa','Kayque Nascimento','Josimar Machado','Erica Collins']
 };
 
 let COORD = null;
@@ -420,9 +420,14 @@ function renderPresenca() {
   const checkinNomes = checkinsHoje.map(c => normNome(c.CORRETOR));
   const noveqNomes = noveqHoje.map(n => normNome(n.CORRETOR));
 
-  const fezCheckin = corretores.filter(m => checkinNomes.includes(normNome(m)));
-  const fez945 = corretores.filter(m => noveqNomes.includes(normNome(m)));
-  const fezNada = corretores.filter(m => !checkinNomes.includes(normNome(m)) && !noveqNomes.includes(normNome(m)));
+  function nomeMatch(membro, listaNomes) {
+    const nm = normNome(membro);
+    return listaNomes.some(n => n === nm || n.includes(nm) || nm.includes(n));
+  }
+
+  const fezCheckin = corretores.filter(m => nomeMatch(m, checkinNomes));
+  const fez945 = corretores.filter(m => nomeMatch(m, noveqNomes));
+  const fezNada = corretores.filter(m => !nomeMatch(m, checkinNomes) && !nomeMatch(m, noveqNomes));
 
   // KPIs
   document.getElementById('presencaResumo').innerHTML = `
@@ -442,14 +447,15 @@ function renderPresenca() {
 
   // Função pra montar card de corretor
   function cardCorretor(m) {
-    const temCheckin = checkinNomes.includes(normNome(m));
-    const tem945 = noveqNomes.includes(normNome(m));
+    const temCheckin = nomeMatch(m, checkinNomes);
+    const tem945 = nomeMatch(m, noveqNomes);
     const checkinIcon = temCheckin ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
     const noveqIcon = tem945 ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
 
     let horaCheckin = '';
     if (temCheckin) {
-      const reg = checkinsHoje.find(c => normNome(c.CORRETOR) === normNome(m));
+      const nm = normNome(m);
+      const reg = checkinsHoje.find(c => { const cn = normNome(c.CORRETOR); return cn === nm || cn.includes(nm) || nm.includes(cn); });
       if (reg) {
         const h = reg.HORA || '';
         horaCheckin = typeof h === 'string' && /\d{2}:\d{2}/.test(h) ? h : '';
@@ -471,10 +477,10 @@ function renderPresenca() {
   }
 
   // Coluna esquerda: quem fez pelo menos 1
-  const fizeram = corretores.filter(m => checkinNomes.includes(normNome(m)) || noveqNomes.includes(normNome(m)));
+  const fizeram = corretores.filter(m => nomeMatch(m, checkinNomes) || nomeMatch(m, noveqNomes));
   fizeram.sort((a, b) => {
-    const sA = (checkinNomes.includes(normNome(a)) ? 1 : 0) + (noveqNomes.includes(normNome(a)) ? 1 : 0);
-    const sB = (checkinNomes.includes(normNome(b)) ? 1 : 0) + (noveqNomes.includes(normNome(b)) ? 1 : 0);
+    const sA = (nomeMatch(a, checkinNomes) ? 1 : 0) + (nomeMatch(a, noveqNomes) ? 1 : 0);
+    const sB = (nomeMatch(b, checkinNomes) ? 1 : 0) + (nomeMatch(b, noveqNomes) ? 1 : 0);
     return sB - sA;
   });
   let htmlFez = `<div class="section-title" style="color:var(--success);">Presentes (${fizeram.length})</div><div style="display:grid;gap:6px;">`;
