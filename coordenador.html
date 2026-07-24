@@ -227,19 +227,30 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   </div>
   </div>
   <div class="view-presenca" id="viewPresenca" style="display:none;">
-    <div style="padding:20px;max-width:900px;margin:0 auto;">
-      <div class="section-title" style="display:flex;align-items:center;gap:8px;">Presenca da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Hoje</span></div>
-      <div id="presencaResumo" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;"></div>
-      <div id="presencaLista"></div>
+    <div class="main">
+      <div class="col-left">
+        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Presenca da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Hoje</span></div>
+        <div id="presencaResumo" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;"></div>
+        <div id="presencaFizeram" style="margin-top:16px;"></div>
+      </div>
+      <div class="col-right">
+        <div class="section-title" style="color:var(--danger);">Pendentes</div>
+        <div id="presencaPendentes"></div>
+      </div>
     </div>
   </div>
   <div class="view-vendas" id="viewVendas" style="display:none;">
-    <div style="padding:20px;max-width:900px;margin:0 auto;">
-      <div class="error-banner" id="errorBannerV" style="display:none;"></div>
-      <div class="section-title" style="display:flex;align-items:center;gap:8px;">Vendas da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Mes comercial atual</span></div>
-      <div id="vendasResumo" class="vendas-resumo"></div>
-      <div id="vendasRanking"></div>
-      <div id="vendasLista"></div>
+    <div class="main">
+      <div class="col-left">
+        <div class="error-banner" id="errorBannerV" style="display:none;"></div>
+        <div class="section-title" style="display:flex;align-items:center;gap:8px;">Vendas da Equipe <span style="font-size:.6rem;color:var(--gold);font-weight:400;">Mes comercial atual</span></div>
+        <div id="vendasResumo" class="vendas-resumo"></div>
+        <div id="vendasRanking"></div>
+      </div>
+      <div class="col-right">
+        <div class="section-title">Detalhes das Vendas</div>
+        <div id="vendasLista"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -394,16 +405,13 @@ function renderPresenca() {
   const membros = getMinhaEquipe();
   const coordsNomes = ['Glauco Ribeiro','Edvan Silva','Marcelo Arouca','Adriel Duarte'];
 
-  // Filtrar só corretores (sem coordenadores/gerente)
   const corretores = membros.filter(m => !coordsNomes.some(c => normNome(c) === normNome(m)));
 
-  // Check-ins de hoje
   const checkinsHoje = registros.filter(r => {
     const dt = String(r.DATA || '').substring(0, 10);
     return dt === hoje && (r.TIPO || '').toLowerCase() === 'checkin' && pertenceEquipe(r.CORRETOR);
   });
 
-  // 945 de hoje
   const noveqHoje = registros.filter(r => {
     const dt = String(r.DATA || '').substring(0, 10);
     return dt === hoje && (r.TIPO || '') === '945-individual' && pertenceEquipe(r.CORRETOR);
@@ -413,9 +421,7 @@ function renderPresenca() {
   const noveqNomes = noveqHoje.map(n => normNome(n.CORRETOR));
 
   const fezCheckin = corretores.filter(m => checkinNomes.includes(normNome(m)));
-  const naoCheckin = corretores.filter(m => !checkinNomes.includes(normNome(m)));
   const fez945 = corretores.filter(m => noveqNomes.includes(normNome(m)));
-  const nao945 = corretores.filter(m => !noveqNomes.includes(normNome(m)));
   const fezNada = corretores.filter(m => !checkinNomes.includes(normNome(m)) && !noveqNomes.includes(normNome(m)));
 
   // KPIs
@@ -434,22 +440,13 @@ function renderPresenca() {
     </div>
   `;
 
-  // Lista por corretor
-  let html = '<div style="display:grid;gap:6px;">';
-  corretores.sort((a, b) => {
-    // Quem não fez nada primeiro, depois quem fez parcial, depois quem fez tudo
-    const scoreA = (checkinNomes.includes(normNome(a)) ? 1 : 0) + (noveqNomes.includes(normNome(a)) ? 1 : 0);
-    const scoreB = (checkinNomes.includes(normNome(b)) ? 1 : 0) + (noveqNomes.includes(normNome(b)) ? 1 : 0);
-    return scoreA - scoreB;
-  });
-
-  corretores.forEach(m => {
+  // Função pra montar card de corretor
+  function cardCorretor(m) {
     const temCheckin = checkinNomes.includes(normNome(m));
     const tem945 = noveqNomes.includes(normNome(m));
     const checkinIcon = temCheckin ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
     const noveqIcon = tem945 ? '<span style="color:var(--success);font-weight:800;">&#10003;</span>' : '<span style="color:var(--danger);font-weight:800;">&#10007;</span>';
 
-    // Hora do check-in
     let horaCheckin = '';
     if (temCheckin) {
       const reg = checkinsHoje.find(c => normNome(c.CORRETOR) === normNome(m));
@@ -461,7 +458,7 @@ function renderPresenca() {
 
     const borderColor = (!temCheckin && !tem945) ? 'var(--danger)' : (temCheckin && tem945) ? 'var(--success)' : 'var(--warning)';
 
-    html += `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${borderColor};border-radius:var(--rad);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${borderColor};border-radius:var(--rad);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
       <div>
         <div style="font-size:.85rem;font-weight:700;color:#fff;">${m}</div>
         ${horaCheckin ? '<div style="font-size:.65rem;color:var(--textL);margin-top:2px;">Check-in ' + horaCheckin + '</div>' : ''}
@@ -471,10 +468,28 @@ function renderPresenca() {
         <div style="text-align:center;"><div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">945</div>${noveqIcon}</div>
       </div>
     </div>`;
-  });
+  }
 
-  html += '</div>';
-  document.getElementById('presencaLista').innerHTML = html;
+  // Coluna esquerda: quem fez pelo menos 1
+  const fizeram = corretores.filter(m => checkinNomes.includes(normNome(m)) || noveqNomes.includes(normNome(m)));
+  fizeram.sort((a, b) => {
+    const sA = (checkinNomes.includes(normNome(a)) ? 1 : 0) + (noveqNomes.includes(normNome(a)) ? 1 : 0);
+    const sB = (checkinNomes.includes(normNome(b)) ? 1 : 0) + (noveqNomes.includes(normNome(b)) ? 1 : 0);
+    return sB - sA;
+  });
+  let htmlFez = `<div class="section-title" style="color:var(--success);">Presentes (${fizeram.length})</div><div style="display:grid;gap:6px;">`;
+  fizeram.forEach(m => { htmlFez += cardCorretor(m); });
+  if (fizeram.length === 0) htmlFez += '<div class="empty">Ninguem fez check-in ou 945 ainda.</div>';
+  htmlFez += '</div>';
+  document.getElementById('presencaFizeram').innerHTML = htmlFez;
+
+  // Coluna direita: quem não fez nada
+  fezNada.sort((a, b) => normNome(a).localeCompare(normNome(b)));
+  let htmlPend = '<div style="display:grid;gap:6px;">';
+  fezNada.forEach(m => { htmlPend += cardCorretor(m); });
+  if (fezNada.length === 0) htmlPend += '<div class="empty" style="color:var(--success);">Todos fizeram pelo menos check-in ou 945!</div>';
+  htmlPend += '</div>';
+  document.getElementById('presencaPendentes').innerHTML = htmlPend;
 }
 
 function setTab(tab) {
@@ -849,7 +864,7 @@ function renderVendas() {
   document.getElementById('vendasRanking').innerHTML = podiumHtml;
 
   // Lista de vendas
-  let listaHtml = '<div style="font-size:.65rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Detalhes das vendas</div>';
+  let listaHtml = '';
   const vendasOrdenadas = [...vendas].sort((a, b) => {
     const da = String(a.DATA_VENDA || '').substring(0, 10);
     const db = String(b.DATA_VENDA || '').substring(0, 10);
