@@ -1061,13 +1061,44 @@ function getProxAgendamento(nomeCliente) {
   return futuros[0] || null;
 }
 
+function foiAtendido(nomeCliente) {
+  const agendas = getAgendaCliente(nomeCliente);
+  return agendas.some(a => {
+    const at = (a.ATENDIDO || '').toLowerCase();
+    return at === 'sim' || at === 'true';
+  });
+}
+
+function estaEmVendas(nomeCliente) {
+  const nc = normNome(nomeCliente);
+  if (!nc || nc.length < 3) return false;
+  return (DADOS.vendas || []).some(v => {
+    const nv = normNome(v.CLIENTE || '');
+    return nv === nc || nv.includes(nc) || nc.includes(nv);
+  });
+}
+
 function getColunaEfetiva(cliente) {
   const statusCol = mapStatusToColuna(cliente.STATUS);
-  // Se status é PENDENTE mas tem agendamento futuro, mover pra AGENDADO
+  const nome = cliente.CLIENTE || '';
+
+  // 1. Se aparece na aba Vendas → VENDA (prioridade máxima)
+  if (estaEmVendas(nome)) return 'VENDA';
+
+  // 2. Se status já é avançado (BACEN, APROVADO, PASTA, etc), respeitar
+  if (['VENDA', 'BACEN', 'DISTRATO', 'REPROVADO', 'REMARKETING'].includes(statusCol)) return statusCol;
+
+  // 3. Se foi atendido (tem ATENDIDO=sim na agenda) → ATENDIDO
+  if (statusCol === 'PENDENTE' || statusCol === 'AGENDADO') {
+    if (foiAtendido(nome)) return 'ATENDIDO';
+  }
+
+  // 4. Se tem agendamento futuro → AGENDADO
   if (statusCol === 'PENDENTE') {
-    const prox = getProxAgendamento(cliente.CLIENTE || '');
+    const prox = getProxAgendamento(nome);
     if (prox) return 'AGENDADO';
   }
+
   return statusCol;
 }
 
