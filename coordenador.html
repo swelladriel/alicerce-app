@@ -1100,27 +1100,79 @@ function abrirDetalheCliente(cpf) {
     const nomeC = normNome(nome);
     return nomeA === nomeC || nomeA.includes(nomeC) || nomeC.includes(nomeA);
   });
+  agenda.sort((a, b) => String(a.DATA || '').localeCompare(String(b.DATA || '')));
 
+  const hoje = hojeStr();
+  const futuros = agenda.filter(a => String(a.DATA || '').substring(0, 10) >= hoje);
+  const totalAg = agenda.length;
+  const totalAtendido = agenda.filter(a => { const at = (a.ATENDIDO||'').toLowerCase(); return at === 'sim' || at === 'true'; }).length;
+  const totalBolo = agenda.filter(a => (a.ATENDIDO||'').toUpperCase() === 'BOLO').length;
+  const totalPendente = agenda.filter(a => { const at = (a.ATENDIDO||'').toLowerCase(); return !at || (at !== 'sim' && at !== 'true' && at !== 'bolo'); }).length;
+
+  // Próximo agendamento em destaque
+  let proxHtml = '';
+  if (futuros.length > 0) {
+    const prox = futuros[0];
+    const pDt = String(prox.DATA || '').substring(0, 10);
+    const pHr = String(prox.HORA || '');
+    proxHtml = `<div style="background:rgba(255,215,0,.08);border:1px solid var(--gold);border-radius:var(--rad);padding:12px;margin-bottom:12px;">
+      <div style="font-size:.65rem;font-weight:700;color:var(--gold);margin-bottom:4px;">PROXIMO AGENDAMENTO</div>
+      <div style="font-size:1rem;font-weight:800;color:#fff;">📅 ${pDt} as ${pHr}</div>
+      ${futuros.length > 1 ? '<div style="font-size:.65rem;color:var(--textL);margin-top:4px;">+ ' + (futuros.length - 1) + ' agendamento' + (futuros.length > 2 ? 's' : '') + ' futuro' + (futuros.length > 2 ? 's' : '') + '</div>' : ''}
+    </div>`;
+  }
+
+  // Histórico e timeline
   let agendaHtml = '';
-  if (agenda.length > 0) {
-    agendaHtml = '<div style="margin-top:12px;"><div style="font-size:.7rem;font-weight:700;color:var(--accent);margin-bottom:6px;">AGENDAMENTOS</div>';
-    agenda.sort((a, b) => String(b.DATA || '').localeCompare(String(a.DATA || '')));
-    agenda.slice(0, 5).forEach(a => {
+  if (totalAg > 0) {
+    agendaHtml = '<div style="margin-top:12px;">';
+    agendaHtml += '<div style="font-size:.7rem;font-weight:700;color:var(--accent);margin-bottom:8px;">HISTORICO DE ATENDIMENTOS</div>';
+    agendaHtml += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+      <div style="background:var(--card2);border-radius:6px;padding:8px;text-align:center;">
+        <div style="font-size:1rem;font-weight:800;color:var(--accent);">${totalAg}</div>
+        <div style="font-size:.55rem;color:var(--textL);">AGENDADOS</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:8px;text-align:center;">
+        <div style="font-size:1rem;font-weight:800;color:var(--success);">${totalAtendido}</div>
+        <div style="font-size:.55rem;color:var(--textL);">ATENDIDOS</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:8px;text-align:center;">
+        <div style="font-size:1rem;font-weight:800;color:var(--danger);">${totalBolo}</div>
+        <div style="font-size:.55rem;color:var(--textL);">BOLOS</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:8px;text-align:center;">
+        <div style="font-size:1rem;font-weight:800;color:var(--warning);">${totalPendente}</div>
+        <div style="font-size:.55rem;color:var(--textL);">PENDENTES</div>
+      </div>
+    </div>`;
+    agendaHtml += '<div style="font-size:.65rem;color:var(--textL);margin-bottom:4px;">TIMELINE</div>';
+    const agendaOrdenada = [...agenda].reverse();
+    agendaOrdenada.forEach(a => {
       const dt = String(a.DATA || '').substring(0, 10);
       const hr = String(a.HORA || '');
       const atend = (a.ATENDIDO || '').toLowerCase();
-      const icon = atend === 'sim' || atend === 'true' ? '&#10003;' : atend === 'bolo' ? '🍰' : '⏳';
-      agendaHtml += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:.75rem;">
-        <span style="color:var(--text);">${dt} ${hr}</span><span>${icon}</span></div>`;
+      let icon, label, cor;
+      if (atend === 'sim' || atend === 'true') { icon = '✓'; label = 'Atendido'; cor = 'var(--success)'; }
+      else if (atend === 'bolo') { icon = '🍰'; label = 'BOLO'; cor = 'var(--danger)'; }
+      else if (dt < hoje) { icon = '?'; label = 'Sem registro'; cor = 'var(--textL)'; }
+      else { icon = '⏳'; label = 'Agendado'; cor = 'var(--gold)'; }
+      agendaHtml += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.75rem;">
+        <span style="color:${cor};font-weight:800;min-width:18px;text-align:center;">${icon}</span>
+        <span style="color:var(--text);flex:1;">${dt} ${hr}</span>
+        <span style="color:${cor};font-size:.65rem;">${label}</span>
+      </div>`;
     });
     agendaHtml += '</div>';
+  } else {
+    agendaHtml = '<div style="margin-top:12px;padding:12px;text-align:center;color:var(--textL);font-size:.75rem;background:var(--card2);border-radius:6px;">Nenhum agendamento registrado</div>';
   }
 
   const inputStyle = 'width:100%;background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:6px 8px;color:#fff;font-size:.8rem;';
 
   const html = `
     <div style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px;">${nome}</div>
-    <div style="font-size:.75rem;color:var(--accent);margin-bottom:16px;">${corretor} · ${status}</div>
+    <div style="font-size:.75rem;color:var(--accent);margin-bottom:12px;">${corretor} · ${status}</div>
+    ${proxHtml}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
         <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">NOME</div>
