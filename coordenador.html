@@ -285,6 +285,27 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   </div>
 </div>
 
+<div class="modal-overlay" id="modalDetalhe" style="display:none;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:500px;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="fecharModalDetalhe()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--textL);font-size:1.2rem;cursor:pointer;">&times;</button>
+    <div id="detalheConteudo"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAgendar" style="display:none;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:380px;position:relative;">
+    <button onclick="fecharModalAgendar()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--textL);font-size:1.2rem;cursor:pointer;">&times;</button>
+    <div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:16px;">Agendar Atendimento</div>
+    <div id="agendarClienteNome" style="font-size:.85rem;color:var(--gold);margin-bottom:12px;"></div>
+    <div style="display:grid;gap:10px;">
+      <input id="agendar-data" type="date" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;">
+      <input id="agendar-hora" type="time" style="background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:#fff;font-size:.85rem;">
+      <div id="agendar-erro" style="color:var(--danger);font-size:.75rem;display:none;"></div>
+      <button id="agendar-btn" onclick="confirmarAgendamento()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:12px;font-size:.85rem;font-weight:700;cursor:pointer;">CONFIRMAR AGENDAMENTO</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalCliente" style="display:none;">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:420px;position:relative;">
     <div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:16px;">Novo Cliente</div>
@@ -1003,55 +1024,168 @@ function mapStatusToColuna(status) {
 }
 
 let draggedCard = null;
+let agendarCPF = null;
+let agendarNome = null;
+let agendarCorretor = null;
+
+function getClienteByCPF(cpf) {
+  return (DADOS.clientes || []).find(c => String(c.CPF || '').replace(/[^0-9]/g, '') === String(cpf).replace(/[^0-9]/g, ''));
+}
 
 function renderPipeline() {
   const board = document.getElementById('kanbanBoard');
-  if (!board) { console.error('PIPELINE: board nao encontrado'); return; }
-  board.innerHTML = '<div style="padding:20px;color:yellow;">Carregando pipeline...</div>';
+  if (!board) return;
   try {
-  const todosClientes = DADOS.clientes || [];
-  const clientes = todosClientes.filter(c => pertenceEquipe(c.CORRETOR));
-  board.innerHTML = '<div style="padding:20px;color:yellow;">Total: ' + todosClientes.length + ' | Equipe: ' + clientes.length + '</div>';
-  if (clientes.length === 0) {
-    board.innerHTML = '<div style="padding:40px;text-align:center;color:var(--textL);">Total na API: ' + todosClientes.length + ' | Filtrados equipe: ' + clientes.length + '<br>Logado como: ' + (COORD ? COORD.nome + ' (' + COORD.cargo + ')' : 'ninguem') + '</div>';
-    return;
-  }
+    const clientes = (DADOS.clientes || []).filter(c => pertenceEquipe(c.CORRETOR));
+    if (clientes.length === 0) {
+      board.innerHTML = '<div style="padding:40px;text-align:center;color:var(--textL);">Nenhum cliente encontrado.</div>';
+      return;
+    }
 
-  let html = '';
-  PIPELINE_COLUNAS.forEach(col => {
-    const cards = clientes.filter(c => mapStatusToColuna(c.STATUS) === col.id);
-    html += `<div class="kanban-col" data-coluna="${col.id}" ondragover="kanbanDragOver(event)" ondragleave="kanbanDragLeave(event)" ondrop="kanbanDrop(event)">`;
-    html += `<div class="kanban-col-header" style="color:${col.cor};border-top:3px solid ${col.cor};">${col.label} <span class="kanban-col-count">${cards.length}</span></div>`;
-    html += `<div class="kanban-col-body">`;
-    cards.forEach(c => {
-      const cpf = String(c.CPF || '').trim();
-      const nome = c.CLIENTE || 'Sem nome';
-      const corretor = c.CORRETOR || '';
-      const tel = c.TELEFONE || '';
-      const email = c.EMAIL || '';
-      const regiao = c.REGIÃO || c['REGIÃO'] || '';
-      html += `<div class="kanban-card" draggable="true" data-cpf="${cpf}" ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">`;
-      html += `<div class="kc-nome">${nome}</div>`;
-      html += `<div class="kc-corretor">${corretor}</div>`;
-      if (tel) html += `<div class="kc-info">${tel}</div>`;
-      if (regiao) html += `<div class="kc-info">${regiao}</div>`;
-      html += `</div>`;
+    let html = '';
+    PIPELINE_COLUNAS.forEach(col => {
+      const cards = clientes.filter(c => mapStatusToColuna(c.STATUS) === col.id);
+      html += `<div class="kanban-col" data-coluna="${col.id}" ondragover="kanbanDragOver(event)" ondragleave="kanbanDragLeave(event)" ondrop="kanbanDrop(event)">`;
+      html += `<div class="kanban-col-header" style="color:${col.cor};border-top:3px solid ${col.cor};">${col.label} <span class="kanban-col-count">${cards.length}</span></div>`;
+      html += `<div class="kanban-col-body">`;
+      cards.forEach(c => {
+        const cpf = String(c.CPF || '').trim();
+        const nome = c.CLIENTE || 'Sem nome';
+        const corretor = c.CORRETOR || '';
+        const tel = String(c.TELEFONE || '');
+        const regiao = String(c['REGIÃO'] || c.REGIAO || '');
+        html += `<div class="kanban-card" draggable="true" data-cpf="${cpf}" onclick="abrirDetalheCliente('${cpf.replace(/'/g,'')}')" ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">`;
+        html += `<div class="kc-nome">${nome}</div>`;
+        html += `<div class="kc-corretor">${corretor}</div>`;
+        if (tel) html += `<div class="kc-info">${tel}</div>`;
+        if (regiao) html += `<div class="kc-info">${regiao}</div>`;
+        html += `</div>`;
+      });
+      html += `</div></div>`;
     });
-    html += `</div></div>`;
-  });
-  board.innerHTML = html;
+    board.innerHTML = html;
   } catch(err) { board.innerHTML = '<div style="padding:20px;color:red;">ERRO: ' + err.message + '</div>'; }
 }
 
+// === DETALHE DO CLIENTE ===
+function abrirDetalheCliente(cpf) {
+  const c = getClienteByCPF(cpf);
+  if (!c) return;
+  const nome = c.CLIENTE || 'Sem nome';
+  const corretor = c.CORRETOR || '-';
+  const tel = String(c.TELEFONE || '-');
+  const email = String(c.EMAIL || '-');
+  const status = c.STATUS || 'PENDENTE';
+  const renda = c.RENDA || '-';
+  const regiao = String(c['REGIÃO'] || c.REGIAO || '-');
+  const valorAprov = c['VALOR APROVADO'] || '-';
+  const faixa = c.FAIXA || '-';
+  const teto = c['TETO IMÓVEL'] || '-';
+  const dataCriacao = String(c['DATA CRIAÇÃO'] || '').substring(0, 10);
+  const dataAtual = String(c['DATA ATUALIZAÇÃO'] || '').substring(0, 10);
+  const notas = String(c.OBSERVACOES || c.NOTAS || '');
+  const cpfStr = String(c.CPF || '');
+
+  // Buscar agendamentos desse cliente
+  const agenda = (DADOS.agenda || []).filter(a => {
+    const nomeA = normNome(a.CLIENTE || '');
+    const nomeC = normNome(nome);
+    return nomeA === nomeC || nomeA.includes(nomeC) || nomeC.includes(nomeA);
+  });
+
+  let agendaHtml = '';
+  if (agenda.length > 0) {
+    agendaHtml = '<div style="margin-top:12px;"><div style="font-size:.7rem;font-weight:700;color:var(--accent);margin-bottom:6px;">AGENDAMENTOS</div>';
+    agenda.sort((a, b) => String(b.DATA || '').localeCompare(String(a.DATA || '')));
+    agenda.slice(0, 5).forEach(a => {
+      const dt = String(a.DATA || '').substring(0, 10);
+      const hr = String(a.HORA || '');
+      const atend = (a.ATENDIDO || '').toLowerCase();
+      const icon = atend === 'sim' || atend === 'true' ? '&#10003;' : atend === 'bolo' ? '🍰' : '⏳';
+      agendaHtml += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:.75rem;">
+        <span style="color:var(--text);">${dt} ${hr}</span><span>${icon}</span></div>`;
+    });
+    agendaHtml += '</div>';
+  }
+
+  const html = `
+    <div style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px;">${nome}</div>
+    <div style="font-size:.75rem;color:var(--accent);margin-bottom:16px;">${corretor} · ${status}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">TELEFONE</div>
+        <div style="font-size:.8rem;color:#fff;">${tel}</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">EMAIL</div>
+        <div style="font-size:.8rem;color:#fff;word-break:break-all;">${email}</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">CPF</div>
+        <div style="font-size:.8rem;color:#fff;">${cpfStr}</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">REGIAO</div>
+        <div style="font-size:.8rem;color:#fff;">${regiao}</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">RENDA</div>
+        <div style="font-size:.8rem;color:#fff;">${renda}</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">VALOR APROVADO</div>
+        <div style="font-size:.8rem;color:#fff;">${valorAprov}</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">CADASTRO</div>
+        <div style="font-size:.8rem;color:#fff;">${dataCriacao}</div>
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">ATUALIZADO</div>
+        <div style="font-size:.8rem;color:#fff;">${dataAtual}</div>
+      </div>
+    </div>
+    ${agendaHtml}
+    <div style="margin-top:16px;">
+      <div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:6px;">ANOTACOES</div>
+      <textarea id="detalhe-notas" style="width:100%;min-height:80px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px;color:#fff;font-size:.8rem;resize:vertical;">${notas}</textarea>
+      <button onclick="salvarNotas('${cpfStr.replace(/'/g,'')}')" style="margin-top:6px;background:var(--accent);color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:.75rem;font-weight:700;cursor:pointer;">Salvar Anotacao</button>
+      <span id="notas-status" style="margin-left:8px;font-size:.7rem;color:var(--success);display:none;">Salvo!</span>
+    </div>
+  `;
+  document.getElementById('detalheConteudo').innerHTML = html;
+  document.getElementById('modalDetalhe').style.display = 'flex';
+}
+
+function fecharModalDetalhe() {
+  document.getElementById('modalDetalhe').style.display = 'none';
+}
+
+async function salvarNotas(cpf) {
+  const notas = document.getElementById('detalhe-notas').value;
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_cliente', cpf: cpf, campos: { OBSERVACOES: notas } })
+    });
+  } catch(e) {}
+  const st = document.getElementById('notas-status');
+  st.style.display = 'inline';
+  setTimeout(() => { st.style.display = 'none'; }, 2000);
+}
+
+// === DRAG AND DROP ===
 function kanbanDragStart(e) {
-  draggedCard = e.target;
-  e.target.classList.add('dragging');
+  draggedCard = e.target.closest('.kanban-card');
+  draggedCard.classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', e.target.dataset.cpf);
+  e.dataTransfer.setData('text/plain', draggedCard.dataset.cpf);
 }
 
 function kanbanDragEnd(e) {
-  e.target.classList.remove('dragging');
+  if (draggedCard) draggedCard.classList.remove('dragging');
   document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
   draggedCard = null;
 }
@@ -1078,11 +1212,27 @@ async function kanbanDrop(e) {
   const novoStatus = col.dataset.coluna;
   if (!cpf) return;
 
+  // Se mover pra AGENDADO, abrir modal de agendamento
+  if (novoStatus === 'AGENDADO') {
+    const c = getClienteByCPF(cpf);
+    agendarCPF = cpf;
+    agendarNome = c ? c.CLIENTE : '';
+    agendarCorretor = c ? c.CORRETOR : '';
+    document.getElementById('agendarClienteNome').textContent = agendarNome;
+    document.getElementById('agendar-data').value = '';
+    document.getElementById('agendar-hora').value = '';
+    document.getElementById('agendar-erro').style.display = 'none';
+    document.getElementById('modalAgendar').style.display = 'flex';
+    // Guardar referência da coluna destino
+    draggedCard._destCol = col;
+    return;
+  }
+
   // Mover card visualmente
   const body = col.querySelector('.kanban-col-body');
   body.appendChild(draggedCard);
 
-  // Atualizar na planilha
+  // Atualizar status na planilha
   try {
     await fetch(API_URL, {
       method: 'POST',
@@ -1092,11 +1242,95 @@ async function kanbanDrop(e) {
     });
   } catch(err) {}
 
-  // Atualizar contadores
+  atualizarContadores();
+}
+
+function atualizarContadores() {
   document.querySelectorAll('.kanban-col').forEach(c => {
     const count = c.querySelector('.kanban-col-body').children.length;
     c.querySelector('.kanban-col-count').textContent = count;
   });
+}
+
+// === MODAL AGENDAMENTO ===
+function fecharModalAgendar() {
+  document.getElementById('modalAgendar').style.display = 'none';
+  agendarCPF = null;
+}
+
+async function confirmarAgendamento() {
+  const data = document.getElementById('agendar-data').value;
+  const hora = document.getElementById('agendar-hora').value;
+  const erroEl = document.getElementById('agendar-erro');
+
+  if (!data) { erroEl.textContent = 'Selecione a data'; erroEl.style.display = 'block'; return; }
+  if (!hora) { erroEl.textContent = 'Selecione o horario'; erroEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('agendar-btn');
+  btn.textContent = 'AGENDANDO...';
+  btn.disabled = true;
+
+  // 1. Atualizar status do cliente pra AGENDADO
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_cliente', cpf: agendarCPF, campos: { STATUS: 'AGENDADO' } })
+    });
+  } catch(e) {}
+
+  // 2. Adicionar na aba Agenda (sincroniza com calendário, app e ranking)
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        acao: 'atualizar_agenda',
+        busca: { _novo: true },
+        campos: {
+          DATA: data,
+          HORA: hora,
+          TIPO: 'Cliente',
+          CLIENTE: agendarNome,
+          CONTATO: '',
+          CORRETOR: agendarCorretor,
+          EQUIPE: '',
+          CRIADO_EM: new Date().toISOString(),
+          ATENDIDO: ''
+        }
+      })
+    });
+  } catch(e) {
+    // Fallback: adicionar via GET
+    const params = new URLSearchParams({
+      acao: 'checkin',
+      registro: JSON.stringify({
+        DATA: data,
+        HORA: hora,
+        TIPO: 'agendamento-pipeline',
+        CLIENTE: agendarNome,
+        CORRETOR: agendarCorretor,
+        OBSERVACOES: 'Agendado via Pipeline CRM'
+      })
+    });
+    fetch(API_URL + '?' + params.toString()).catch(() => {});
+  }
+
+  // 3. Mover card visualmente
+  if (draggedCard && draggedCard._destCol) {
+    const body = draggedCard._destCol.querySelector('.kanban-col-body');
+    body.appendChild(draggedCard);
+    atualizarContadores();
+  }
+
+  fecharModalAgendar();
+  btn.textContent = 'CONFIRMAR AGENDAMENTO';
+  btn.disabled = false;
+
+  // Recarregar dados pra sincronizar calendário
+  setTimeout(() => carregarDadosSilencioso(), 2000);
 }
 
 // Modal novo cliente
