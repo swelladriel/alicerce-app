@@ -1032,6 +1032,45 @@ function getClienteByCPF(cpf) {
   return (DADOS.clientes || []).find(c => String(c.CPF || '').replace(/[^0-9]/g, '') === String(cpf).replace(/[^0-9]/g, ''));
 }
 
+function matchNomeAgenda(nomeCliente, nomeAgenda) {
+  const nc = normNome(nomeCliente);
+  const na = normNome(nomeAgenda);
+  if (!nc || !na || nc.length < 3 || na.length < 3) return false;
+  if (nc === na) return true;
+  if (nc.includes(na) || na.includes(nc)) return true;
+  // Comparar primeiro nome
+  const pc = nc.split(/\s+/)[0];
+  const pa = na.split(/\s+/)[0];
+  if (pc.length >= 3 && pa.length >= 3 && pc === pa) {
+    // Mesmo primeiro nome — verificar se sobrenome parcial bate
+    const sc = nc.split(/\s+/).slice(1).join(' ');
+    const sa = na.split(/\s+/).slice(1).join(' ');
+    if (sc && sa && (sc.includes(sa) || sa.includes(sc))) return true;
+  }
+  return false;
+}
+
+function getAgendaCliente(nomeCliente) {
+  return (DADOS.agenda || []).filter(a => matchNomeAgenda(nomeCliente, a.CLIENTE || ''));
+}
+
+function getProxAgendamento(nomeCliente) {
+  const hoje = hojeStr();
+  const futuros = getAgendaCliente(nomeCliente).filter(a => String(a.DATA || '').substring(0, 10) >= hoje);
+  futuros.sort((a, b) => String(a.DATA || '').localeCompare(String(b.DATA || '')));
+  return futuros[0] || null;
+}
+
+function getColunaEfetiva(cliente) {
+  const statusCol = mapStatusToColuna(cliente.STATUS);
+  // Se status é PENDENTE mas tem agendamento futuro, mover pra AGENDADO
+  if (statusCol === 'PENDENTE') {
+    const prox = getProxAgendamento(cliente.CLIENTE || '');
+    if (prox) return 'AGENDADO';
+  }
+  return statusCol;
+}
+
 function renderPipeline() {
   const board = document.getElementById('kanbanBoard');
   if (!board) return;
@@ -1044,7 +1083,7 @@ function renderPipeline() {
 
     let html = '';
     PIPELINE_COLUNAS.forEach(col => {
-      const cards = clientes.filter(c => mapStatusToColuna(c.STATUS) === col.id);
+      const cards = clientes.filter(c => getColunaEfetiva(c) === col.id);
       html += `<div class="kanban-col" data-coluna="${col.id}" ondragover="kanbanDragOver(event)" ondragleave="kanbanDragLeave(event)" ondrop="kanbanDrop(event)">`;
       html += `<div class="kanban-col-header" style="color:${col.cor};border-top:3px solid ${col.cor};">${col.label} <span class="kanban-col-count">${cards.length}</span></div>`;
       html += `<div class="kanban-col-body">`;
@@ -1054,13 +1093,7 @@ function renderPipeline() {
         const corretor = c.CORRETOR || '';
         const tel = String(c.TELEFONE || '');
         const regiao = String(c['REGIÃO'] || c.REGIAO || '');
-        // Buscar próximo agendamento desse cliente
-        const nomeNorm = normNome(nome);
-        const agendamentos = (DADOS.agenda || []).filter(a => {
-          const na = normNome(a.CLIENTE || '');
-          return (na === nomeNorm || na.includes(nomeNorm) || nomeNorm.includes(na)) && String(a.DATA || '').substring(0,10) >= hojeStr();
-        }).sort((a, b) => String(a.DATA || '').localeCompare(String(b.DATA || '')));
-        const prox = agendamentos[0];
+        const prox = getProxAgendamento(nome);
         html += `<div class="kanban-card" draggable="true" data-cpf="${cpf}" onclick="abrirDetalheCliente('${cpf.replace(/'/g,'')}')" ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">`;
         html += `<div class="kc-nome">${nome}</div>`;
         html += `<div class="kc-corretor">${corretor}</div>`;
@@ -1095,11 +1128,7 @@ function abrirDetalheCliente(cpf) {
   const cpfStr = String(c.CPF || '');
 
   // Buscar agendamentos desse cliente
-  const agenda = (DADOS.agenda || []).filter(a => {
-    const nomeA = normNome(a.CLIENTE || '');
-    const nomeC = normNome(nome);
-    return nomeA === nomeC || nomeA.includes(nomeC) || nomeC.includes(nomeA);
-  });
+  const agenda = getAgendaCliente(nome);
   agenda.sort((a, b) => String(a.DATA || '').localeCompare(String(b.DATA || '')));
 
   const hoje = hojeStr();
