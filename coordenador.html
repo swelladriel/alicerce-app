@@ -1108,50 +1108,57 @@ function abrirDetalheCliente(cpf) {
     agendaHtml += '</div>';
   }
 
+  const inputStyle = 'width:100%;background:var(--card2);border:1px solid var(--border);border-radius:4px;padding:6px 8px;color:#fff;font-size:.8rem;';
+
   const html = `
     <div style="font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px;">${nome}</div>
     <div style="font-size:.75rem;color:var(--accent);margin-bottom:16px;">${corretor} · ${status}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">NOME</div>
+        <input id="ed-nome" value="${nome}" style="${inputStyle}">
+      </div>
+      <div style="background:var(--card2);border-radius:6px;padding:10px;">
         <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">TELEFONE</div>
-        <div style="font-size:.8rem;color:#fff;">${tel}</div>
+        <input id="ed-tel" value="${tel === '-' ? '' : tel}" style="${inputStyle}">
       </div>
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
         <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">EMAIL</div>
-        <div style="font-size:.8rem;color:#fff;word-break:break-all;">${email}</div>
+        <input id="ed-email" value="${email === '-' ? '' : email}" style="${inputStyle}">
       </div>
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
         <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">CPF</div>
-        <div style="font-size:.8rem;color:#fff;">${cpfStr}</div>
+        <div style="font-size:.8rem;color:var(--textL);padding:6px 0;">${cpfStr}</div>
       </div>
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
         <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">REGIAO</div>
-        <div style="font-size:.8rem;color:#fff;">${regiao}</div>
+        <input id="ed-regiao" value="${regiao === '-' ? '' : regiao}" style="${inputStyle}">
       </div>
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
         <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">RENDA</div>
-        <div style="font-size:.8rem;color:#fff;">${renda}</div>
+        <input id="ed-renda" value="${renda === '-' ? '' : renda}" style="${inputStyle}">
       </div>
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
         <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">VALOR APROVADO</div>
-        <div style="font-size:.8rem;color:#fff;">${valorAprov}</div>
+        <input id="ed-valor" value="${valorAprov === '-' ? '' : valorAprov}" style="${inputStyle}">
       </div>
       <div style="background:var(--card2);border-radius:6px;padding:10px;">
-        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">CADASTRO</div>
-        <div style="font-size:.8rem;color:#fff;">${dataCriacao}</div>
-      </div>
-      <div style="background:var(--card2);border-radius:6px;padding:10px;">
-        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">ATUALIZADO</div>
-        <div style="font-size:.8rem;color:#fff;">${dataAtual}</div>
+        <div style="font-size:.6rem;color:var(--textL);margin-bottom:2px;">STATUS</div>
+        <select id="ed-status" style="${inputStyle}">
+          ${PIPELINE_COLUNAS.map(col => '<option value="' + col.id + '"' + (mapStatusToColuna(status) === col.id ? ' selected' : '') + '>' + col.label + '</option>').join('')}
+        </select>
       </div>
     </div>
     ${agendaHtml}
-    <div style="margin-top:16px;">
+    <div style="margin-top:12px;">
       <div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:6px;">ANOTACOES</div>
-      <textarea id="detalhe-notas" style="width:100%;min-height:80px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px;color:#fff;font-size:.8rem;resize:vertical;">${notas}</textarea>
-      <button onclick="salvarNotas('${cpfStr.replace(/'/g,'')}')" style="margin-top:6px;background:var(--accent);color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:.75rem;font-weight:700;cursor:pointer;">Salvar Anotacao</button>
-      <span id="notas-status" style="margin-left:8px;font-size:.7rem;color:var(--success);display:none;">Salvo!</span>
+      <textarea id="ed-notas" style="width:100%;min-height:80px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:10px;color:#fff;font-size:.8rem;resize:vertical;">${notas}</textarea>
     </div>
+    <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+      <button onclick="salvarEdicaoCliente('${cpfStr.replace(/'/g,'')}')" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:10px 24px;font-size:.85rem;font-weight:700;cursor:pointer;">SALVAR ALTERACOES</button>
+      <span id="edit-status" style="font-size:.75rem;color:var(--success);display:none;">Salvo!</span>
+    </div>
+    <div style="font-size:.6rem;color:var(--textL);margin-top:10px;">Cadastro: ${dataCriacao} · Atualizado: ${dataAtual}</div>
   `;
   document.getElementById('detalheConteudo').innerHTML = html;
   document.getElementById('modalDetalhe').style.display = 'flex';
@@ -1161,19 +1168,28 @@ function fecharModalDetalhe() {
   document.getElementById('modalDetalhe').style.display = 'none';
 }
 
-async function salvarNotas(cpf) {
-  const notas = document.getElementById('detalhe-notas').value;
+async function salvarEdicaoCliente(cpf) {
+  const campos = {
+    'CLIENTE': (document.getElementById('ed-nome').value || '').trim().toUpperCase(),
+    'TELEFONE': (document.getElementById('ed-tel').value || '').trim(),
+    'EMAIL': (document.getElementById('ed-email').value || '').trim(),
+    'REGIÃO': (document.getElementById('ed-regiao').value || '').trim(),
+    'RENDA': (document.getElementById('ed-renda').value || '').trim(),
+    'VALOR APROVADO': (document.getElementById('ed-valor').value || '').trim(),
+    'STATUS': document.getElementById('ed-status').value,
+    'OBSERVACOES': (document.getElementById('ed-notas').value || '').trim()
+  };
   try {
     await fetch(API_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ acao: 'atualizar_cliente', cpf: cpf, campos: { OBSERVACOES: notas } })
+      body: JSON.stringify({ acao: 'atualizar_cliente', cpf: cpf, campos: campos })
     });
   } catch(e) {}
-  const st = document.getElementById('notas-status');
+  const st = document.getElementById('edit-status');
   st.style.display = 'inline';
-  setTimeout(() => { st.style.display = 'none'; }, 2000);
+  setTimeout(() => { st.style.display = 'none'; fecharModalDetalhe(); carregarDadosSilencioso(); }, 1500);
 }
 
 // === DRAG AND DROP ===
