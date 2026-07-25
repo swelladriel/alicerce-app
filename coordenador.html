@@ -1054,9 +1054,17 @@ function renderPipeline() {
         const corretor = c.CORRETOR || '';
         const tel = String(c.TELEFONE || '');
         const regiao = String(c['REGIÃO'] || c.REGIAO || '');
+        // Buscar próximo agendamento desse cliente
+        const nomeNorm = normNome(nome);
+        const agendamentos = (DADOS.agenda || []).filter(a => {
+          const na = normNome(a.CLIENTE || '');
+          return (na === nomeNorm || na.includes(nomeNorm) || nomeNorm.includes(na)) && String(a.DATA || '').substring(0,10) >= hojeStr();
+        }).sort((a, b) => String(a.DATA || '').localeCompare(String(b.DATA || '')));
+        const prox = agendamentos[0];
         html += `<div class="kanban-card" draggable="true" data-cpf="${cpf}" onclick="abrirDetalheCliente('${cpf.replace(/'/g,'')}')" ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">`;
         html += `<div class="kc-nome">${nome}</div>`;
         html += `<div class="kc-corretor">${corretor}</div>`;
+        if (prox) html += `<div class="kc-info" style="color:var(--gold);">📅 ${String(prox.DATA||'').substring(5,10).replace('-','/')} ${String(prox.HORA||'')}</div>`;
         if (tel) html += `<div class="kc-info">${tel}</div>`;
         if (regiao) html += `<div class="kc-info">${regiao}</div>`;
         html += `</div>`;
