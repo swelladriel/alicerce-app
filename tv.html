@@ -822,7 +822,7 @@ function alternarPagina() {
 
 function iniciarTimer() {
   setInterval(() => {
-    elapsed += 0.1;
+    elapsed += 0.5;
     const tempoTotal = PAGINAS[paginaIdx].tempo;
     document.getElementById('progress-bar').style.width = (elapsed / tempoTotal * 100) + '%';
 
@@ -831,7 +831,7 @@ function iniciarTimer() {
       document.getElementById('progress-bar').style.width = '0%';
       alternarPagina();
     }
-  }, 100);
+  }, 500);
 }
 
 // ============================================
@@ -950,7 +950,7 @@ function iniciarTV() {
   atualizarRelogio();
   setInterval(atualizarRelogio, 1000);
   carregarDados();
-  setInterval(atualizarDados, 30000);
+  setInterval(atualizarDados, 120000);
 }
 
 // Auto-iniciar após 3 segundos (pra Smart TVs que não suportam click)
