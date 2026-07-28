@@ -839,6 +839,9 @@ atualizarRelogio();
 setInterval(atualizarRelogio, 1000);
 carregarDados();
 setInterval(atualizarDados, 120000);
+
+// Auto-reload a cada 1 hora pra limpar memória da TV
+setTimeout(() => { location.reload(); }, 3600000);
 </script>
 </body>
 </html>
