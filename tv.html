@@ -187,14 +187,14 @@ body {
 /* ============ CELEBRATION ============ */
 .celebration { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.88); opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
 .celebration.show { opacity: 1; pointer-events: auto; }
-.celebration-icon { font-size: 100px; transform: scale(0); }
-.celebration.show .celebration-icon { animation: celebPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.celebration-text { font-size: 36px; font-weight: 900; margin-top: 20px; text-transform: uppercase; letter-spacing: 4px; opacity: 0; }
-.celebration.show .celebration-text { animation: celebFadeIn 0.4s ease 0.3s forwards; }
-.celebration-sub { font-size: 20px; color: var(--gold); margin-top: 10px; font-weight: 700; opacity: 0; }
-.celebration.show .celebration-sub { animation: celebFadeIn 0.4s ease 0.5s forwards; }
-.celebration-detail { font-size: 16px; color: var(--text-dim); margin-top: 8px; font-weight: 600; opacity: 0; }
-.celebration.show .celebration-detail { animation: celebFadeIn 0.4s ease 0.7s forwards; }
+.celebration-icon { font-size: 140px; transform: scale(0); }
+.celebration.show .celebration-icon { animation: celebPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.celebration-text { font-size: 52px; font-weight: 900; margin-top: 24px; text-transform: uppercase; letter-spacing: 6px; opacity: 0; }
+.celebration.show .celebration-text { animation: celebFadeIn 0.5s ease 0.4s forwards; }
+.celebration-sub { font-size: 32px; color: var(--gold); margin-top: 14px; font-weight: 700; opacity: 0; }
+.celebration.show .celebration-sub { animation: celebFadeIn 0.5s ease 0.7s forwards; }
+.celebration-detail { font-size: 24px; color: var(--text-dim); margin-top: 10px; font-weight: 600; opacity: 0; }
+.celebration.show .celebration-detail { animation: celebFadeIn 0.5s ease 1s forwards; }
 .celebration-glow { position: absolute; width: 400px; height: 400px; border-radius: 50%; filter: blur(120px); opacity: 0; pointer-events: none; }
 .celebration.show .celebration-glow { animation: glowPulse 2s ease-in-out infinite; }
 
@@ -338,36 +338,69 @@ function getAudioCtx() {
 
 function somAgendamento() {
   const ctx = getAudioCtx();
-  [523.25, 659.25, 783.99].forEach((freq, i) => {
+  // DING DING DING — 3 sinos altos e claros
+  [784, 988, 1175, 1319, 1568].forEach((freq, i) => {
     const osc = ctx.createOscillator(); const gain = ctx.createGain();
     osc.type = 'sine'; osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.8);
+    gain.gain.setValueAtTime(0.7, ctx.currentTime + i * 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.18 + 1.2);
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 0.8);
+    osc.start(ctx.currentTime + i * 0.18); osc.stop(ctx.currentTime + i * 0.18 + 1.2);
   });
+  // Segunda onda harmônica pra encher o som
+  setTimeout(() => {
+    [1175, 1319, 1568].forEach((freq, i) => {
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'triangle'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 1);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.15); osc.stop(ctx.currentTime + i * 0.15 + 1);
+    });
+  }, 600);
 }
 
 function somVenda() {
   const ctx = getAudioCtx();
-  [392, 523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+  // FANFARRA ÉPICA — 3 ondas crescentes
+  // Onda 1: acordes subindo
+  [262, 330, 392, 523, 659, 784, 1047].forEach((freq, i) => {
     const osc = ctx.createOscillator(); const gain = ctx.createGain();
-    osc.type = 'triangle'; osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.15);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 1.2);
+    osc.type = 'square'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.5, ctx.currentTime + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 1.5);
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(ctx.currentTime + i * 0.15); osc.stop(ctx.currentTime + i * 0.15 + 1.2);
+    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 1.5);
   });
+  // Onda 2: acorde triunfal
   setTimeout(() => {
-    [523.25, 659.25, 783.99, 1046.5].forEach(freq => {
+    [523, 659, 784, 1047, 1319].forEach(freq => {
       const osc = ctx.createOscillator(); const gain = ctx.createGain();
       osc.type = 'sine'; osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
+      gain.gain.setValueAtTime(0.8, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.5);
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 2);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 2.5);
     });
-  }, 800);
+  }, 900);
+  // Onda 3: final grandioso
+  setTimeout(() => {
+    [784, 1047, 1319, 1568, 2093].forEach(freq => {
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(1.0, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 3);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 3);
+    });
+    // Baixo pulsante
+    const bass = ctx.createOscillator(); const bassGain = ctx.createGain();
+    bass.type = 'sine'; bass.frequency.value = 131;
+    bassGain.gain.setValueAtTime(0.6, ctx.currentTime);
+    bassGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 3);
+    bass.connect(bassGain); bassGain.connect(ctx.destination);
+    bass.start(ctx.currentTime); bass.stop(ctx.currentTime + 3);
+  }, 2000);
 }
 
 // ============================================
@@ -398,12 +431,12 @@ function celebrar(icon, texto, sub, detail, tipo) {
   document.getElementById('celeb-sub').textContent = sub;
   document.getElementById('celeb-detail').textContent = detail || '';
   el.classList.add('show');
-  // Sons simples (sem confetti — pesado demais pra Smart TV)
   try {
-    if (tipo === 'venda') somVenda();
+    if (tipo === 'venda') { somVenda(); setTimeout(somVenda, 3000); }
     else somAgendamento();
   } catch(e) {}
-  setTimeout(() => el.classList.remove('show'), 5000);
+  const duracao = tipo === 'venda' ? 12000 : 8000;
+  setTimeout(() => el.classList.remove('show'), duracao);
 }
 
 // ============================================
