@@ -123,8 +123,11 @@ body {
 }
 
 .rank-pos { font-size: 16px; font-weight: 900; color: var(--text-dim); min-width: 26px; text-align: center; }
-.rank-name { font-size: 15px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rank-pts { font-size: 19px; font-weight: 900; color: var(--gold); text-align: right; }
+.rank-name { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-prod { display: flex; gap: 5px; align-items: center; margin-left: auto; }
+.rank-prod-item { font-size: 9px; color: var(--text-dim); }
+.rank-prod-item span { font-weight: 800; color: var(--text); }
+.rank-pts { font-size: 19px; font-weight: 900; color: var(--gold); text-align: right; min-width: 50px; }
 .rank-pts-label { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-align: right; }
 
 .rank-cats { display: none; }
@@ -606,16 +609,17 @@ function renderRanking() {
   `).join('');
 
   document.getElementById('ranking-rest').innerHTML = rest.map((p, i) => `
-    <div class="rank-row" style="animation-delay: ${(i + 3) * 0.05}s">
+    <div class="rank-row">
       <div class="rank-pos">${i + 4}º</div>
       <div class="rank-name">${p.nome}</div>
-      <div class="rank-cats">
-        <div class="rank-cat">📋 <span class="rank-cat-val">${p.agendamentos}x</span> <span class="rank-cat-pts">${fmtPts(p.agendamentos * 3)}</span></div>
-        <div class="rank-cat">✅ <span class="rank-cat-val">${p.atendimentos}x</span> <span class="rank-cat-pts">${fmtPts(p.atendimentos * 5)}</span></div>
-        <div class="rank-cat">📁 <span class="rank-cat-val">${p.pastas}x</span> <span class="rank-cat-pts">${fmtPts(p.pastas * 8)}</span></div>
-        <div class="rank-cat">🏆 <span class="rank-cat-val">${p.vendas}x</span> <span class="rank-cat-pts">${fmtPts(p.vendas * 20)}</span></div>
-        <div class="rank-cat">⏰ <span class="${ptClass(p.ptCheckin)}">${fmtPts(p.ptCheckin)}</span></div>
-        <div class="rank-cat">🎙 <span class="${ptClass(p.pt945)}">${fmtPts(p.pt945)}</span></div>
+      <div class="rank-prod">
+        <div class="rank-prod-item">📋<span>${p.agendamentos}</span></div>
+        <div class="rank-prod-item">✅<span>${p.atendimentos}</span></div>
+        <div class="rank-prod-item">📁<span>${p.pastas}</span></div>
+        <div class="rank-prod-item">🏆<span>${p.vendas}</span></div>
+        <div class="rank-prod-item">📜<span>${p.consorcios}</span></div>
+        <div class="rank-prod-item">⏰<span>${p.checkins}</span></div>
+        <div class="rank-prod-item">🎙<span>${p.dias945}</span></div>
       </div>
       <div>
         <div class="rank-pts">${p.total}</div>
