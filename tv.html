@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alicerce — TV</title>
 <style>
-/* Fonte do sistema — sem dependência externa */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -26,7 +26,7 @@
 }
 
 body {
-  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
@@ -72,7 +72,7 @@ body {
 
 /* PROGRESS */
 .tv-progress { width: 100%; height: 2px; background: rgba(255,255,255,0.05); }
-.tv-progress-bar { height: 100%; background: var(--gold); width: 0%; }
+.tv-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), #f0d78c); width: 0%; transition: width 0.1s linear; }
 
 /* PAGES */
 .tv-page {
@@ -85,47 +85,47 @@ body {
 .tv-page.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
 /* ============ RANKING ============ */
-.ranking-podium { display: flex; gap: 20px; justify-content: center; align-items: flex-end; padding-bottom: 16px; }
+.ranking-podium { display: flex; gap: 12px; justify-content: center; align-items: flex-end; padding-bottom: 8px; }
 
 .podium-card {
-  flex: 1; max-width: 380px; background: var(--card); border: 1px solid var(--card-border);
-  border-radius: 14px; padding: 20px; text-align: center; position: relative; overflow: hidden;
+  flex: 1; max-width: 300px; background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 12px; padding: 12px; text-align: center; position: relative; overflow: hidden;
 }
 
-.podium-card.first { border-color: rgba(212,168,67,0.4); background: linear-gradient(180deg, rgba(212,168,67,0.12) 0%, var(--card) 100%); transform: scale(1.05); order: 2; }
+.podium-card.first { border-color: rgba(212,168,67,0.4); background: linear-gradient(180deg, rgba(212,168,67,0.12) 0%, var(--card) 100%); transform: scale(1.03); order: 2; }
 .podium-card.second { border-color: rgba(168,178,193,0.3); background: linear-gradient(180deg, rgba(168,178,193,0.08) 0%, var(--card) 100%); order: 1; }
 .podium-card.third { border-color: rgba(205,127,50,0.3); background: linear-gradient(180deg, rgba(205,127,50,0.08) 0%, var(--card) 100%); order: 3; }
 
-.podium-pos { font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.podium-pos { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
 .podium-card.first .podium-pos { color: var(--gold); }
 .podium-card.second .podium-pos { color: var(--silver); }
 .podium-card.third .podium-pos { color: var(--bronze); }
 
-.podium-medal { font-size: 32px; margin-bottom: 4px; }
-.podium-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
-.podium-pts { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.podium-medal { font-size: 24px; margin-bottom: 2px; }
+.podium-name { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+.podium-pts { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
 .podium-card.first .podium-pts { color: var(--gold); }
 .podium-card.second .podium-pts { color: var(--silver); }
 .podium-card.third .podium-pts { color: var(--bronze); }
-.podium-label { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+.podium-label { font-size: 9px; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
 
-.podium-cats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px; margin-top: 10px; text-align: left; }
-.podium-cat { font-size: 12px; color: var(--text-dim); display: flex; justify-content: space-between; padding: 2px 6px; background: rgba(255,255,255,0.03); border-radius: 4px; }
+.podium-cats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; margin-top: 6px; text-align: left; }
+.podium-cat { font-size: 10px; color: var(--text-dim); display: flex; justify-content: space-between; padding: 1px 4px; background: rgba(255,255,255,0.03); border-radius: 3px; }
 .podium-cat-val { color: var(--text); font-weight: 700; }
-.podium-cat-pts { color: var(--gold); font-weight: 600; font-size: 11px; }
+.podium-cat-pts { color: var(--gold); font-weight: 600; font-size: 9px; }
 
 /* RANKING REST */
-.ranking-rest { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.ranking-rest { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
 
 .rank-row {
-  display: flex; align-items: center; gap: 10px; background: var(--card);
-  border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px; background: var(--card);
+  border: 1px solid var(--card-border); border-radius: 8px; padding: 6px 10px;
 }
 
-.rank-pos { font-size: 18px; font-weight: 900; color: var(--text-dim); min-width: 28px; text-align: center; }
-.rank-name { font-size: 17px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rank-pts { font-size: 22px; font-weight: 900; color: var(--gold); text-align: right; }
-.rank-pts-label { font-size: 10px; color: var(--text-dim); letter-spacing: 1px; text-align: right; }
+.rank-pos { font-size: 14px; font-weight: 900; color: var(--text-dim); min-width: 24px; text-align: center; }
+.rank-name { font-size: 13px; font-weight: 700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-pts { font-size: 16px; font-weight: 900; color: var(--gold); text-align: right; }
+.rank-pts-label { font-size: 8px; color: var(--text-dim); letter-spacing: 1px; text-align: right; }
 
 .rank-cats { display: none; }
 .rank-cat-val { color: var(--text); font-weight: 700; }
@@ -250,7 +250,8 @@ body {
   <div class="splash-hint">Clique em qualquer lugar para iniciar em tela cheia</div>
 </div>
 
-<!-- bg-glow removido pra performance -->
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
 
 <div id="loading" class="loading" style="display:none;"><div class="loading-spin"></div>Carregando dados...</div>
 
@@ -319,8 +320,9 @@ body {
 const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
 
 const PAGINAS = [
-  { id: 'ranking',    tab: 'ranking', tempo: 30 },
-  { id: 'agenda',     tab: 'agenda',  tempo: 10 },
+  { id: 'ranking',    tab: 'ranking', tempo: 20 },
+  { id: 'calendario', tab: 'cal',     tempo: 15 },
+  { id: 'agenda',     tab: 'agenda',  tempo: 15 },
 ];
 
 const INICIO_MES_COMERCIAL = '2026-07-03';
@@ -332,8 +334,6 @@ let paginaIdx = 0;
 let paginaAtual = 'ranking';
 let elapsed = 0;
 let agendaAnterior = 0;
-let atendidosAnterior = 0;
-let pastasAnterior = 0;
 let vendasAnterior = 0;
 let audioCtx = null;
 
@@ -407,11 +407,8 @@ function celebrar(icon, texto, sub, detail, tipo) {
   document.getElementById('celeb-sub').textContent = sub;
   document.getElementById('celeb-detail').textContent = detail || '';
   el.classList.add('show');
-  // Sons simples (sem confetti — pesado demais pra Smart TV)
-  try {
-    if (tipo === 'venda') somVenda();
-    else somAgendamento();
-  } catch(e) {}
+  lancarConfetti();
+  if (tipo === 'venda') somVenda(); else somAgendamento();
   setTimeout(() => el.classList.remove('show'), 5000);
 }
 
@@ -781,7 +778,7 @@ function alternarPagina() {
 
 function iniciarTimer() {
   setInterval(() => {
-    elapsed += 0.5;
+    elapsed += 0.1;
     const tempoTotal = PAGINAS[paginaIdx].tempo;
     document.getElementById('progress-bar').style.width = (elapsed / tempoTotal * 100) + '%';
 
@@ -790,7 +787,7 @@ function iniciarTimer() {
       document.getElementById('progress-bar').style.width = '0%';
       alternarPagina();
     }
-  }, 500);
+  }, 100);
 }
 
 // ============================================
@@ -806,19 +803,10 @@ async function carregarDados() {
 
     renderRanking();
     agendaAnterior = renderAgenda() || 0;
+    renderCalendario();
+
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
     vendasAnterior = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
-
-    // Contar atendimentos e pastas iniciais
-    const hoje = new Date().toISOString().substring(0, 10);
-    atendidosAnterior = (DADOS.agenda || []).filter(a => {
-      const at = (a.ATENDIDO || '').toLowerCase();
-      return parseDataISO(a.DATA) >= INICIO_MES_COMERCIAL && (at === 'sim' || at === 'true');
-    }).length;
-    pastasAnterior = (DADOS.clientes || []).filter(c => {
-      const s = (c.STATUS || '').toUpperCase();
-      return (s.includes('APROVAD') || s.includes('PASTA') || s.includes('BACEN'));
-    }).length;
 
     iniciarTimer();
   } catch (e) {
@@ -827,63 +815,22 @@ async function carregarDados() {
   }
 }
 
-let dadosHash = '';
-
 async function atualizarDados() {
   try {
     const resp = await fetch(API_URL + '?acao=tv');
-    const novosDados = await resp.json();
+    DADOS = await resp.json();
+    renderRanking();
+    const qtdAgendaNova = renderAgenda() || 0;
+    renderCalendario();
 
-    // Só re-renderiza se dados mudaram
-    const novoHash = (novosDados.registros || []).length + '|' + (novosDados.agenda || []).length + '|' + (novosDados.vendas || []).length;
-    const mudou = novoHash !== dadosHash;
-    dadosHash = novoHash;
-    DADOS = novosDados;
-
-    if (mudou) {
-      renderRanking();
-      renderAgenda();
-    }
-
-    const hoje = new Date().toISOString().substring(0, 10);
-    const qtdAgendaNova = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === hoje).length;
-
-    const hoje = new Date().toISOString().substring(0, 10);
-
-    // Detectar novo agendamento
     if (qtdAgendaNova > agendaAnterior && agendaAnterior > 0) {
+      const hoje = new Date().toISOString().substring(0, 10);
       const agendaHoje = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === hoje);
       const ultimo = agendaHoje[agendaHoje.length - 1];
       celebrar('📅', 'Novo Agendamento!', ultimo ? ultimo.CORRETOR : '', ultimo ? ultimo.CLIENTE : '', 'agendamento');
     }
     agendaAnterior = qtdAgendaNova;
 
-    // Detectar novo atendimento confirmado
-    const atendidosNovo = (DADOS.agenda || []).filter(a => {
-      const at = (a.ATENDIDO || '').toLowerCase();
-      return parseDataISO(a.DATA) >= INICIO_MES_COMERCIAL && (at === 'sim' || at === 'true');
-    }).length;
-    if (atendidosNovo > atendidosAnterior && atendidosAnterior > 0) {
-      const atendidos = (DADOS.agenda || []).filter(a => {
-        const at = (a.ATENDIDO || '').toLowerCase();
-        return parseDataISO(a.DATA) === hoje && (at === 'sim' || at === 'true');
-      });
-      const ultimo = atendidos[atendidos.length - 1];
-      celebrar('✅', 'Atendimento Confirmado!', ultimo ? ultimo.CORRETOR : '', ultimo ? ultimo.CLIENTE : '', 'agendamento');
-    }
-    atendidosAnterior = atendidosNovo;
-
-    // Detectar nova pasta/aprovação
-    const pastasNovo = (DADOS.clientes || []).filter(c => {
-      const s = (c.STATUS || '').toUpperCase();
-      return (s.includes('APROVAD') || s.includes('PASTA') || s.includes('BACEN'));
-    }).length;
-    if (pastasNovo > pastasAnterior && pastasAnterior > 0) {
-      celebrar('📋', 'Pasta Aprovada!', '', '', 'agendamento');
-    }
-    pastasAnterior = pastasNovo;
-
-    // Detectar nova venda
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
     const vendasNova = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
     if (vendasNova > vendasAnterior && vendasAnterior > 0) {
@@ -900,33 +847,21 @@ async function atualizarDados() {
 // ============================================
 function entrarFullscreen() {
   const el = document.documentElement;
-  try {
-    if (el.requestFullscreen) el.requestFullscreen();
-    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-    else if (el.msRequestFullscreen) el.msRequestFullscreen();
-  } catch(e) {}
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  else if (el.msRequestFullscreen) el.msRequestFullscreen();
 
-  iniciarTV();
-}
-
-function iniciarTV() {
-  // Esconder splash, mostrar loading
+  // Esconder splash, mostrar loading, ativar áudio
   document.getElementById('splash').style.display = 'none';
   document.getElementById('loading').style.display = 'flex';
+  getAudioCtx();
 
   // Iniciar tudo
   atualizarRelogio();
   setInterval(atualizarRelogio, 1000);
   carregarDados();
-  setInterval(atualizarDados, 120000);
+  setInterval(atualizarDados, 30000);
 }
-
-// Auto-iniciar após 3 segundos (pra Smart TVs que não suportam click)
-setTimeout(function() {
-  if (document.getElementById('splash').style.display !== 'none') {
-    iniciarTV();
-  }
-}, 3000);
 </script>
 </body>
 </html>
