@@ -602,8 +602,8 @@ function renderRanking() {
         <div class="podium-cat"><span>📁 Pastas</span> <span><span class="podium-cat-val">${p.pastas}x</span> <span class="podium-cat-pts">${fmtPts(p.pastas * 8)}</span></span></div>
         <div class="podium-cat"><span>🏆 Vendas</span> <span><span class="podium-cat-val">${p.vendas}x</span> <span class="podium-cat-pts">${fmtPts(p.vendas * 20)}</span></span></div>
         <div class="podium-cat"><span>📜 Consórcio</span> <span><span class="podium-cat-val">${p.consorcios}x</span> <span class="podium-cat-pts">${fmtPts(p.consorcios * 10)}</span></span></div>
-        <div class="podium-cat"><span>⏰ Check-in</span> <span class="${ptClass(p.ptCheckin)}">${fmtPts(p.ptCheckin)}</span></div>
-        <div class="podium-cat"><span>🎙 945</span> <span class="${ptClass(p.pt945)}">${fmtPts(p.pt945)}</span></div>
+        <div class="podium-cat"><span>⏰ Check-in</span> <span><span class="podium-cat-val">${p.checkins}x</span> <span class="${ptClass(p.ptCheckin)}">${fmtPts(p.ptCheckin)}</span></span></div>
+        <div class="podium-cat"><span>🎙 945</span> <span><span class="podium-cat-val">${p.dias945}x</span> <span class="${ptClass(p.pt945)}">${fmtPts(p.pt945)}</span></span></div>
       </div>
     </div>
   `).join('');
