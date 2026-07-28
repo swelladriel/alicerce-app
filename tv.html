@@ -77,10 +77,12 @@ body {
 /* PAGES */
 .tv-page {
   position: absolute; top: 110px; left: 0; right: 0; bottom: 0;
-  padding: 10px 36px; display: none; overflow: hidden;
+  padding: 10px 36px; opacity: 0; transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
+  overflow: hidden;
 }
 
-.tv-page.active { display: block; }
+.tv-page.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
 /* ============ RANKING ============ */
 .ranking-podium { display: flex; gap: 20px; justify-content: center; align-items: flex-end; padding-bottom: 16px; }
@@ -185,14 +187,14 @@ body {
 /* ============ CELEBRATION ============ */
 .celebration { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.88); opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
 .celebration.show { opacity: 1; pointer-events: auto; }
-.celebration-icon { font-size: 140px; transform: scale(0); }
-.celebration.show .celebration-icon { animation: celebPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.celebration-text { font-size: 52px; font-weight: 900; margin-top: 24px; text-transform: uppercase; letter-spacing: 6px; opacity: 0; }
-.celebration.show .celebration-text { animation: celebFadeIn 0.5s ease 0.4s forwards; }
-.celebration-sub { font-size: 32px; color: var(--gold); margin-top: 14px; font-weight: 700; opacity: 0; }
-.celebration.show .celebration-sub { animation: celebFadeIn 0.5s ease 0.7s forwards; }
-.celebration-detail { font-size: 24px; color: var(--text-dim); margin-top: 10px; font-weight: 600; opacity: 0; }
-.celebration.show .celebration-detail { animation: celebFadeIn 0.5s ease 1s forwards; }
+.celebration-icon { font-size: 100px; transform: scale(0); }
+.celebration.show .celebration-icon { animation: celebPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.celebration-text { font-size: 36px; font-weight: 900; margin-top: 20px; text-transform: uppercase; letter-spacing: 4px; opacity: 0; }
+.celebration.show .celebration-text { animation: celebFadeIn 0.4s ease 0.3s forwards; }
+.celebration-sub { font-size: 20px; color: var(--gold); margin-top: 10px; font-weight: 700; opacity: 0; }
+.celebration.show .celebration-sub { animation: celebFadeIn 0.4s ease 0.5s forwards; }
+.celebration-detail { font-size: 16px; color: var(--text-dim); margin-top: 8px; font-weight: 600; opacity: 0; }
+.celebration.show .celebration-detail { animation: celebFadeIn 0.4s ease 0.7s forwards; }
 .celebration-glow { position: absolute; width: 400px; height: 400px; border-radius: 50%; filter: blur(120px); opacity: 0; pointer-events: none; }
 .celebration.show .celebration-glow { animation: glowPulse 2s ease-in-out infinite; }
 
@@ -248,7 +250,7 @@ body {
   <div class="splash-hint">Clique em qualquer lugar para iniciar em tela cheia</div>
 </div>
 
-<!-- bg-glow removido pra performance na Smart TV -->
+<!-- bg-glow removido pra performance -->
 
 <div id="loading" class="loading" style="display:none;"><div class="loading-spin"></div>Carregando dados...</div>
 
@@ -269,6 +271,7 @@ body {
 
   <div class="tv-tab-bar">
     <div class="tv-tab active" id="tab-ranking-btn">Ranking</div>
+    <div class="tv-tab" id="tab-cal-btn">Calendário</div>
     <div class="tv-tab" id="tab-agenda-btn">Agenda do Dia</div>
   </div>
 
@@ -280,7 +283,16 @@ body {
     <div class="ranking-rest" id="ranking-rest"></div>
   </div>
 
-  <!-- CALENDÁRIO REMOVIDO -->
+  <!-- CALENDÁRIO -->
+  <div class="tv-page" id="page-calendario">
+    <div class="cal-container">
+      <div class="cal-titulo">
+        <span class="cal-mes-label" id="cal-mes-label"></span>
+        <span class="cal-total" id="cal-total">0 agendamentos</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
 
   <!-- AGENDA DO DIA -->
   <div class="tv-page" id="page-agenda">
@@ -307,8 +319,8 @@ body {
 const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
 
 const PAGINAS = [
-  { id: 'ranking',    tab: 'ranking', tempo: 45 },
-  { id: 'agenda',     tab: 'agenda',  tempo: 15 },
+  { id: 'ranking',    tab: 'ranking', tempo: 30 },
+  { id: 'agenda',     tab: 'agenda',  tempo: 10 },
 ];
 
 const INICIO_MES_COMERCIAL = '2026-07-03';
@@ -335,69 +347,36 @@ function getAudioCtx() {
 
 function somAgendamento() {
   const ctx = getAudioCtx();
-  // DING DING DING — 3 sinos altos e claros
-  [784, 988, 1175, 1319, 1568].forEach((freq, i) => {
+  [523.25, 659.25, 783.99].forEach((freq, i) => {
     const osc = ctx.createOscillator(); const gain = ctx.createGain();
     osc.type = 'sine'; osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.7, ctx.currentTime + i * 0.18);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.18 + 1.2);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.8);
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(ctx.currentTime + i * 0.18); osc.stop(ctx.currentTime + i * 0.18 + 1.2);
+    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 0.8);
   });
-  // Segunda onda harmônica pra encher o som
-  setTimeout(() => {
-    [1175, 1319, 1568].forEach((freq, i) => {
-      const osc = ctx.createOscillator(); const gain = ctx.createGain();
-      osc.type = 'triangle'; osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 1);
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + i * 0.15); osc.stop(ctx.currentTime + i * 0.15 + 1);
-    });
-  }, 600);
 }
 
 function somVenda() {
   const ctx = getAudioCtx();
-  // FANFARRA ÉPICA — 3 ondas crescentes
-  // Onda 1: acordes subindo
-  [262, 330, 392, 523, 659, 784, 1047].forEach((freq, i) => {
+  [392, 523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
     const osc = ctx.createOscillator(); const gain = ctx.createGain();
-    osc.type = 'square'; osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0.5, ctx.currentTime + i * 0.12);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 1.5);
+    osc.type = 'triangle'; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 1.2);
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 1.5);
+    osc.start(ctx.currentTime + i * 0.15); osc.stop(ctx.currentTime + i * 0.15 + 1.2);
   });
-  // Onda 2: acorde triunfal
   setTimeout(() => {
-    [523, 659, 784, 1047, 1319].forEach(freq => {
+    [523.25, 659.25, 783.99, 1046.5].forEach(freq => {
       const osc = ctx.createOscillator(); const gain = ctx.createGain();
       osc.type = 'sine'; osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.8, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.5);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 2.5);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 2);
     });
-  }, 900);
-  // Onda 3: final grandioso
-  setTimeout(() => {
-    [784, 1047, 1319, 1568, 2093].forEach(freq => {
-      const osc = ctx.createOscillator(); const gain = ctx.createGain();
-      osc.type = 'sine'; osc.frequency.value = freq;
-      gain.gain.setValueAtTime(1.0, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 3);
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 3);
-    });
-    // Baixo pulsante
-    const bass = ctx.createOscillator(); const bassGain = ctx.createGain();
-    bass.type = 'sine'; bass.frequency.value = 131;
-    bassGain.gain.setValueAtTime(0.6, ctx.currentTime);
-    bassGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 3);
-    bass.connect(bassGain); bassGain.connect(ctx.destination);
-    bass.start(ctx.currentTime); bass.stop(ctx.currentTime + 3);
-  }, 2000);
+  }, 800);
 }
 
 // ============================================
@@ -428,12 +407,12 @@ function celebrar(icon, texto, sub, detail, tipo) {
   document.getElementById('celeb-sub').textContent = sub;
   document.getElementById('celeb-detail').textContent = detail || '';
   el.classList.add('show');
+  // Sons simples (sem confetti — pesado demais pra Smart TV)
   try {
-    if (tipo === 'venda') { somVenda(); setTimeout(somVenda, 3000); }
+    if (tipo === 'venda') somVenda();
     else somAgendamento();
   } catch(e) {}
-  const duracao = tipo === 'venda' ? 12000 : 8000;
-  setTimeout(() => el.classList.remove('show'), duracao);
+  setTimeout(() => el.classList.remove('show'), 5000);
 }
 
 // ============================================
@@ -624,7 +603,7 @@ function renderRanking() {
   function ptClass(val) { return val < 0 ? 'rank-cat-neg' : 'rank-cat-pts'; }
 
   document.getElementById('podium').innerHTML = top3.map((p, i) => `
-    <div class="podium-card ${classes[i]}">
+    <div class="podium-card ${classes[i]}" style="animation-delay: ${i * 0.1}s">
       <div class="podium-pos">${labels[i]}</div>
       <div class="podium-medal">${medals[i]}</div>
       <div class="podium-name">${p.nome}</div>
@@ -643,7 +622,7 @@ function renderRanking() {
   `).join('');
 
   document.getElementById('ranking-rest').innerHTML = rest.map((p, i) => `
-    <div class="rank-row">
+    <div class="rank-row" style="animation-delay: ${(i + 3) * 0.05}s">
       <div class="rank-pos">${i + 4}º</div>
       <div class="rank-name">${p.nome}</div>
       <div class="rank-cats">
@@ -692,7 +671,7 @@ function renderAgenda() {
     if (atendido) { bc = 'atendido'; bt = '✓ Atendido'; }
 
     return `
-      <div class="agenda-card ${atendido ? 'atendido' : ''}">
+      <div class="agenda-card ${atendido ? 'atendido' : ''}" style="animation-delay: ${i * 0.05}s">
         <div class="agenda-hora">${parseHora(a.HORA || a.DATA)}</div>
         <div class="agenda-divider"></div>
         <div class="agenda-info">
@@ -704,6 +683,84 @@ function renderAgenda() {
   }).join('');
 
   return agenda.length;
+}
+
+// ============================================
+// RENDER CALENDÁRIO
+// ============================================
+function renderCalendario() {
+  if (!DADOS) return;
+
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = agora.getMonth();
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  document.getElementById('cal-mes-label').textContent = meses[mes] + ' ' + ano;
+
+  const agenda = DADOS.agenda || [];
+  const hojeStr = agora.toISOString().substring(0, 10);
+
+  const porDia = {};
+  let totalMes = 0;
+  agenda.forEach(a => {
+    const dt = parseDataISO(a.DATA);
+    if (!dt) return;
+    const [y, m] = dt.split('-');
+    if (parseInt(y) === ano && parseInt(m) === mes + 1) {
+      if (!porDia[dt]) porDia[dt] = [];
+      porDia[dt].push(a);
+      totalMes++;
+    }
+  });
+
+  document.getElementById('cal-total').textContent = totalMes + ' agendamentos';
+
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+
+  let html = diasSemana.map(d => `<div class="cal-header-cell">${d}</div>`).join('');
+
+  for (let i = 0; i < primeiroDia; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const diaStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const isHoje = diaStr === hojeStr;
+    const agendaDia = porDia[diaStr] || [];
+    const temAgenda = agendaDia.length > 0;
+
+    let nomes = '';
+    if (temAgenda) {
+      const maxNomes = 3;
+      const visiveis = agendaDia.slice(0, maxNomes);
+      const restantes = agendaDia.length - maxNomes;
+
+      nomes = '<div class="cal-nomes">';
+      visiveis.forEach(a => {
+        const tipo = (a.TIPO || 'Cliente').toLowerCase();
+        let nomeClass = '', label = '';
+        if (tipo.includes('reuni')) { nomeClass = 'reuniao'; label = a.TIPO || 'Reunião'; }
+        else if (tipo.includes('alinh')) { nomeClass = 'alinhamento'; label = a.TIPO || 'Alinhamento'; }
+        else if (tipo.includes('meet')) { nomeClass = 'meeting'; label = a.TIPO || 'Meeting'; }
+        else {
+          const corretor = (a.CORRETOR || '').split(' ')[0];
+          label = corretor + ': ' + (a.CLIENTE || '—');
+        }
+        nomes += `<div class="cal-nome ${nomeClass}">${label}</div>`;
+      });
+      if (restantes > 0) nomes += `<div class="cal-mais">+${restantes} mais</div>`;
+      nomes += '</div>';
+    }
+
+    html += `
+      <div class="cal-cell ${isHoje ? 'hoje' : ''} ${temAgenda ? 'tem-agenda' : ''}" style="animation-delay: ${dia * 0.02}s">
+        <div class="cal-dia">${dia}</div>
+        ${nomes}
+      </div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
 }
 
 // ============================================
@@ -778,7 +835,7 @@ async function atualizarDados() {
     const novosDados = await resp.json();
 
     // Só re-renderiza se dados mudaram
-    const novoHash = JSON.stringify(novosDados.registros?.length) + '|' + JSON.stringify(novosDados.agenda?.length) + '|' + JSON.stringify(novosDados.vendas?.length);
+    const novoHash = (novosDados.registros || []).length + '|' + (novosDados.agenda || []).length + '|' + (novosDados.vendas || []).length;
     const mudou = novoHash !== dadosHash;
     dadosHash = novoHash;
     DADOS = novosDados;
@@ -787,7 +844,9 @@ async function atualizarDados() {
       renderRanking();
       renderAgenda();
     }
-    const qtdAgendaNova = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === new Date().toISOString().substring(0, 10)).length;
+
+    const hoje = new Date().toISOString().substring(0, 10);
+    const qtdAgendaNova = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === hoje).length;
 
     const hoje = new Date().toISOString().substring(0, 10);
 
