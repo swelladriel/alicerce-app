@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alicerce — TV</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+/* Fonte do sistema — sem dependência externa */
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -26,7 +26,7 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
@@ -72,7 +72,7 @@ body {
 
 /* PROGRESS */
 .tv-progress { width: 100%; height: 2px; background: rgba(255,255,255,0.05); }
-.tv-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), #f0d78c); width: 0%; transition: width 0.1s linear; }
+.tv-progress-bar { height: 100%; background: var(--gold); width: 0%; }
 
 /* PAGES */
 .tv-page {
@@ -624,7 +624,7 @@ function renderRanking() {
   function ptClass(val) { return val < 0 ? 'rank-cat-neg' : 'rank-cat-pts'; }
 
   document.getElementById('podium').innerHTML = top3.map((p, i) => `
-    <div class="podium-card ${classes[i]}" style="animation-delay: ${i * 0.1}s">
+    <div class="podium-card ${classes[i]}">
       <div class="podium-pos">${labels[i]}</div>
       <div class="podium-medal">${medals[i]}</div>
       <div class="podium-name">${p.nome}</div>
@@ -643,7 +643,7 @@ function renderRanking() {
   `).join('');
 
   document.getElementById('ranking-rest').innerHTML = rest.map((p, i) => `
-    <div class="rank-row" style="animation-delay: ${(i + 3) * 0.05}s">
+    <div class="rank-row">
       <div class="rank-pos">${i + 4}º</div>
       <div class="rank-name">${p.nome}</div>
       <div class="rank-cats">
@@ -692,7 +692,7 @@ function renderAgenda() {
     if (atendido) { bc = 'atendido'; bt = '✓ Atendido'; }
 
     return `
-      <div class="agenda-card ${atendido ? 'atendido' : ''}" style="animation-delay: ${i * 0.05}s">
+      <div class="agenda-card ${atendido ? 'atendido' : ''}">
         <div class="agenda-hora">${parseHora(a.HORA || a.DATA)}</div>
         <div class="agenda-divider"></div>
         <div class="agenda-info">
@@ -704,84 +704,6 @@ function renderAgenda() {
   }).join('');
 
   return agenda.length;
-}
-
-// ============================================
-// RENDER CALENDÁRIO
-// ============================================
-function renderCalendario() {
-  if (!DADOS) return;
-
-  const agora = new Date();
-  const ano = agora.getFullYear();
-  const mes = agora.getMonth();
-  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
-  document.getElementById('cal-mes-label').textContent = meses[mes] + ' ' + ano;
-
-  const agenda = DADOS.agenda || [];
-  const hojeStr = agora.toISOString().substring(0, 10);
-
-  const porDia = {};
-  let totalMes = 0;
-  agenda.forEach(a => {
-    const dt = parseDataISO(a.DATA);
-    if (!dt) return;
-    const [y, m] = dt.split('-');
-    if (parseInt(y) === ano && parseInt(m) === mes + 1) {
-      if (!porDia[dt]) porDia[dt] = [];
-      porDia[dt].push(a);
-      totalMes++;
-    }
-  });
-
-  document.getElementById('cal-total').textContent = totalMes + ' agendamentos';
-
-  const primeiroDia = new Date(ano, mes, 1).getDay();
-  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-  const diasSemana = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
-
-  let html = diasSemana.map(d => `<div class="cal-header-cell">${d}</div>`).join('');
-
-  for (let i = 0; i < primeiroDia; i++) html += '<div class="cal-cell empty"></div>';
-
-  for (let dia = 1; dia <= diasNoMes; dia++) {
-    const diaStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-    const isHoje = diaStr === hojeStr;
-    const agendaDia = porDia[diaStr] || [];
-    const temAgenda = agendaDia.length > 0;
-
-    let nomes = '';
-    if (temAgenda) {
-      const maxNomes = 3;
-      const visiveis = agendaDia.slice(0, maxNomes);
-      const restantes = agendaDia.length - maxNomes;
-
-      nomes = '<div class="cal-nomes">';
-      visiveis.forEach(a => {
-        const tipo = (a.TIPO || 'Cliente').toLowerCase();
-        let nomeClass = '', label = '';
-        if (tipo.includes('reuni')) { nomeClass = 'reuniao'; label = a.TIPO || 'Reunião'; }
-        else if (tipo.includes('alinh')) { nomeClass = 'alinhamento'; label = a.TIPO || 'Alinhamento'; }
-        else if (tipo.includes('meet')) { nomeClass = 'meeting'; label = a.TIPO || 'Meeting'; }
-        else {
-          const corretor = (a.CORRETOR || '').split(' ')[0];
-          label = corretor + ': ' + (a.CLIENTE || '—');
-        }
-        nomes += `<div class="cal-nome ${nomeClass}">${label}</div>`;
-      });
-      if (restantes > 0) nomes += `<div class="cal-mais">+${restantes} mais</div>`;
-      nomes += '</div>';
-    }
-
-    html += `
-      <div class="cal-cell ${isHoje ? 'hoje' : ''} ${temAgenda ? 'tem-agenda' : ''}" style="animation-delay: ${dia * 0.02}s">
-        <div class="cal-dia">${dia}</div>
-        ${nomes}
-      </div>`;
-  }
-
-  document.getElementById('cal-grid').innerHTML = html;
 }
 
 // ============================================
@@ -848,12 +770,24 @@ async function carregarDados() {
   }
 }
 
+let dadosHash = '';
+
 async function atualizarDados() {
   try {
     const resp = await fetch(API_URL + '?acao=tv');
-    DADOS = await resp.json();
-    renderRanking();
-    const qtdAgendaNova = renderAgenda() || 0;
+    const novosDados = await resp.json();
+
+    // Só re-renderiza se dados mudaram
+    const novoHash = JSON.stringify(novosDados.registros?.length) + '|' + JSON.stringify(novosDados.agenda?.length) + '|' + JSON.stringify(novosDados.vendas?.length);
+    const mudou = novoHash !== dadosHash;
+    dadosHash = novoHash;
+    DADOS = novosDados;
+
+    if (mudou) {
+      renderRanking();
+      renderAgenda();
+    }
+    const qtdAgendaNova = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === new Date().toISOString().substring(0, 10)).length;
 
     const hoje = new Date().toISOString().substring(0, 10);
 
