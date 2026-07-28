@@ -241,7 +241,14 @@ body {
 </head>
 <body>
 
-<!-- SPLASH REMOVIDO — inicia direto -->
+<!-- LOADING COM LOGO -->
+<div id="loading-splash" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;">
+  <div style="width:80px;height:80px;background:white;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:#0a0a0f;margin-bottom:16px;">A</div>
+  <div style="font-size:32px;font-weight:900;color:white;letter-spacing:4px;margin-bottom:8px;">ALICERCE</div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.5);letter-spacing:2px;">Swell Consultoria</div>
+  <div style="margin-top:40px;width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:#d4a843;border-radius:50%;animation:spin 1s linear infinite;"></div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</div>
 
 <div class="bg-glow bg-glow-1"></div>
 <div class="bg-glow bg-glow-2"></div>
@@ -265,7 +272,6 @@ body {
 
   <div class="tv-tab-bar">
     <div class="tv-tab active" id="tab-ranking-btn">Ranking</div>
-    <div class="tv-tab" id="tab-cal-btn">Calendário</div>
     <div class="tv-tab" id="tab-agenda-btn">Agenda do Dia</div>
   </div>
 
@@ -275,17 +281,6 @@ body {
   <div class="tv-page active" id="page-ranking">
     <div class="ranking-podium" id="podium"></div>
     <div class="ranking-rest" id="ranking-rest"></div>
-  </div>
-
-  <!-- CALENDÁRIO -->
-  <div class="tv-page" id="page-calendario">
-    <div class="cal-container">
-      <div class="cal-titulo">
-        <span class="cal-mes-label" id="cal-mes-label"></span>
-        <span class="cal-total" id="cal-total">0 agendamentos</span>
-      </div>
-      <div class="cal-grid" id="cal-grid"></div>
-    </div>
   </div>
 
   <!-- AGENDA DO DIA -->
@@ -313,9 +308,8 @@ body {
 const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
 
 const PAGINAS = [
-  { id: 'ranking',    tab: 'ranking', tempo: 20 },
-  { id: 'calendario', tab: 'cal',     tempo: 15 },
-  { id: 'agenda',     tab: 'agenda',  tempo: 15 },
+  { id: 'ranking',    tab: 'ranking', tempo: 48 },
+  { id: 'agenda',     tab: 'agenda',  tempo: 12 },
 ];
 
 const INICIO_MES_COMERCIAL = '2026-07-03';
@@ -792,6 +786,7 @@ async function carregarDados() {
     DADOS = await resp.json();
 
     document.getElementById('loading').style.display = 'none';
+    document.getElementById('loading-splash').style.display = 'none';
     document.getElementById('app').style.display = 'block';
 
     renderRanking();
