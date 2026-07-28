@@ -791,7 +791,7 @@ async function carregarDados() {
 
     renderRanking();
     agendaAnterior = renderAgenda() || 0;
-    renderCalendario();
+    // renderCalendario removido
 
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
     vendasAnterior = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
@@ -809,7 +809,7 @@ async function atualizarDados() {
     DADOS = await resp.json();
     renderRanking();
     const qtdAgendaNova = renderAgenda() || 0;
-    renderCalendario();
+    // renderCalendario removido
 
     if (qtdAgendaNova > agendaAnterior && agendaAnterior > 0) {
       const hoje = new Date().toISOString().substring(0, 10);
@@ -838,7 +838,7 @@ document.getElementById('loading').style.display = 'flex';
 atualizarRelogio();
 setInterval(atualizarRelogio, 1000);
 carregarDados();
-setInterval(atualizarDados, 30000);
+setInterval(atualizarDados, 120000);
 </script>
 </body>
 </html>
