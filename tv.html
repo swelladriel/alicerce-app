@@ -241,14 +241,7 @@ body {
 </head>
 <body>
 
-<!-- SPLASH: clique pra entrar fullscreen -->
-<div class="splash" id="splash" onclick="entrarFullscreen()">
-  <div class="splash-logo">A</div>
-  <div class="splash-title">Alicerce</div>
-  <div class="splash-sub">Swell Consultoria</div>
-  <button class="splash-btn">ENTRAR</button>
-  <div class="splash-hint">Clique em qualquer lugar para iniciar em tela cheia</div>
-</div>
+<!-- SPLASH REMOVIDO — inicia direto -->
 
 <div class="bg-glow bg-glow-1"></div>
 <div class="bg-glow bg-glow-2"></div>
@@ -845,23 +838,12 @@ async function atualizarDados() {
 // ============================================
 // FULLSCREEN
 // ============================================
-function entrarFullscreen() {
-  const el = document.documentElement;
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  else if (el.msRequestFullscreen) el.msRequestFullscreen();
-
-  // Esconder splash, mostrar loading, ativar áudio
-  document.getElementById('splash').style.display = 'none';
-  document.getElementById('loading').style.display = 'flex';
-  getAudioCtx();
-
-  // Iniciar tudo
-  atualizarRelogio();
-  setInterval(atualizarRelogio, 1000);
-  carregarDados();
-  setInterval(atualizarDados, 30000);
-}
+// Inicia direto sem splash
+document.getElementById('loading').style.display = 'flex';
+atualizarRelogio();
+setInterval(atualizarRelogio, 1000);
+carregarDados();
+setInterval(atualizarDados, 30000);
 </script>
 </body>
 </html>
