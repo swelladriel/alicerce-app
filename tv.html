@@ -407,8 +407,9 @@ function celebrar(icon, texto, sub, detail, tipo) {
   document.getElementById('celeb-sub').textContent = sub;
   document.getElementById('celeb-detail').textContent = detail || '';
   el.classList.add('show');
-  lancarConfetti();
-  if (tipo === 'venda') somVenda(); else somAgendamento();
+  // Confetti e sons desativados pra Smart TVs (pesado demais)
+  // lancarConfetti();
+  // if (tipo === 'venda') somVenda(); else somAgendamento();
   setTimeout(() => el.classList.remove('show'), 5000);
 }
 
@@ -847,14 +848,19 @@ async function atualizarDados() {
 // ============================================
 function entrarFullscreen() {
   const el = document.documentElement;
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-  else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  try {
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  } catch(e) {}
 
-  // Esconder splash, mostrar loading, ativar áudio
+  iniciarTV();
+}
+
+function iniciarTV() {
+  // Esconder splash, mostrar loading
   document.getElementById('splash').style.display = 'none';
   document.getElementById('loading').style.display = 'flex';
-  getAudioCtx();
 
   // Iniciar tudo
   atualizarRelogio();
@@ -862,6 +868,13 @@ function entrarFullscreen() {
   carregarDados();
   setInterval(atualizarDados, 30000);
 }
+
+// Auto-iniciar após 3 segundos (pra Smart TVs que não suportam click)
+setTimeout(function() {
+  if (document.getElementById('splash').style.display !== 'none') {
+    iniciarTV();
+  }
+}, 3000);
 </script>
 </body>
 </html>
