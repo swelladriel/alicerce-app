@@ -442,6 +442,10 @@ function parseHora(val) {
 }
 
 // ============================================
+function semAcento(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 // CALCULAR RANKING (lógica idêntica à plataforma 3.0)
 // ============================================
 function calcularRanking() {
@@ -546,7 +550,8 @@ function calcularRanking() {
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let cn = (v.CORRETOR || '').trim().toUpperCase();
     if (!cn || !v.CLIENTE) return;
-    const corr = corretores.find(c => cn.includes(c.NOME.toUpperCase()) || c.NOME.toUpperCase().includes(cn));
+    const cnN = semAcento(cn);
+    const corr = corretores.find(c => { const nN = semAcento(c.NOME.toUpperCase()); return cnN.includes(nN) || nN.includes(cnN); });
     if (!corr || !pontuacao[corr.NOME]) return;
     if ((v.STATUS_VENDA || '').includes('CONSORCIO')) pontuacao[corr.NOME].consorcios++;
     else pontuacao[corr.NOME].vendas++;

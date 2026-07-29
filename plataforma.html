@@ -1856,6 +1856,8 @@ function renderRanking() {
   const INICIO_MES_COMERCIAL = '2026-07-03';
   const INICIO_CHECKIN_945 = '2026-07-11'; // Check-in e 945 valem só a partir desta data
 
+  function semAcento(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+
   // Helper: converte qualquer formato de data pra YYYY-MM-DD
   // Aceita ISO ("2026-07-03T..."), formato HTTP ("Wed, 24 Jun 2026"), ou string curta ("2026-07-03")
   function parseDataISO(raw) {
@@ -1993,7 +1995,8 @@ function renderRanking() {
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let corrNome = (v.CORRETOR || '').trim().toUpperCase();
     if (!corrNome || !v.CLIENTE) return; // Ignorar linhas vazias
-    const corr = corretoresAtivos.find(c => corrNome.includes(c.NOME.toUpperCase()) || c.NOME.toUpperCase().includes(corrNome));
+    const corrNomeN = semAcento(corrNome);
+    const corr = corretoresAtivos.find(c => { const nN = semAcento(c.NOME.toUpperCase()); return corrNomeN.includes(nN) || nN.includes(corrNomeN); });
     if (!corr || !pontuacao[corr.NOME]) return;
     const isConsorcio = (v.STATUS_VENDA || '').includes('CONSORCIO');
     if (isConsorcio) { pontuacao[corr.NOME].consorcios++; pontuacao[corr.NOME].ptVenda += 10; }
