@@ -1992,8 +1992,10 @@ function renderRanking() {
   });
 
   // === VENDAS: +20 venda, +10 consórcio (desde INICIO_MES_COMERCIAL) ===
+  const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA'};
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let corrNome = (v.CORRETOR || '').trim().toUpperCase();
+    if (NOMES_EQUIV[corrNome]) corrNome = NOMES_EQUIV[corrNome];
     if (!corrNome || !v.CLIENTE) return; // Ignorar linhas vazias
     const corrNomeN = semAcento(corrNome);
     const corr = corretoresAtivos.find(c => { const nN = semAcento(c.NOME.toUpperCase()); return corrNomeN.includes(nN) || nN.includes(corrNomeN); });
