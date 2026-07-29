@@ -700,7 +700,16 @@ function getDemandas() {
     const tipo = (d.TIPO || '').toLowerCase();
     return tipo === 'ia-refinada-v2';
   });
-  return demandas.filter(d => pertenceEquipe(d.RESPONSAVEL));
+  const filtradas = demandas.filter(d => pertenceEquipe(d.RESPONSAVEL));
+  // Deduplicar: mesma data + responsavel + primeiros 60 chars da descricao
+  const seen = new Set();
+  return filtradas.filter(d => {
+    const dt = d.DATA instanceof Date ? d.DATA.toISOString().substring(0,10) : String(d.DATA || '').substring(0,10);
+    const chave = dt + '|' + (d.RESPONSAVEL || '') + '|' + String(d.DESCRICAO || '').substring(0,60);
+    if (seen.has(chave)) return false;
+    seen.add(chave);
+    return true;
+  });
 }
 
 function renderDemandas() {
