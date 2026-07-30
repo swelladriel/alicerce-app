@@ -816,30 +816,43 @@ async function carregarDados() {
   }
 }
 
-async function atualizarDados() {
+// Checagem leve a cada 10s — só detecta novidades e celebra (sem re-render)
+async function checarNovidades() {
   try {
     const resp = await fetch(API_URL + '?acao=tv');
-    DADOS = await resp.json();
-    renderRanking();
-    const qtdAgendaNova = renderAgenda() || 0;
-    // renderCalendario removido
+    const dados = await resp.json();
+
+    const hoje = new Date().toISOString().substring(0, 10);
+    const qtdAgendaNova = (dados.agenda || []).filter(a => parseDataISO(a.DATA) === hoje).length;
 
     if (!primeiraCarga && qtdAgendaNova > agendaAnterior) {
-      const hoje = new Date().toISOString().substring(0, 10);
-      const agendaHoje = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === hoje);
+      DADOS = dados;
+      renderAgenda();
+      const agendaHoje = (dados.agenda || []).filter(a => parseDataISO(a.DATA) === hoje);
       const ultimo = agendaHoje[agendaHoje.length - 1];
       celebrar('📅', 'Novo Agendamento!', ultimo ? ultimo.CORRETOR : '', ultimo ? ultimo.CLIENTE : '', 'agendamento');
     }
     agendaAnterior = qtdAgendaNova;
 
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
-    const vendasNova = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
+    const vendasNova = (dados.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
     if (!primeiraCarga && vendasNova > vendasAnterior) {
-      const vendas = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual);
+      DADOS = dados;
+      const vendas = (dados.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual);
       const ultima = vendas[vendas.length - 1];
       celebrar('🏆', 'VENDA FECHADA!', ultima ? ultima.CORRETOR : '', ultima ? ultima.CLIENTE : '', 'venda');
     }
     vendasAnterior = vendasNova;
+  } catch (e) {}
+}
+
+// Re-render completo a cada 3min — atualiza ranking e agenda na tela
+async function atualizarDados() {
+  try {
+    const resp = await fetch(API_URL + '?acao=tv');
+    DADOS = await resp.json();
+    renderRanking();
+    renderAgenda();
   } catch (e) {}
 }
 
@@ -851,6 +864,7 @@ document.getElementById('loading').style.display = 'flex';
 atualizarRelogio();
 setInterval(atualizarRelogio, 1000);
 carregarDados();
+setInterval(checarNovidades, 10000);
 setInterval(atualizarDados, 180000);
 
 // Auto-reload a cada 30 min pra limpar memória da TV
