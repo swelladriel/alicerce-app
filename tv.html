@@ -72,13 +72,13 @@ body {
 
 /* PROGRESS */
 .tv-progress { width: 100%; height: 2px; background: rgba(255,255,255,0.05); }
-.tv-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), #f0d78c); width: 0%; transition: width 0.1s linear; }
+.tv-progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold), #f0d78c); width: 0%; transition: width 1s linear; }
 
 /* PAGES */
 .tv-page {
-  position: absolute; top: 110px; left: 0; right: 0; bottom: 0;
+  position: absolute; top: 130px; left: 0; right: 0; bottom: 0;
   padding: 10px 36px; opacity: 0; transform: translateY(30px);
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
+  transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
   overflow: hidden;
 }
 
@@ -326,6 +326,7 @@ let agendaAnterior = 0;
 let vendasAnterior = 0;
 let audioCtx = null;
 let timerInterval = null;
+let primeiraCarga = true;
 
 // ============================================
 // SONS
@@ -803,11 +804,11 @@ async function carregarDados() {
 
     renderRanking();
     agendaAnterior = renderAgenda() || 0;
-    // renderCalendario removido
 
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
     vendasAnterior = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
 
+    primeiraCarga = false;
     iniciarTimer();
   } catch (e) {
     document.getElementById('loading').innerHTML = '<div style="color: var(--red);">Erro ao carregar. Recarregando...</div>';
@@ -823,7 +824,7 @@ async function atualizarDados() {
     const qtdAgendaNova = renderAgenda() || 0;
     // renderCalendario removido
 
-    if (qtdAgendaNova > agendaAnterior && agendaAnterior > 0) {
+    if (!primeiraCarga && qtdAgendaNova > agendaAnterior) {
       const hoje = new Date().toISOString().substring(0, 10);
       const agendaHoje = (DADOS.agenda || []).filter(a => parseDataISO(a.DATA) === hoje);
       const ultimo = agendaHoje[agendaHoje.length - 1];
@@ -833,7 +834,7 @@ async function atualizarDados() {
 
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
     const vendasNova = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).length;
-    if (vendasNova > vendasAnterior && vendasAnterior > 0) {
+    if (!primeiraCarga && vendasNova > vendasAnterior) {
       const vendas = (DADOS.vendas || []).filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual);
       const ultima = vendas[vendas.length - 1];
       celebrar('🏆', 'VENDA FECHADA!', ultima ? ultima.CORRETOR : '', ultima ? ultima.CLIENTE : '', 'venda');
