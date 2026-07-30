@@ -238,7 +238,6 @@ body {
 .splash-hint { font-size: 11px; color: var(--text-dim); margin-top: 16px; letter-spacing: 1px; }
 
 /* ANIMATIONS */
-.rank-row, .agenda-card, .podium-card, .cal-cell:not(.empty) { animation: fadeInUp 0.4s ease forwards; opacity: 0; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
@@ -326,6 +325,7 @@ let elapsed = 0;
 let agendaAnterior = 0;
 let vendasAnterior = 0;
 let audioCtx = null;
+let timerInterval = null;
 
 // ============================================
 // SONS
@@ -597,7 +597,7 @@ function renderRanking() {
   function ptClass(val) { return val < 0 ? 'rank-cat-neg' : 'rank-cat-pts'; }
 
   document.getElementById('podium').innerHTML = top3.map((p, i) => `
-    <div class="podium-card ${classes[i]}" style="animation-delay: ${i * 0.1}s">
+    <div class="podium-card ${classes[i]}" style="">
       <div class="podium-pos">${labels[i]}</div>
       <div class="podium-medal">${medals[i]}</div>
       <div class="podium-name">${p.nome}</div>
@@ -666,7 +666,7 @@ function renderAgenda() {
     if (atendido) { bc = 'atendido'; bt = '✓ Atendido'; }
 
     return `
-      <div class="agenda-card ${atendido ? 'atendido' : ''}" style="animation-delay: ${i * 0.05}s">
+      <div class="agenda-card ${atendido ? 'atendido' : ''}" style="">
         <div class="agenda-hora">${parseHora(a.HORA || a.DATA)}</div>
         <div class="agenda-divider"></div>
         <div class="agenda-info">
@@ -749,7 +749,7 @@ function renderCalendario() {
     }
 
     html += `
-      <div class="cal-cell ${isHoje ? 'hoje' : ''} ${temAgenda ? 'tem-agenda' : ''}" style="animation-delay: ${dia * 0.02}s">
+      <div class="cal-cell ${isHoje ? 'hoje' : ''} ${temAgenda ? 'tem-agenda' : ''}" style="">
         <div class="cal-dia">${dia}</div>
         ${nomes}
       </div>`;
@@ -775,8 +775,9 @@ function alternarPagina() {
 }
 
 function iniciarTimer() {
-  setInterval(() => {
-    elapsed += 0.1;
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    elapsed += 1;
     const tempoTotal = PAGINAS[paginaIdx].tempo;
     document.getElementById('progress-bar').style.width = (elapsed / tempoTotal * 100) + '%';
 
@@ -785,7 +786,7 @@ function iniciarTimer() {
       document.getElementById('progress-bar').style.width = '0%';
       alternarPagina();
     }
-  }, 100);
+  }, 1000);
 }
 
 // ============================================
@@ -849,10 +850,10 @@ document.getElementById('loading').style.display = 'flex';
 atualizarRelogio();
 setInterval(atualizarRelogio, 1000);
 carregarDados();
-setInterval(atualizarDados, 120000);
+setInterval(atualizarDados, 180000);
 
-// Auto-reload a cada 1 hora pra limpar memória da TV
-setTimeout(() => { location.reload(); }, 3600000);
+// Auto-reload a cada 30 min pra limpar memória da TV
+setTimeout(() => { location.reload(); }, 1800000);
 </script>
 </body>
 </html>
