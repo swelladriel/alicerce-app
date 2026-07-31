@@ -1986,6 +1986,27 @@ async function confirmarAgendamento() {
     } catch(e2) {}
   }
 
+  // Cadastrar cliente na aba Clientes se tipo=Cliente (entra no CRM/funil automaticamente)
+  if (tipo === 'Cliente' && cliente) {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          acao: 'adicionar_cliente_crm',
+          CLIENTE: cliente,
+          CPF: '',
+          TELEFONE: contato || '',
+          EMAIL: '',
+          CORRETOR: USUARIO.NOME,
+          REGIAO: '',
+          STATUS: 'AGENDADO'
+        })
+      });
+    } catch(e) {}
+  }
+
   btn.disabled = false;
   btn.textContent = 'AGENDAR CLIENTE';
   fecharModalAgenda();
@@ -2172,7 +2193,57 @@ function registrarCheckin(lat, lng) {
       'OBSERVACOES': obsText
     })
   });
-  fetch(API_URL + '?' + checkinParams.toString()).catch(() => {});
+  enviarCheckinComRetry(API_URL + '?' + checkinParams.toString(), 3);
+}
+
+function enviarCheckinComRetry(url, tentativas) {
+  fetch(url)
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(txt => {
+      // Gravou com sucesso
+      document.getElementById('checkin-status').textContent += ' ✅ Salvo na planilha';
+    })
+    .catch(() => {
+      if (tentativas > 1) {
+        // Tentar de novo em 3 segundos
+        setTimeout(() => enviarCheckinComRetry(url, tentativas - 1), 3000);
+      } else {
+        // Falhou 3x — avisar o corretor
+        const statusEl = document.getElementById('checkin-status');
+        statusEl.innerHTML += ' <span style="color:var(--danger);font-weight:700;">⚠️ NÃO SALVOU na planilha</span>';
+        // Mostrar botão de retry
+        const retryDiv = document.createElement('div');
+        retryDiv.style.cssText = 'margin-top:12px;text-align:center;';
+        retryDiv.innerHTML = '<button onclick="reenviarCheckin(this)" style="background:var(--danger);color:#fff;border:none;border-radius:8px;padding:12px 24px;font-size:.9rem;font-weight:700;cursor:pointer;">REENVIAR CHECK-IN</button><div style="font-size:.7rem;color:var(--textL);margin-top:6px;">Verifique sua internet e tente novamente</div>';
+        document.querySelector('.checkin-box').appendChild(retryDiv);
+        // Salvar URL pra retry
+        window._checkinRetryUrl = url;
+      }
+    });
+}
+
+function reenviarCheckin(btn) {
+  if (!window._checkinRetryUrl) return;
+  btn.textContent = 'ENVIANDO...';
+  btn.disabled = true;
+  fetch(window._checkinRetryUrl)
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(() => {
+      btn.parentElement.innerHTML = '<div style="color:var(--success);font-weight:700;padding:8px;">✅ Check-in salvo com sucesso!</div>';
+      const statusEl = document.getElementById('checkin-status');
+      statusEl.innerHTML = statusEl.innerHTML.replace(/<span.*?⚠️ NÃO SALVOU.*?<\/span>/, '<span style="color:var(--success);">✅ Salvo</span>');
+    })
+    .catch(() => {
+      btn.textContent = 'REENVIAR CHECK-IN';
+      btn.disabled = false;
+      alert('Ainda não conseguiu salvar. Verifique sua conexão com a internet e tente novamente.');
+    });
 }
 
 function carregarCheckins() {
