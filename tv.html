@@ -484,12 +484,16 @@ function calcularRanking() {
     return dt.getDay() === 0 || dt.getDay() === 6;
   }
 
-  // CHECK-INS (lógica idêntica à plataforma)
+  // CHECK-INS (lógica idêntica à plataforma, deduplicado 1 por dia)
   const checkinsPorCorretorDia = {};
+  const checkinDedup = new Set();
   REGISTROS.filter(r => r.TIPO === 'checkin' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
     const nome = r.CORRETOR;
     if (!pontuacao[nome]) return;
     const dia = parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10);
+    const chave = `${nome}|${dia}`;
+    if (checkinDedup.has(chave)) return;
+    checkinDedup.add(chave);
     const hora = parseHora(r.HORA || r.DATA);
     const [h, m] = hora.split(':').map(Number);
     const minutos = h * 60 + m;
