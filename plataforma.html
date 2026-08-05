@@ -1728,11 +1728,13 @@ function renderVendas() {
   if (selMes.options.length <= 1) {
     const meses = [...new Set(VENDAS.map(v => String(v.MES_COMERCIAL || '').substring(0, 7)).filter(m => m && m !== 'None'))].sort();
     const nomesMes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const mesComercialAtual = INICIO_MES_COMERCIAL.substring(0, 7);
     meses.forEach(m => {
       const [ano, mes] = m.split('-');
       const o = document.createElement('option');
       o.value = m;
       o.textContent = `${nomesMes[parseInt(mes)]}/${ano}`;
+      if (m === mesComercialAtual) o.selected = true;
       selMes.appendChild(o);
     });
   }
