@@ -544,8 +544,12 @@ function calcularRanking() {
     pontuacao[r.CORRETOR].atendimentos++;
   });
 
-  // PASTAS +8 (match fuzzy igual plataforma)
-  CLIENTES.filter(c => (parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '') >= INICIO_MES_COMERCIAL).forEach(c => {
+  // PASTAS +8 (match fuzzy igual plataforma, excluir status AGENDADO que vem do app)
+  CLIENTES.filter(c => {
+    const dt = (parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '');
+    const status = (c.STATUS || '').toUpperCase();
+    return dt >= INICIO_MES_COMERCIAL && status !== 'AGENDADO';
+  }).forEach(c => {
     const corrNome = (c.CORRETOR || '');
     const corr = corretores.find(ca => ca.NOME === corrNome || corrNome.toUpperCase().includes(ca.NOME.toUpperCase()) || ca.NOME.toUpperCase().includes(corrNome.toUpperCase()));
     if (corr && pontuacao[corr.NOME]) pontuacao[corr.NOME].pastas++;

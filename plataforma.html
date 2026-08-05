@@ -1985,10 +1985,11 @@ function renderRanking() {
     pontuacao[nome].ptAtend += 5;
   });
 
-  // === PASTAS: +8 (desde INICIO_MES_COMERCIAL) ===
+  // === PASTAS: +8 (desde INICIO_MES_COMERCIAL, excluir status AGENDADO que vem do app) ===
   CLIENTES.filter(c => {
     const dt = parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '';
-    return dt >= INICIO_MES_COMERCIAL;
+    const status = (c.STATUS || '').toUpperCase();
+    return dt >= INICIO_MES_COMERCIAL && status !== 'AGENDADO';
   }).forEach(c => {
     const corrNome = (c.CORRETOR || '');
     const corr = corretoresAtivos.find(ca => ca.NOME === corrNome || corrNome.toUpperCase().includes(ca.NOME.toUpperCase()) || ca.NOME.toUpperCase().includes(corrNome.toUpperCase()));
