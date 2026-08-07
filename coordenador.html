@@ -183,11 +183,8 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   <div class="login-logo">ALICERCE</div>
   <div class="login-sub">Painel do Coordenador</div>
   <div class="login-question">Quem e voce?</div>
-  <div class="login-grid">
-    <div class="login-btn" onclick="login('Glauco','Coordenador')">Glauco<div class="role">Coordenador</div></div>
-    <div class="login-btn" onclick="login('Edvan','Coordenador')">Edvan<div class="role">Coordenador</div></div>
-    <div class="login-btn" onclick="login('Marcelo Arouca','Coordenador')">Marcelo Arouca<div class="role">Coordenador</div></div>
-    <div class="login-btn gerente" onclick="login('Adriel Duarte','Gerente')">Adriel Duarte<div class="role">Gerente - ve todas as equipes</div></div>
+  <div class="login-grid" id="loginGrid">
+    <div style="grid-column:1/3;text-align:center;color:var(--textL);font-size:.8rem;">Carregando equipes...</div>
   </div>
 </div>
 
@@ -215,6 +212,7 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
     <div class="col-left">
       <div class="error-banner" id="errorBanner"></div>
       <div class="section-title">Demandas da Equipe</div>
+      <div id="alertasZerados" style="display:none;margin-bottom:14px;"></div>
       <div class="tabs" id="demTabs">
         <div class="tab-btn active" data-tab="hoje" onclick="setTab('hoje')">Hoje</div>
         <div class="tab-btn" data-tab="pendentes" onclick="setTab('pendentes')">Pendentes</div>
@@ -331,12 +329,21 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
 
-const EQUIPES = {
-  'Glauco': ['Glauco Ribeiro','Dandara Campos','Isaac de Sá','Davi Ribeiro','William Bueno','Gabriel Souza','NATÃ OLIVEIRA','RICARDO BRAGA','kauã Portes'],
-  'Edvan': ['Edvan Silva','Gabriel Ribeiro','Cristiano Fernandes','Bruna Pacheco','Maria Clara','Kerlly Martins','Suzy Franklyn'],
-  'Marcelo Arouca': ['Marcelo Arouca','Felipe Guimarães'],
-  'Adriel Duarte': ['Marcos Reis','Joyce Brisa','Kayque Nascimento','Josimar Machado','Erica Collins']
-};
+// EQUIPES construídas dinamicamente da API (aba Corretores)
+let EQUIPES = {};
+
+function buildEquipes(corretores) {
+  EQUIPES = {};
+  const coordMap = { 'Glauco': 'Glauco', 'Edivan': 'Edvan', 'Edvan': 'Edvan', 'Marcelo ': 'Marcelo Arouca', 'Marcelo': 'Marcelo Arouca', 'Adriel': 'Adriel Duarte' };
+  (corretores || []).filter(c => (c.STATUS || '').toLowerCase() === 'ativo').forEach(c => {
+    const equipeRaw = (c.EQUIPE || '').trim();
+    const equipeKey = coordMap[equipeRaw] || equipeRaw;
+    if (!equipeKey) return;
+    if (!EQUIPES[equipeKey]) EQUIPES[equipeKey] = [];
+    const nome = (c.NOME || c['NOME COMPLETO'] || '').trim();
+    if (nome && !EQUIPES[equipeKey].includes(nome)) EQUIPES[equipeKey].push(nome);
+  });
+}
 
 let COORD = null;
 let DADOS = {};
@@ -401,6 +408,30 @@ function pertenceEquipe(nomeCorretor) {
   return equipe.some(m => normNome(m) === norm || norm.includes(normNome(m)) || normNome(m).includes(norm));
 }
 
+async function buildLoginGrid() {
+  const grid = document.getElementById('loginGrid');
+  try {
+    const res = await fetch(API_URL + '?acao=corretores');
+    const corretores = await res.json();
+    const coords = corretores.filter(c => (c.STATUS || '').toLowerCase() === 'ativo' && (c.CARGO || '').toLowerCase() === 'coordenador');
+    const gerentes = corretores.filter(c => (c.STATUS || '').toLowerCase() === 'ativo' && (c.CARGO || '').toLowerCase() === 'gerente');
+    const coordMap = { 'Glauco': 'Glauco', 'Edivan': 'Edvan', 'Edvan': 'Edvan', 'Marcelo ': 'Marcelo Arouca', 'Marcelo': 'Marcelo Arouca', 'Adriel': 'Adriel Duarte' };
+    let html = '';
+    coords.forEach(c => {
+      const equipeRaw = (c.EQUIPE || '').trim();
+      const loginNome = coordMap[equipeRaw] || c.NOME;
+      html += '<div class="login-btn" onclick="login(\'' + loginNome.replace(/'/g,"\\'") + '\',\'Coordenador\')">' + c.NOME + '<div class="role">Coordenador</div></div>';
+    });
+    gerentes.forEach(c => {
+      const loginNome = coordMap[(c.EQUIPE || '').trim()] || c.NOME;
+      html += '<div class="login-btn gerente" onclick="login(\'' + loginNome.replace(/'/g,"\\'") + '\',\'Gerente\')">' + c.NOME + '<div class="role">Gerente - ve todas as equipes</div></div>';
+    });
+    grid.innerHTML = html;
+  } catch(e) {
+    grid.innerHTML = '<div class="login-btn" onclick="login(\'Glauco\',\'Coordenador\')">Glauco<div class="role">Coordenador</div></div><div class="login-btn" onclick="login(\'Edvan\',\'Coordenador\')">Edvan<div class="role">Coordenador</div></div><div class="login-btn" onclick="login(\'Marcelo Arouca\',\'Coordenador\')">Marcelo Arouca<div class="role">Coordenador</div></div><div class="login-btn gerente" onclick="login(\'Adriel Duarte\',\'Gerente\')">Adriel Duarte<div class="role">Gerente - ve todas as equipes</div></div>';
+  }
+}
+
 function login(nome, cargo) {
   COORD = { nome, cargo };
   localStorage.setItem('coordenadorLogado', JSON.stringify(COORD));
@@ -430,6 +461,7 @@ async function carregarDados() {
   try {
     const res = await fetch(API_URL + '?acao=tudo');
     DADOS = await res.json();
+    buildEquipes(DADOS.corretores);
     renderTudo();
   } catch (e) {
     document.getElementById('errorBanner').textContent = 'Erro ao carregar dados: ' + e.message;
@@ -442,6 +474,7 @@ async function carregarDadosSilencioso() {
   try {
     const res = await fetch(API_URL + '?acao=tudo');
     DADOS = await res.json();
+    buildEquipes(DADOS.corretores);
     renderTudo();
   } catch (e) {}
 }
@@ -459,7 +492,48 @@ function setMainView(view) {
   document.getElementById('viewVendas').style.display = view === 'vendas' ? '' : 'none';
 }
 
+function renderAlertasZerados() {
+  const container = document.getElementById('alertasZerados');
+  if (!container || !COORD) { if(container) container.style.display='none'; return; }
+  const membros = getMinhaEquipe();
+  const coordsNomes = Object.keys(EQUIPES);
+  const corretores = membros.filter(m => !coordsNomes.includes(m) && normNome(m) !== normNome(COORD.nome));
+  const hoje = new Date(hojeStr() + 'T12:00:00');
+  const tresDiasAtras = new Date(hoje); tresDiasAtras.setDate(hoje.getDate() - 3);
+  const limiteStr = tresDiasAtras.toISOString().split('T')[0];
+
+  const registros = DADOS.registros || [];
+  const agenda = DADOS.agenda || [];
+  const alertas = [];
+
+  corretores.forEach(nome => {
+    const nn = normNome(nome);
+    // Últimos 945
+    const ultimos945 = registros.filter(r => '945' === String(r.TIPO||'').replace('945-individual','945').replace('checkin','') && r.TIPO && r.TIPO.includes('945') && normNome(r.CORRETOR) === nn && String(r.DATA||'').substring(0,10) >= limiteStr);
+    // Últimos agendamentos
+    const ultimosAg = agenda.filter(a => normNome(a.CORRETOR) === nn && String(a.DATA||'').substring(0,10) >= limiteStr);
+
+    const sem945 = ultimos945.length === 0;
+    const semAg = ultimosAg.length === 0;
+
+    if (sem945 || semAg) {
+      let motivos = [];
+      if (sem945) motivos.push('sem 945');
+      if (semAg) motivos.push('sem agendamento');
+      alertas.push({ nome, motivos: motivos.join(' e '), dias: 3 });
+    }
+  });
+
+  if (alertas.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  container.innerHTML = '<div style="font-size:.7rem;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">⚠ Alertas — Corretores inativos (3+ dias)</div>' +
+    alertas.map(a => '<div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">' +
+      '<span style="font-size:.85rem;font-weight:700;">' + a.nome + '</span>' +
+      '<span style="font-size:.75rem;color:var(--danger);font-weight:600;">' + a.motivos + '</span></div>').join('');
+}
+
 function renderTudo() {
+  try { renderAlertasZerados(); } catch(e) { console.error('renderAlertasZerados:', e); }
   try { renderDemandas(); } catch(e) { console.error('renderDemandas:', e); }
   try { renderFoco(); } catch(e) { console.error('renderFoco:', e); }
   try { renderCalendario(); } catch(e) { console.error('renderCalendario:', e); }
@@ -1679,6 +1753,7 @@ function renderVendas() {
     } catch(e) {}
   }
   document.getElementById('loginScreen').classList.remove('hidden');
+  buildLoginGrid();
 })();
 </script>
 <style>
