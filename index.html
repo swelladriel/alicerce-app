@@ -2533,6 +2533,11 @@ function mostrarConfirmacao(mensagem) {
 // ============================================
 function verificarLembretes() {
   if (!USUARIO) return;
+  // Coordenadores e gerente NÃO recebem cobrança de check-in/945
+  if (USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente') {
+    document.getElementById('lembretes-container').innerHTML = '';
+    return;
+  }
   const agora = new Date();
   const hora = agora.getHours();
   const minuto = agora.getMinutes();
