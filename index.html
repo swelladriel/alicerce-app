@@ -1459,12 +1459,16 @@ function renderMinhasVendas() {
   const total = vendasMes.length;
   const vgv = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
   const repassados = vendasMes.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
+  const aguardando = vendasMes.filter(v => (v.STATUS_VENDA || '').includes('Aguardando')).length;
+  const consorcios = vendasMes.filter(v => (v.STATUS_VENDA || '').includes('CONSORCIO')).length;
   const comissaoTotal = vendasMes.reduce((s, v) => s + calcComissao(parseFloat(v.VGV) || 0), 0);
 
   document.getElementById('vd-kpis').innerHTML = `
     <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Vendas no Mês</div></div>
     <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV do Mês</div></div>
     <div class="m-kpi green"><div class="v">${repassados}</div><div class="l">Repassados</div></div>
+    <div class="m-kpi" style="border-bottom:3px solid #f0ad4e;"><div class="v" style="color:#f0ad4e;">${aguardando}</div><div class="l">Aguardando CEF</div></div>
+    ${consorcios ? `<div class="m-kpi" style="border-bottom:3px solid #9b59b6;"><div class="v" style="color:#9b59b6;">${consorcios}</div><div class="l">Consórcios</div></div>` : ''}
   `;
 
   // Card de comissão
@@ -1507,10 +1511,17 @@ function renderHistoricoVendas() {
   const comissaoTotal = lista.reduce((s, v) => s + calcComissao(parseFloat(v.VGV) || 0), 0);
   const comFmt = comissaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
+  const aguardandoH = lista.filter(v => (v.STATUS_VENDA || '').includes('Aguardando')).length;
+  const consorciosH = lista.filter(v => (v.STATUS_VENDA || '').includes('CONSORCIO')).length;
+
   document.getElementById('hist-kpis').innerHTML = `
     <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Total Vendas</div></div>
     <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV Total</div></div>
     <div class="m-kpi" style="border-bottom:3px solid var(--gold);"><div class="v" style="color:var(--gold);">R$ ${(comissaoTotal/1000).toFixed(1)}k</div><div class="l">Comissão Total</div></div>
+    <div class="m-kpi green"><div class="v">${repassados}</div><div class="l">Repassados</div></div>
+    <div class="m-kpi" style="border-bottom:3px solid #f0ad4e;"><div class="v" style="color:#f0ad4e;">${aguardandoH}</div><div class="l">Aguardando CEF</div></div>
+    <div class="m-kpi" style="border-bottom:3px solid #e74c3c;"><div class="v" style="color:#e74c3c;">${distratos}</div><div class="l">Distratos</div></div>
+    ${consorciosH ? `<div class="m-kpi" style="border-bottom:3px solid #9b59b6;"><div class="v" style="color:#9b59b6;">${consorciosH}</div><div class="l">Consórcios</div></div>` : ''}
   `;
 
   // Filtro por mês

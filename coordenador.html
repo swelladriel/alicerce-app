@@ -1663,10 +1663,18 @@ function renderVendas() {
   // KPIs
   const totalVendas = vendas.length;
   const totalVGV = vendas.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const repassados = vendas.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
+  const aguardando = vendas.filter(v => (v.STATUS_VENDA || '').includes('Aguardando')).length;
+  const vgvAguardando = vendas.filter(v => (v.STATUS_VENDA || '').includes('Aguardando')).reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const consorcios = vendas.filter(v => (v.STATUS_VENDA || '').includes('CONSORCIO')).length;
 
   document.getElementById('vendasResumo').innerHTML =
-    '<div class="vendas-kpi"><div class="vendas-kpi-num">' + totalVendas + '</div><div class="vendas-kpi-label">Vendas no mes</div></div>' +
-    '<div class="vendas-kpi"><div class="vendas-kpi-num">' + fmtVGV(totalVGV) + '</div><div class="vendas-kpi-label">VGV Total</div></div>';
+    '<div class="vendas-kpi"><div class="vendas-kpi-num">' + totalVendas + '</div><div class="vendas-kpi-label">Vendas no mês</div></div>' +
+    '<div class="vendas-kpi"><div class="vendas-kpi-num">' + fmtVGV(totalVGV) + '</div><div class="vendas-kpi-label">VGV Total</div></div>' +
+    '<div class="vendas-kpi"><div class="vendas-kpi-num" style="color:#27ae60;">' + repassados + '</div><div class="vendas-kpi-label">Repassados</div></div>' +
+    '<div class="vendas-kpi"><div class="vendas-kpi-num" style="color:#f0ad4e;">' + aguardando + '</div><div class="vendas-kpi-label">Aguardando CEF</div></div>' +
+    (consorcios ? '<div class="vendas-kpi"><div class="vendas-kpi-num" style="color:#9b59b6;">' + consorcios + '</div><div class="vendas-kpi-label">Consórcios</div></div>' : '') +
+    (aguardando ? '<div class="vendas-kpi" style="grid-column:1/-1;"><div class="vendas-kpi-num" style="color:#f0ad4e;font-size:1.1rem;">' + fmtVGV(vgvAguardando) + '</div><div class="vendas-kpi-label">VGV Aguardando Assinatura</div></div>' : '');
 
   if (totalVendas === 0) {
     document.getElementById('vendasRanking').innerHTML = '';
@@ -1733,7 +1741,9 @@ function renderVendas() {
     listaHtml += '</div>';
     listaHtml += '<div>';
     listaHtml += '<div class="venda-vgv">' + fmtVGVFull(v.VGV) + '</div>';
-    listaHtml += '<div class="venda-status">' + (v.STATUS_VENDA || '') + '</div>';
+    const stVenda = v.STATUS_VENDA || '';
+    const stColor = stVenda.includes('Repassado') ? '#27ae60' : stVenda.includes('Aguardando') ? '#f0ad4e' : stVenda.includes('CONSORCIO') ? '#9b59b6' : 'var(--textL)';
+    listaHtml += '<div class="venda-status" style="color:' + stColor + ';font-weight:600;">' + stVenda + '</div>';
     listaHtml += '</div>';
     listaHtml += '</div>';
   });
