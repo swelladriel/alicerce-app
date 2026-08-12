@@ -469,7 +469,7 @@ function calcularRanking() {
 
   corretores.forEach(c => {
     pontuacao[c.NOME] = {
-      nome: c.NOME, total: 0, agendamentos: 0, atendimentos: 0, pastas: 0,
+      nome: c.NOME, total: 0, agendamentos: 0, atendimentos: 0, atendVideos: 0, pastas: 0,
       vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, atrasos: 0
     };
   });
@@ -541,7 +541,7 @@ function calcularRanking() {
     pontuacao[a.CORRETOR].agendamentos++;
   });
 
-  // ATENDIMENTOS +5 (dedup corretor+cliente no mês)
+  // ATENDIMENTOS: presencial +5, vídeo +2 (dedup corretor+cliente no mês)
   const atendDedup = new Set();
   REGISTROS.filter(r => {
     if (r.TIPO !== 'atendimento-confirmado') return false;
@@ -553,7 +553,13 @@ function calcularRanking() {
     const chave = `${r.CORRETOR}|${String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase()}`;
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
-    pontuacao[r.CORRETOR].atendimentos++;
+    const obs = (r.OBSERVACOES || '').toLowerCase();
+    const tipoAt = (r.TIPO_ATENDIMENTO || '').toLowerCase();
+    if (obs.includes('video') || obs.includes('vídeo') || tipoAt.includes('video')) {
+      pontuacao[r.CORRETOR].atendVideos++;
+    } else {
+      pontuacao[r.CORRETOR].atendimentos++;
+    }
   });
 
   // PASTAS +8 (match fuzzy igual plataforma, excluir status AGENDADO que vem do app)
@@ -595,7 +601,7 @@ function calcularRanking() {
 
   // TOTAL
   Object.values(pontuacao).forEach(p => {
-    p.total = p.ptCheckin + (p.agendamentos * 1) + (p.atendimentos * 5) + (p.pastas * 5) + (p.vendas * 40) + (p.consorcios * 10) + p.pt945;
+    p.total = p.ptCheckin + (p.agendamentos * 1) + (p.atendimentos * 5) + (p.atendVideos * 2) + (p.pastas * 5) + (p.vendas * 40) + (p.consorcios * 10) + p.pt945;
   });
 
   return Object.values(pontuacao).sort((a, b) => b.total - a.total);
@@ -627,6 +633,7 @@ function renderRanking() {
       <div class="podium-cats">
         <div class="podium-cat"><span>📋 Agend.</span> <span><span class="podium-cat-val">${p.agendamentos}x</span> <span class="podium-cat-pts">${fmtPts(p.agendamentos * 1)}</span></span></div>
         <div class="podium-cat"><span>✅ Atend.</span> <span><span class="podium-cat-val">${p.atendimentos}x</span> <span class="podium-cat-pts">${fmtPts(p.atendimentos * 5)}</span></span></div>
+        <div class="podium-cat"><span>📹 Vídeo</span> <span><span class="podium-cat-val">${p.atendVideos || 0}x</span> <span class="podium-cat-pts">${fmtPts((p.atendVideos || 0) * 2)}</span></span></div>
         <div class="podium-cat"><span>📁 Pastas</span> <span><span class="podium-cat-val">${p.pastas}x</span> <span class="podium-cat-pts">${fmtPts(p.pastas * 5)}</span></span></div>
         <div class="podium-cat"><span>🏆 Vendas</span> <span><span class="podium-cat-val">${p.vendas}x</span> <span class="podium-cat-pts">${fmtPts(p.vendas * 40)}</span></span></div>
         <div class="podium-cat"><span>📜 Consórcio</span> <span><span class="podium-cat-val">${p.consorcios}x</span> <span class="podium-cat-pts">${fmtPts(p.consorcios * 10)}</span></span></div>
@@ -643,6 +650,7 @@ function renderRanking() {
       <div class="rank-prod">
         <div class="rank-prod-item">📋<span>${p.agendamentos}</span></div>
         <div class="rank-prod-item">✅<span>${p.atendimentos}</span></div>
+        <div class="rank-prod-item">📹<span>${p.atendVideos || 0}</span></div>
         <div class="rank-prod-item">📁<span>${p.pastas}</span></div>
         <div class="rank-prod-item">🏆<span>${p.vendas}</span></div>
         <div class="rank-prod-item">📜<span>${p.consorcios}</span></div>
@@ -742,7 +750,7 @@ function calcularRankingSemanal() {
 
   // TOTAL
   Object.values(pontuacao).forEach(p => {
-    p.total = p.ptCheckin + (p.agendamentos * 1) + (p.atendimentos * 5) + (p.pastas * 5) + (p.vendas * 40) + (p.consorcios * 10) + p.pt945;
+    p.total = p.ptCheckin + (p.agendamentos * 1) + (p.atendimentos * 5) + (p.atendVideos * 2) + (p.pastas * 5) + (p.vendas * 40) + (p.consorcios * 10) + p.pt945;
   });
 
   return Object.values(pontuacao).sort((a, b) => b.total - a.total);
@@ -779,6 +787,7 @@ function renderRankingSemanal() {
       <div class="rank-prod">
         <div class="rank-prod-item">📋<span>${p.agendamentos}</span></div>
         <div class="rank-prod-item">✅<span>${p.atendimentos}</span></div>
+        <div class="rank-prod-item">📹<span>${p.atendVideos || 0}</span></div>
         <div class="rank-prod-item">📁<span>${p.pastas}</span></div>
         <div class="rank-prod-item">🏆<span>${p.vendas}</span></div>
         <div class="rank-prod-item">⏰<span>${p.checkins}</span></div>
