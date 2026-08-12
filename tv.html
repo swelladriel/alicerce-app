@@ -686,7 +686,7 @@ function calcularRankingSemanal() {
   const corretores = (DADOS.corretores || []).filter(c => !COORDS_GERENTE.includes(c.NOME) && c.STATUS === 'Ativo');
   const pontuacao = {};
   corretores.forEach(c => {
-    pontuacao[c.NOME] = { nome: c.NOME, agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, total: 0 };
+    pontuacao[c.NOME] = { nome: c.NOME, agendamentos: 0, atendimentos: 0, atendVideos: 0, pastas: 0, vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, total: 0 };
   });
 
   // CHECK-INS da semana
@@ -716,14 +716,20 @@ function calcularRankingSemanal() {
     pontuacao[a.CORRETOR].agendamentos++;
   });
 
-  // ATENDIMENTOS da semana
+  // ATENDIMENTOS da semana: presencial +5, vídeo +2
   const atendDedup = new Set();
   (DADOS.registros || []).filter(r => r.TIPO === 'atendimento-confirmado' && (parseDataISO(r.DATA) || '') >= inicioSemana).forEach(r => {
     if (!pontuacao[r.CORRETOR]) return;
     const chave = r.CORRETOR + '|' + (r.CLIENTE || r.CLIENTES || '').toUpperCase();
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
-    pontuacao[r.CORRETOR].atendimentos++;
+    const obs = (r.OBSERVACOES || '').toLowerCase();
+    const tipoAt = (r.TIPO_ATENDIMENTO || '').toLowerCase();
+    if (obs.includes('video') || obs.includes('vídeo') || tipoAt.includes('video')) {
+      pontuacao[r.CORRETOR].atendVideos++;
+    } else {
+      pontuacao[r.CORRETOR].atendimentos++;
+    }
   });
 
   // PASTAS da semana
