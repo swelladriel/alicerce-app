@@ -1020,8 +1020,9 @@ function renderDayAgenda() {
     return;
   }
 
+  window._agendaDia = agenda;
   let html = '';
-  agenda.forEach(a => {
+  agenda.forEach((a, i) => {
     const tipo = (a.TIPO || '').toLowerCase();
     let tipoClass = 'tipo-cliente';
     let tipoLabel = a.TIPO || 'Cliente';
@@ -1038,11 +1039,60 @@ function renderDayAgenda() {
     if (a.CLIENTE) html += '<div class="agenda-cliente">' + a.CLIENTE + '</div>';
     html += '<div class="agenda-corretor">' + (a.CORRETOR || '-') + '</div>';
     html += '</div>';
-    if (atendido) html += '<div class="agenda-atendido">&#10003;</div>';
+    if (atendido) {
+      html += '<div class="agenda-atendido">&#10003;</div>';
+    } else {
+      const idxCoord = i;
+      html += '<div style="display:flex;flex-direction:column;gap:4px;margin-left:auto;">';
+      html += '<button onclick="marcarAtendCoord(' + idxCoord + ',\'presencial\')" style="background:#27ae60;color:#fff;border:none;border-radius:5px;padding:5px 8px;font-size:.65rem;font-weight:700;cursor:pointer;">✅</button>';
+      html += '<button onclick="marcarAtendCoord(' + idxCoord + ',\'video\')" style="background:#3498db;color:#fff;border:none;border-radius:5px;padding:5px 8px;font-size:.65rem;font-weight:700;cursor:pointer;">📹</button>';
+      html += '</div>';
+    }
     html += '</div>';
   });
 
   document.getElementById('dayAgenda').innerHTML = html;
+}
+
+async function marcarAtendCoord(idx, tipo) {
+  const a = window._agendaDia[idx];
+  if (!a) return;
+  a.ATENDIDO = 'SIM';
+
+  const btn = event && event.target ? event.target : null;
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  const API = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
+  const params = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      DATA: String(a.DATA || '').substring(0, 10),
+      HORA: a.HORA || '',
+      TIPO: 'atendimento-confirmado',
+      TIPO_ATENDIMENTO: tipo,
+      CLIENTE: a.CLIENTE || '',
+      CONTATO: a.CONTATO || '',
+      CORRETOR: a.CORRETOR || '',
+      EQUIPE: a.EQUIPE || '',
+      PRESENCA: 'atendido',
+      'O QUE FEZ': '', 'PLANO DO DIA': '', 'DIFICULDADE': '',
+      'CLIENTES': a.CLIENTE || '',
+      'OBSERVACOES': 'Atendimento ' + tipo.toUpperCase() + ' confirmado via Painel Coordenador | Cliente: ' + (a.CLIENTE || '') + ' | Corretor: ' + (a.CORRETOR || '')
+    })
+  });
+  fetch(API + '?' + params.toString()).catch(function(){});
+
+  try {
+    await fetch(API, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'SIM' } })
+    });
+  } catch(e) {}
+
+  // Re-render
+  var sel = document.querySelector('.cal-day.selected');
+  if (sel) sel.click();
 }
 
 const NOMES_VENDAS = {

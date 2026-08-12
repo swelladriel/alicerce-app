@@ -273,7 +273,8 @@ body {
   </div>
 
   <div class="tv-tab-bar">
-    <div class="tv-tab active" id="tab-ranking-btn">Ranking</div>
+    <div class="tv-tab active" id="tab-ranking-btn">Ranking Mensal</div>
+    <div class="tv-tab" id="tab-semanal-btn">Ranking Semanal</div>
     <div class="tv-tab" id="tab-agenda-btn">Agenda do Dia</div>
   </div>
 
@@ -283,6 +284,16 @@ body {
   <div class="tv-page active" id="page-ranking">
     <div class="ranking-podium" id="podium"></div>
     <div class="ranking-rest" id="ranking-rest"></div>
+  </div>
+
+  <!-- RANKING SEMANAL -->
+  <div class="tv-page" id="page-semanal">
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:1rem;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1px;">Ranking da Semana</div>
+      <div style="font-size:.7rem;color:var(--textL);" id="semanal-periodo"></div>
+    </div>
+    <div class="ranking-podium" id="podium-semanal"></div>
+    <div class="ranking-rest" id="ranking-rest-semanal"></div>
   </div>
 
   <!-- AGENDA DO DIA -->
@@ -310,8 +321,9 @@ body {
 const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
 
 const PAGINAS = [
-  { id: 'ranking',    tab: 'ranking', tempo: 48 },
-  { id: 'agenda',     tab: 'agenda',  tempo: 12 },
+  { id: 'ranking',    tab: 'ranking', tempo: 20 },
+  { id: 'semanal',    tab: 'semanal', tempo: 15 },
+  { id: 'agenda',     tab: 'agenda',  tempo: 15 },
 ];
 
 const INICIO_MES_COMERCIAL = '2026-08-05';
@@ -583,7 +595,7 @@ function calcularRanking() {
 
   // TOTAL
   Object.values(pontuacao).forEach(p => {
-    p.total = p.ptCheckin + (p.agendamentos * 3) + (p.atendimentos * 5) + (p.pastas * 8) + (p.vendas * 20) + (p.consorcios * 10) + p.pt945;
+    p.total = p.ptCheckin + (p.agendamentos * 1) + (p.atendimentos * 5) + (p.pastas * 5) + (p.vendas * 40) + (p.consorcios * 10) + p.pt945;
   });
 
   return Object.values(pontuacao).sort((a, b) => b.total - a.total);
@@ -613,10 +625,10 @@ function renderRanking() {
       <div class="podium-pts">${p.total}</div>
       <div class="podium-label">pontos</div>
       <div class="podium-cats">
-        <div class="podium-cat"><span>📋 Agend.</span> <span><span class="podium-cat-val">${p.agendamentos}x</span> <span class="podium-cat-pts">${fmtPts(p.agendamentos * 3)}</span></span></div>
+        <div class="podium-cat"><span>📋 Agend.</span> <span><span class="podium-cat-val">${p.agendamentos}x</span> <span class="podium-cat-pts">${fmtPts(p.agendamentos * 1)}</span></span></div>
         <div class="podium-cat"><span>✅ Atend.</span> <span><span class="podium-cat-val">${p.atendimentos}x</span> <span class="podium-cat-pts">${fmtPts(p.atendimentos * 5)}</span></span></div>
-        <div class="podium-cat"><span>📁 Pastas</span> <span><span class="podium-cat-val">${p.pastas}x</span> <span class="podium-cat-pts">${fmtPts(p.pastas * 8)}</span></span></div>
-        <div class="podium-cat"><span>🏆 Vendas</span> <span><span class="podium-cat-val">${p.vendas}x</span> <span class="podium-cat-pts">${fmtPts(p.vendas * 20)}</span></span></div>
+        <div class="podium-cat"><span>📁 Pastas</span> <span><span class="podium-cat-val">${p.pastas}x</span> <span class="podium-cat-pts">${fmtPts(p.pastas * 5)}</span></span></div>
+        <div class="podium-cat"><span>🏆 Vendas</span> <span><span class="podium-cat-val">${p.vendas}x</span> <span class="podium-cat-pts">${fmtPts(p.vendas * 40)}</span></span></div>
         <div class="podium-cat"><span>📜 Consórcio</span> <span><span class="podium-cat-val">${p.consorcios}x</span> <span class="podium-cat-pts">${fmtPts(p.consorcios * 10)}</span></span></div>
         <div class="podium-cat"><span>⏰ Check-in</span> <span><span class="podium-cat-val">${p.checkins}x</span> <span class="${ptClass(p.ptCheckin)}">${fmtPts(p.ptCheckin)}</span></span></div>
         <div class="podium-cat"><span>🎙 945</span> <span><span class="podium-cat-val">${p.dias945}x</span> <span class="${ptClass(p.pt945)}">${fmtPts(p.pt945)}</span></span></div>
@@ -640,6 +652,141 @@ function renderRanking() {
       <div>
         <div class="rank-pts">${p.total}</div>
         <div class="rank-pts-label">pontos</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// RANKING SEMANAL (quarta a terça)
+// ============================================
+function getInicioSemana() {
+  const hoje = new Date();
+  const dia = hoje.getDay(); // 0=dom, 1=seg, 2=ter, 3=qua
+  let diff = dia - 3; // dias desde quarta
+  if (diff < 0) diff += 7;
+  const inicio = new Date(hoje);
+  inicio.setDate(inicio.getDate() - diff);
+  return inicio.toISOString().substring(0, 10);
+}
+
+function calcularRankingSemanal() {
+  if (!DADOS) return [];
+  const inicioSemana = getInicioSemana();
+  const hoje = new Date().toISOString().substring(0, 10);
+
+  const corretores = (DADOS.corretores || []).filter(c => !COORDS_GERENTE.includes(c.NOME) && c.STATUS === 'Ativo');
+  const pontuacao = {};
+  corretores.forEach(c => {
+    pontuacao[c.NOME] = { nome: c.NOME, agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, total: 0 };
+  });
+
+  // CHECK-INS da semana
+  (DADOS.registros || []).filter(r => r.TIPO === 'checkin' && (parseDataISO(r.DATA) || '') >= inicioSemana && (parseDataISO(r.DATA) || '') <= hoje).forEach(r => {
+    if (!pontuacao[r.CORRETOR]) return;
+    pontuacao[r.CORRETOR].checkins++;
+    const h = parseHora(r.HORA || r.DATA);
+    const [hh, mm] = h.split(':').map(Number);
+    const minutos = hh * 60 + (mm || 0);
+    const dt = parseDataISO(r.DATA) || '';
+    const d = new Date(dt + 'T12:00:00'); const dow = d.getDay();
+    const multiplicador = (dow === 0 || dow === 6) ? 2 : 1;
+    let pts = 0;
+    if (minutos < 570) pts = 5 * multiplicador;
+    else if (minutos < 600) pts = 3 * multiplicador;
+    else if (minutos < 630) pts = 1 * multiplicador;
+    pontuacao[r.CORRETOR].ptCheckin += pts;
+  });
+
+  // AGENDAMENTOS da semana
+  const agendaDedup = new Set();
+  (DADOS.agenda || []).filter(a => (parseDataISO(a.DATA) || '') >= inicioSemana && (parseDataISO(a.DATA) || '') <= hoje && (a.TIPO || '').toLowerCase().includes('client')).forEach(a => {
+    if (!pontuacao[a.CORRETOR]) return;
+    const chave = a.CORRETOR + '|' + (a.CLIENTE || '').toUpperCase();
+    if (agendaDedup.has(chave)) return;
+    agendaDedup.add(chave);
+    pontuacao[a.CORRETOR].agendamentos++;
+  });
+
+  // ATENDIMENTOS da semana
+  const atendDedup = new Set();
+  (DADOS.registros || []).filter(r => r.TIPO === 'atendimento-confirmado' && (parseDataISO(r.DATA) || '') >= inicioSemana).forEach(r => {
+    if (!pontuacao[r.CORRETOR]) return;
+    const chave = r.CORRETOR + '|' + (r.CLIENTE || r.CLIENTES || '').toUpperCase();
+    if (atendDedup.has(chave)) return;
+    atendDedup.add(chave);
+    pontuacao[r.CORRETOR].atendimentos++;
+  });
+
+  // PASTAS da semana
+  (DADOS.clientes || []).filter(c => {
+    const dt = parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '';
+    return dt >= inicioSemana && (c.STATUS || '').toUpperCase() !== 'AGENDADO';
+  }).forEach(c => {
+    const corr = corretores.find(ca => ca.NOME === c.CORRETOR || (c.CORRETOR || '').toUpperCase().includes(ca.NOME.toUpperCase()));
+    if (corr && pontuacao[corr.NOME]) pontuacao[corr.NOME].pastas++;
+  });
+
+  // 945 da semana
+  const dias945 = {};
+  (DADOS.registros || []).filter(r => r.TIPO === '945-individual' && (parseDataISO(r.DATA) || '') >= inicioSemana).forEach(r => {
+    if (!pontuacao[r.CORRETOR]) return;
+    if (!dias945[r.CORRETOR]) dias945[r.CORRETOR] = new Set();
+    dias945[r.CORRETOR].add(parseDataISO(r.DATA));
+  });
+  Object.values(pontuacao).forEach(p => {
+    const s = dias945[p.nome] || new Set();
+    p.dias945 = s.size;
+    p.pt945 = s.size * 2;
+  });
+
+  // TOTAL
+  Object.values(pontuacao).forEach(p => {
+    p.total = p.ptCheckin + (p.agendamentos * 1) + (p.atendimentos * 5) + (p.pastas * 5) + (p.vendas * 40) + (p.consorcios * 10) + p.pt945;
+  });
+
+  return Object.values(pontuacao).sort((a, b) => b.total - a.total);
+}
+
+function renderRankingSemanal() {
+  const ranking = calcularRankingSemanal();
+  if (!ranking.length) return;
+
+  const inicioSemana = getInicioSemana();
+  const partes = inicioSemana.split('-');
+  document.getElementById('semanal-periodo').textContent = 'Semana de ' + partes[2] + '/' + partes[1];
+
+  const top3 = ranking.slice(0, 3);
+  const rest = ranking.slice(3);
+  const medals = ['🥇', '🥈', '🥉'];
+  const classes = ['first', 'second', 'third'];
+  const labels = ['1º LUGAR', '2º LUGAR', '3º LUGAR'];
+
+  document.getElementById('podium-semanal').innerHTML = top3.map((p, i) => `
+    <div class="podium-card ${classes[i]}">
+      <div class="podium-pos">${labels[i]}</div>
+      <div class="podium-medal">${medals[i]}</div>
+      <div class="podium-name">${p.nome}</div>
+      <div class="podium-pts">${p.total}</div>
+      <div class="podium-label">pontos na semana</div>
+    </div>
+  `).join('');
+
+  document.getElementById('ranking-rest-semanal').innerHTML = rest.map((p, i) => `
+    <div class="rank-row">
+      <div class="rank-pos">${i + 4}º</div>
+      <div class="rank-name">${p.nome}</div>
+      <div class="rank-prod">
+        <div class="rank-prod-item">📋<span>${p.agendamentos}</span></div>
+        <div class="rank-prod-item">✅<span>${p.atendimentos}</span></div>
+        <div class="rank-prod-item">📁<span>${p.pastas}</span></div>
+        <div class="rank-prod-item">🏆<span>${p.vendas}</span></div>
+        <div class="rank-prod-item">⏰<span>${p.checkins}</span></div>
+        <div class="rank-prod-item">🎙<span>${p.dias945}</span></div>
+      </div>
+      <div>
+        <div class="rank-pts">${p.total}</div>
+        <div class="rank-pts-label">pts</div>
       </div>
     </div>
   `).join('');
@@ -811,6 +958,7 @@ async function carregarDados() {
     document.getElementById('app').style.display = 'block';
 
     renderRanking();
+    renderRankingSemanal();
     agendaAnterior = renderAgenda() || 0;
 
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
@@ -860,6 +1008,7 @@ async function atualizarDados() {
     const resp = await fetch(API_URL + '?acao=tv');
     DADOS = await resp.json();
     renderRanking();
+    renderRankingSemanal();
     renderAgenda();
   } catch (e) {}
 }

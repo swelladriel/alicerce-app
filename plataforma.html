@@ -1959,7 +1959,7 @@ function renderRanking() {
     if (agendaDedup.has(chave)) return;
     agendaDedup.add(chave);
     pontuacao[nome].agendamentos++;
-    pontuacao[nome].ptAgenda += 3;
+    pontuacao[nome].ptAgenda += 1;
   });
 
   // === ATENDIMENTOS: +5 (desde INICIO_MES_COMERCIAL, deduplicado por CORRETOR+CLIENTE+DATA, sem "teste") ===
@@ -1982,7 +1982,9 @@ function renderRanking() {
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
     pontuacao[nome].atendimentos++;
-    pontuacao[nome].ptAtend += 5;
+    const tipoAtend = (r.TIPO_ATENDIMENTO || r.OBSERVACOES || '').toLowerCase().includes('video') || (r.TIPO_ATENDIMENTO || r.OBSERVACOES || '').toLowerCase().includes('vídeo') ? 'video' : 'presencial';
+    if (tipoAtend === 'video') { pontuacao[nome].atendVideos = (pontuacao[nome].atendVideos || 0) + 1; pontuacao[nome].ptAtend += 2; }
+    else { pontuacao[nome].ptAtend += 5; }
   });
 
   // === PASTAS: +8 (desde INICIO_MES_COMERCIAL, excluir status AGENDADO que vem do app) ===
@@ -1995,7 +1997,7 @@ function renderRanking() {
     const corr = corretoresAtivos.find(ca => ca.NOME === corrNome || corrNome.toUpperCase().includes(ca.NOME.toUpperCase()) || ca.NOME.toUpperCase().includes(corrNome.toUpperCase()));
     if (!corr || !pontuacao[corr.NOME]) return;
     pontuacao[corr.NOME].pastas++;
-    pontuacao[corr.NOME].ptPasta += 8;
+    pontuacao[corr.NOME].ptPasta += 5;
   });
 
   // === VENDAS: +20 venda, +10 consórcio (desde INICIO_MES_COMERCIAL) ===
@@ -2009,7 +2011,7 @@ function renderRanking() {
     if (!corr || !pontuacao[corr.NOME]) return;
     const isConsorcio = (v.STATUS_VENDA || '').includes('CONSORCIO');
     if (isConsorcio) { pontuacao[corr.NOME].consorcios++; pontuacao[corr.NOME].ptVenda += 10; }
-    else { pontuacao[corr.NOME].vendas++; pontuacao[corr.NOME].ptVenda += 20; }
+    else { pontuacao[corr.NOME].vendas++; pontuacao[corr.NOME].ptVenda += 40; }
   });
 
   // === 945: +2 fez, -2 não fez (só a partir de INICIO_CHECKIN_945, sem penalizar sáb/dom) ===
@@ -2402,7 +2404,10 @@ function renderDiaDetalhePlat(dataStr, listaFiltrada) {
         <div style="font-size:.85rem;font-weight:700;color:#fff;">${icone}${a.CLIENTE || '-'} ${statusLabel}</div>
         ${tipo === 'Cliente' && a.CONTATO ? `<div style="font-size:.72rem;color:var(--textL);margin-top:2px;">${a.CONTATO}</div>` : ''}
         <div style="font-size:.72rem;color:var(--accent);margin-top:4px;font-weight:600;">${a.CORRETOR || '-'} ${eqTagHTML(eq)}</div>
-        ${!atendido && !bolo ? `<button onclick="marcarAtendidoPlat(${idxPlat})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>
+        ${!atendido && !bolo ? `<div style="display:flex;gap:6px;margin-top:8px;">
+          <button onclick="marcarAtendidoPlat(${idxPlat})" style="flex:1;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">✅ PRESENCIAL</button>
+          <button onclick="marcarAtendidoVideoPlat(${idxPlat})" style="flex:1;background:#3498db;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">📹 VÍDEO</button>
+        </div>
         <div style="display:flex;gap:6px;margin-top:6px;">
           <button onclick="marcarBoloPlat(${idxPlat})" style="flex:1;background:#f44336;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">🍰 BOLO</button>
           <button onclick="abrirRemarcarPlat(${idxPlat})" style="flex:1;background:rgba(255,255,255,.08);color:var(--gold);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;font-size:.68rem;font-weight:600;cursor:pointer;">📅 REMARCAR</button>
@@ -2450,6 +2455,42 @@ async function marcarAtendidoPlat(idx) {
   } catch(e) {}
 
   // Atualizar visual
+  renderDiaDetalhePlat(PLAT_DIA_SEL, AGENDA_PLAT);
+}
+
+async function marcarAtendidoVideoPlat(idx) {
+  const a = AGENDA_PLAT[idx];
+  if (!a) return;
+
+  a.ATENDIDO = 'SIM';
+
+  const params = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      DATA: String(a.DATA || '').substring(0, 10),
+      HORA: a.HORA || '',
+      TIPO: 'atendimento-confirmado',
+      TIPO_ATENDIMENTO: 'video',
+      CLIENTE: a.CLIENTE || '',
+      CONTATO: a.CONTATO || '',
+      CORRETOR: a.CORRETOR || '',
+      EQUIPE: a.EQUIPE || '',
+      PRESENCA: 'atendido',
+      'O QUE FEZ': '', 'PLANO DO DIA': '', 'DIFICULDADE': '', 'CLIENTES': a.CLIENTE || '',
+      'OBSERVACOES': `Atendimento VIDEO confirmado via Plataforma | Cliente: ${a.CLIENTE} | Corretor: ${a.CORRETOR}`
+    })
+  });
+  fetch(API_URL + '?' + params.toString()).catch(() => {});
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'SIM' } })
+    });
+  } catch(e) {}
+
   renderDiaDetalhePlat(PLAT_DIA_SEL, AGENDA_PLAT);
 }
 

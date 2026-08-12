@@ -1740,7 +1740,7 @@ function renderDiaDetalhe(dataStr) {
         <div class="cal-card-cliente">${icone}${a.CLIENTE || '-'} ${statusLabel}</div>
         ${tipo === 'Cliente' && podVerContato && a.CONTATO ? `<div class="cal-card-contato">${a.CONTATO}</div>` : ''}
         <div class="cal-card-corretor">${a.CORRETOR || '-'}</div>
-        ${!atendido && !bolo ? `${podVerContato ? `<button onclick="marcarAtendido(${idxAgenda})" style="margin-top:8px;width:100%;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">ATENDIMENTO FEITO</button>` : ''}
+        ${!atendido && !bolo ? `${podVerContato ? `<div style="display:flex;gap:6px;margin-top:8px;"><button onclick="marcarAtendido(${idxAgenda})" style="flex:1;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">✅ PRESENCIAL</button><button onclick="marcarAtendidoVideo(${idxAgenda})" style="flex:1;background:#3498db;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">📹 VÍDEO</button></div>` : ''}
         ${(a.CORRETOR === USUARIO.NOME || podVerContato) ? `<div style="display:flex;gap:6px;margin-top:6px;">
           <button onclick="marcarBolo(${idxAgenda})" style="flex:1;background:#f44336;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">🍰 BOLO</button>
           <button onclick="abrirRemarcar(${idxAgenda})" style="flex:1;background:rgba(255,255,255,.08);color:var(--gold);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;font-size:.68rem;font-weight:600;cursor:pointer;">📅 REMARCAR</button>
@@ -1801,6 +1801,50 @@ async function marcarAtendido(idx) {
   // Atualizar visual
   renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
   mostrarConfirmacao('ATENDIMENTO CONFIRMADO');
+}
+
+async function marcarAtendidoVideo(idx) {
+  const a = AGENDA[idx];
+  if (!a) return;
+  if (a.ATENDIDO === 'SIM') return;
+
+  const btn = event && event.target ? event.target : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'SALVANDO...'; }
+
+  a.ATENDIDO = 'SIM';
+
+  const params = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      DATA: String(a.DATA || '').substring(0, 10),
+      HORA: a.HORA || '',
+      TIPO: 'atendimento-confirmado',
+      TIPO_ATENDIMENTO: 'video',
+      CLIENTE: a.CLIENTE || '',
+      CONTATO: a.CONTATO || '',
+      CORRETOR: a.CORRETOR || '',
+      EQUIPE: a.EQUIPE || '',
+      PRESENCA: 'atendido',
+      'O QUE FEZ': '',
+      'PLANO DO DIA': '',
+      'DIFICULDADE': '',
+      'CLIENTES': a.CLIENTE || '',
+      'OBSERVACOES': `Atendimento VIDEO confirmado por ${USUARIO.NOME} | Cliente: ${a.CLIENTE} | Corretor: ${a.CORRETOR}`
+    })
+  });
+  fetch(API_URL + '?' + params.toString()).catch(() => {});
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'SIM' } })
+    });
+  } catch(e) {}
+
+  renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
+  mostrarConfirmacao('ATENDIMENTO VÍDEO CONFIRMADO');
 }
 
 async function marcarBolo(idx) {
