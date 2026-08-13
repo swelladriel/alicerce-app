@@ -708,6 +708,8 @@ let DEMANDAS = [];
 let REGISTROS = [];
 let VENDAS = [];
 let CORRETORES_MAP = {}; // nome -> equipe
+const INICIO_MES_COMERCIAL = '2026-08-05';
+const INICIO_CHECKIN_945 = '2026-08-05';
 
 // ============================================
 // NAVEGAÇÃO
@@ -840,6 +842,8 @@ async function carregarDados() {
     CORRETORES.forEach(c => { CORRETORES_MAP[c.NOME] = c.EQUIPE; });
 
     const renders = [
+      ['Vendas', renderVendas],
+      ['AgendaPlat', renderAgendaPlat],
       ['Clientes', renderClientes],
       ['Pipeline', renderPipeline],
       ['Corretores', renderCorretores],
@@ -849,8 +853,6 @@ async function carregarDados() {
       ['Historico945', renderHistorico945],
       ['Ranking', renderRanking],
       ['HistDemandas', renderHistDemandas],
-      ['Vendas', renderVendas],
-      ['AgendaPlat', renderAgendaPlat],
       ['Filtros', preencherFiltros]
     ];
     renders.forEach(([nome, fn]) => {
@@ -1723,6 +1725,8 @@ function renderHistDemandas() {
 // RENDER: VENDAS
 // ============================================
 function renderVendas() {
+  try {
+  document.getElementById('tb-vendas').innerHTML = '<tr><td colspan="9">Processando...</td></tr>';
   const filtroMes = document.getElementById('vd-mes').value;
   const filtroCorr = document.getElementById('vd-corretor').value;
   const filtroSt = document.getElementById('vd-status').value;
@@ -1851,6 +1855,9 @@ function renderVendas() {
 
   document.getElementById('tb-vendas').innerHTML = html;
   document.getElementById('count-vendas').textContent = `${lista.length} vendas | VGV: R$ ${vgvTotal.toLocaleString('pt-BR')}`;
+  } catch(err) {
+    document.getElementById('tb-vendas').innerHTML = '<tr><td colspan="9" style="color:red;padding:20px;">ERRO VENDAS: ' + err.message + '</td></tr>';
+  }
 }
 
 // ============================================
@@ -1860,8 +1867,7 @@ function renderRanking() {
   const filtroEquipe = document.getElementById('rk-equipe').value;
   const agora = new Date();
   const mesAtual = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
-  const INICIO_MES_COMERCIAL = '2026-08-05';
-  const INICIO_CHECKIN_945 = '2026-08-05'; // Check-in e 945 valem só a partir desta data
+  // INICIO_MES_COMERCIAL e INICIO_CHECKIN_945 definidos como globais no topo
 
   function semAcento(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
 
