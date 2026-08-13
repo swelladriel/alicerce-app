@@ -973,7 +973,7 @@ async function carregarDados() {
     document.getElementById('app').style.display = 'block';
 
     renderRanking();
-    renderRankingSemanal();
+    try { renderRankingSemanal(); } catch(e) { console.error('Erro ranking semanal:', e); }
     agendaAnterior = renderAgenda() || 0;
 
     const mesAtual = INICIO_MES_COMERCIAL.substring(0, 7);
@@ -1023,7 +1023,7 @@ async function atualizarDados() {
     const resp = await fetch(API_URL + '?acao=tv');
     DADOS = await resp.json();
     renderRanking();
-    renderRankingSemanal();
+    try { renderRankingSemanal(); } catch(e) { console.error('Erro semanal refresh:', e); }
     renderAgenda();
   } catch (e) {}
 }
