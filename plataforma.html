@@ -839,18 +839,23 @@ async function carregarDados() {
 
     CORRETORES.forEach(c => { CORRETORES_MAP[c.NOME] = c.EQUIPE; });
 
-    renderClientes();
-    renderPipeline();
-    renderCorretores();
-    renderTrello();
-    renderUrgencias();
-    renderCheckins();
-    renderHistorico945();
-    renderRanking();
-    renderHistDemandas();
-    renderVendas();
-    renderAgendaPlat();
-    preencherFiltros();
+    const renders = [
+      ['Clientes', renderClientes],
+      ['Pipeline', renderPipeline],
+      ['Corretores', renderCorretores],
+      ['Trello', renderTrello],
+      ['Urgencias', renderUrgencias],
+      ['Checkins', renderCheckins],
+      ['Historico945', renderHistorico945],
+      ['Ranking', renderRanking],
+      ['HistDemandas', renderHistDemandas],
+      ['Vendas', renderVendas],
+      ['AgendaPlat', renderAgendaPlat],
+      ['Filtros', preencherFiltros]
+    ];
+    renders.forEach(([nome, fn]) => {
+      try { fn(); } catch(e) { console.error('Erro em ' + nome + ':', e); }
+    });
   } catch(e) {
     document.getElementById('tb-clientes').innerHTML = '<tr><td colspan="6" style="color:var(--danger);text-align:center;padding:20px;">Erro ao carregar dados. Verifique a conexão.</td></tr>';
   }
