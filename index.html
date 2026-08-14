@@ -17,7 +17,8 @@
 :root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:12px;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{touch-action:manipulation;}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:480px;margin:0 auto;overflow-x:hidden;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.app-wrapper{max-width:480px;margin:0 auto;position:relative;min-height:100vh;}
 button,a,.tab,.m-filter-btn,.login-btn,.checkin-btn,.rec-enviar,.cal-day,.cal-nav,.dem-card,.foco-card,.agenda-card{touch-action:manipulation;cursor:pointer;-webkit-user-select:none;user-select:none;}
 
 /* LOGIN */
@@ -221,9 +222,62 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 @keyframes confirmCheck{to{transform:rotate(-45deg) scale(1);}}
 @keyframes confirmTextIn{to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(244,67,54,.5);}70%{box-shadow:0 0 0 16px rgba(244,67,54,0);}100%{box-shadow:0 0 0 0 rgba(244,67,54,0);}}
+
+/* HAMBURGER MENU */
+.hamburger-btn{background:none;border:none;color:#fff;font-size:1.4rem;padding:4px 8px;cursor:pointer;line-height:1;}
+.side-menu-overlay{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.6);z-index:9998;}
+.side-menu-overlay.open{display:block;}
+.side-menu{display:none;position:fixed;top:0;left:0;width:80%;max-width:320px;height:100vh;background:var(--card);border-right:1px solid var(--border);z-index:9999;flex-direction:column;overflow-y:auto;}
+.side-menu.open{display:flex;}
+.side-menu-header{padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.side-menu-logo{display:flex;align-items:center;gap:10px;}
+.side-menu-logo-icon{width:36px;height:36px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#111;}
+.side-menu-logo-text{font-size:1rem;font-weight:800;color:#fff;letter-spacing:1.5px;}
+.side-menu-close{background:none;border:none;color:var(--textL);font-size:1.5rem;cursor:pointer;padding:4px;}
+.side-menu-items{flex:1;padding:16px 12px;overflow-y:auto;}
+.side-menu-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:10px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--textL);margin-bottom:4px;transition:all .15s;}
+.side-menu-item:active{background:rgba(100,255,218,.08);color:var(--accent);}
+.side-menu-item .smi-icon{font-size:1.2rem;width:24px;text-align:center;}
+.side-menu-footer{padding:16px;border-top:1px solid var(--border);text-align:center;}
+.side-menu-footer-user{font-size:.78rem;font-weight:700;color:#fff;margin-bottom:2px;}
+.side-menu-footer-team{font-size:.65rem;color:var(--textL);}
+
+/* INICIO TAB */
+.inicio-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.inicio-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px 10px;text-align:center;}
+.inicio-kpi .ik-val{font-size:1.2rem;font-weight:900;color:#fff;}
+.inicio-kpi .ik-label{font-size:.6rem;color:var(--textL);text-transform:uppercase;margin-top:2px;}
+.inicio-kpi.ik-gold{border-bottom:3px solid var(--gold);}
+.inicio-kpi.ik-green{border-bottom:3px solid var(--success);}
+.inicio-kpi.ik-blue{border-bottom:3px solid var(--info);}
+.inicio-section-title{font-size:.82rem;font-weight:800;color:#fff;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+/* POPUP AGENDAMENTO CONFIRMADO */
+.popup-agendamento-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.popup-agendamento-overlay.open{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 20px;}
+.popup-ag-close-x{position:fixed;top:16px;right:16px;background:none;border:none;font-size:1.6rem;color:#666;cursor:pointer;z-index:1001;padding:4px 8px;line-height:1;}
+.popup-ag-content{width:100%;max-width:420px;text-align:center;padding:20px 0;}
+.popup-ag-logo{width:56px;height:56px;background:#fff;border:2px solid #d4a853;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#111;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.popup-ag-title{font-size:1.2rem;font-weight:900;color:#1a7a4c;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.popup-ag-title-check{color:#1a7a4c;font-size:1.3rem;}
+.popup-ag-divider{width:60px;height:2px;background:linear-gradient(90deg,transparent,#d4a853,transparent);margin:16px auto;}
+.popup-ag-cliente{font-size:1.5rem;font-weight:900;color:#111;margin-bottom:8px;line-height:1.2;}
+.popup-ag-data{font-size:1rem;color:#333;font-weight:600;margin-bottom:4px;}
+.popup-ag-hora{font-size:1.8rem;font-weight:900;color:#111;margin-bottom:20px;}
+.popup-ag-local-section{background:#f8f8f8;border-radius:12px;padding:18px;margin-bottom:20px;text-align:center;}
+.popup-ag-local-label{font-size:.65rem;color:#999;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;}
+.popup-ag-local-nome{font-size:1rem;font-weight:800;color:#111;margin-bottom:4px;}
+.popup-ag-local-end{font-size:.82rem;color:#555;line-height:1.5;}
+.popup-ag-corretor{font-size:.88rem;color:#333;margin-bottom:18px;line-height:1.4;}
+.popup-ag-corretor strong{color:#111;font-weight:800;}
+.popup-ag-protocolo{font-size:.72rem;color:#d4a853;font-weight:700;letter-spacing:.5px;margin-bottom:20px;}
+.popup-ag-footer{font-size:.65rem;color:#aaa;letter-spacing:.5px;}
+.popup-ag-btn-fechar{width:100%;max-width:300px;background:#111;color:#fff;border:none;border-radius:var(--rad);padding:14px;font-size:.88rem;font-weight:700;cursor:pointer;margin-top:16px;letter-spacing:.5px;}
+.popup-ag-btn-fechar:active{opacity:.8;}
 </style>
 </head>
 <body>
+<div class="app-wrapper">
 
 <!-- LOGIN -->
 <div class="login-screen" id="login-screen">
@@ -244,9 +298,12 @@ textarea.modal-input{resize:vertical;min-height:60px;}
   <div id="lembretes-container"></div>
   <div class="app-header">
     <div class="app-header-top">
-      <div>
-        <div class="app-user" id="app-user-nome"></div>
-        <div class="app-equipe" id="app-user-equipe"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="hamburger-btn" onclick="abrirSideMenu()">&#9776;</button>
+        <div>
+          <div class="app-user" id="app-user-nome"></div>
+          <div class="app-equipe" id="app-user-equipe"></div>
+        </div>
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="atualizarTudo()" id="btn-atualizar" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:4px 10px;font-size:.68rem;font-weight:700;cursor:pointer;">Atualizar</button>
@@ -255,12 +312,84 @@ textarea.modal-input{resize:vertical;min-height:60px;}
     </div>
   </div>
 
-  <div class="tabs" id="app-tabs"></div>
+  <div class="tabs" id="app-tabs" style="display:none;"></div>
 
   <div class="app-content">
 
+    <!-- TAB: INICIO (KPIs + Demandas) -->
+    <div class="app-page active" id="tab-inicio">
+      <div class="inicio-kpi-row" id="inicio-kpis"></div>
+      <div class="inicio-section-title">Demandas do Dia</div>
+      <div id="inicio-dem-list"><div class="loading">Carregando demandas...</div></div>
+    </div>
+
+    <!-- TAB: REAL (pipeline quente) -->
+    <div class="app-page" id="tab-real">
+      <div class="m-kpis" id="real-kpis">
+        <div class="m-kpi green"><div class="v" id="realKpiCount">0</div><div class="l">Clientes Quentes</div></div>
+        <div class="m-kpi yellow"><div class="v" id="realKpiVgv">R$ 0</div><div class="l">VGV Estimado</div></div>
+        <div class="m-kpi blue"><div class="v" id="realKpiDias">0</div><div class="l">Dias Médio</div></div>
+      </div>
+      <button onclick="abrirModalReal()" style="width:100%;background:var(--gold);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:14px;">🔥 NOVO CLIENTE QUENTE</button>
+      <div class="m-filter" id="real-filter">
+        <div class="m-filter-btn active" onclick="setRealFiltro('todos')">Todos</div>
+        <div class="m-filter-btn" onclick="setRealFiltro('GERANDO')">Gerando</div>
+        <div class="m-filter-btn" onclick="setRealFiltro('N GERADO')">N Gerado</div>
+        <div class="m-filter-btn" onclick="setRealFiltro('GERADO')">Gerado</div>
+      </div>
+      <div id="real-list"><div class="m-empty">Nenhum cliente quente cadastrado</div></div>
+    </div>
+
+    <!-- MODAL REAL -->
+    <div class="modal-agenda" id="modal-real" onclick="if(event.target===this)fecharModalReal()">
+      <div class="modal-agenda-sheet" style="max-height:85vh;overflow-y:auto;">
+        <div class="modal-handle"></div>
+        <div class="modal-agenda-title" id="modal-real-title">🔥 Novo Cliente Quente</div>
+        <input type="hidden" id="real-edit-id">
+        <div class="modal-input-group">
+          <div class="modal-input-label">Nome do Cliente *</div>
+          <input type="text" class="modal-input" id="real-nome" placeholder="Nome completo">
+        </div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">Telefone</div>
+          <input type="tel" class="modal-input" id="real-telefone" placeholder="(21) 99999-9999">
+        </div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">VGV Estimado *</div>
+          <input type="text" class="modal-input" id="real-vgv" placeholder="R$ 200.000">
+        </div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">Empreendimento</div>
+          <input type="text" class="modal-input" id="real-emp" list="real-emp-list" placeholder="Ex: Bosque Jacarepaguá">
+          <datalist id="real-emp-list">
+            <option value="Bosque Jacarepaguá"><option value="Porto Lima"><option value="Porto Valencia"><option value="Estação Rio"><option value="Parque Hotência"><option value="Elevto Bonsucesso"><option value="Soul Taquá"><option value="Park Village"><option value="Beija Flor"><option value="Viva Vida Recanto"><option value="Solar Trindade"><option value="Porto Valencia 2"><option value="Elevato Ramos">
+          </datalist>
+        </div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">Construtora</div>
+          <select class="modal-input" id="real-construtora">
+            <option value="">Selecione...</option>
+            <option value="Tenda">Tenda</option><option value="Cury">Cury</option><option value="Direcional">Direcional</option><option value="VIC">VIC</option><option value="Living">Living</option><option value="Emcamp">Emcamp</option><option value="Novolar">Novolar</option><option value="Habitta">Habitta</option><option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">Status</div>
+          <select class="modal-input" id="real-status">
+            <option value="GERANDO">GERANDO</option>
+            <option value="N GERADO">N GERADO</option>
+            <option value="GERADO">GERADO</option>
+          </select>
+        </div>
+        <div class="modal-input-group">
+          <div class="modal-input-label">Pendência / Observação</div>
+          <textarea class="modal-input" id="real-pendencia" rows="2" placeholder="Ex: Aguardando BACEN..."></textarea>
+        </div>
+        <button class="cal-add-btn" id="real-salvar-btn" onclick="salvarReal()" style="background:var(--gold);">SALVAR</button>
+      </div>
+    </div>
+
     <!-- TAB: DEMANDAS / URGENCIAS -->
-    <div class="app-page active" id="tab-demandas">
+    <div class="app-page" id="tab-demandas">
       <div class="m-kpis" id="dem-kpis"></div>
       <div id="dem-list"><div class="loading">Carregando demandas...</div></div>
     </div>
@@ -454,6 +583,47 @@ textarea.modal-input{resize:vertical;min-height:60px;}
   </div>
 </div>
 
+<!-- POPUP AGENDAMENTO CONFIRMADO (para screenshot do cliente) -->
+<div class="popup-agendamento-overlay" id="popup-agendamento">
+  <button class="popup-ag-close-x" onclick="fecharPopupAgendamento()">&times;</button>
+  <div class="popup-ag-content">
+    <div class="popup-ag-logo">A</div>
+    <div class="popup-ag-title"><span class="popup-ag-title-check">&#10003;</span> AGENDAMENTO CONFIRMADO</div>
+    <div class="popup-ag-divider"></div>
+    <div class="popup-ag-cliente" id="popup-ag-cliente">-</div>
+    <div class="popup-ag-data" id="popup-ag-data">-</div>
+    <div class="popup-ag-hora" id="popup-ag-hora">-</div>
+    <div class="popup-ag-local-section">
+      <div class="popup-ag-local-label">LOCAL DO ATENDIMENTO</div>
+      <div class="popup-ag-local-nome">SWELL &mdash; A5 Offices</div>
+      <div class="popup-ag-local-end">Av. das Am&eacute;ricas, 17150<br>Recreio dos Bandeirantes, Rio de Janeiro - RJ</div>
+    </div>
+    <div class="popup-ag-corretor" id="popup-ag-corretor">Quando chegar, procure por <strong>-</strong></div>
+    <div class="popup-ag-protocolo" id="popup-ag-protocolo">Protocolo: AG-000000</div>
+    <button class="popup-ag-btn-fechar" onclick="fecharPopupAgendamento()">Fechar</button>
+    <div class="popup-ag-footer" style="margin-top:16px;">Alicerce &mdash; Swell Consultoria</div>
+  </div>
+</div>
+
+<!-- SIDE MENU -->
+<div class="side-menu-overlay" id="side-menu-overlay" onclick="fecharSideMenu()" style="display:none !important;"></div>
+<div class="side-menu" id="side-menu" style="display:none !important;">
+  <div class="side-menu-header">
+    <div class="side-menu-logo">
+      <div class="side-menu-logo-icon">A</div>
+      <div class="side-menu-logo-text">ALICERCE</div>
+    </div>
+    <button class="side-menu-close" onclick="fecharSideMenu()">&times;</button>
+  </div>
+  <div class="side-menu-items" id="side-menu-items"></div>
+  <div class="side-menu-footer">
+    <div class="side-menu-footer-user" id="side-menu-user">-</div>
+    <div class="side-menu-footer-team" id="side-menu-team">-</div>
+  </div>
+</div>
+
+</div><!-- fim app-wrapper -->
+
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
 
@@ -548,10 +718,11 @@ async function fazerLogin() {
 
   // Montar tabs dinamicamente conforme cargo
   let tabsHtml = '';
+  tabsHtml += `<div class="tab active" onclick="showTab('tab-inicio', event)">Início</div>`;
   if (isGerente) {
-    tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Urgências</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-demandas', event)">Urgências</div>`;
   } else {
-    tabsHtml += `<div class="tab active" onclick="showTab('tab-demandas', event)">Demandas</div>`;
+    tabsHtml += `<div class="tab" onclick="showTab('tab-demandas', event)">Demandas</div>`;
   }
   tabsHtml += `<div class="tab" onclick="showTab('tab-unica', event)">Foco</div>`;
   tabsHtml += `<div class="tab" onclick="showTab('tab-agenda', event)">Agenda</div>`;
@@ -561,7 +732,7 @@ async function fazerLogin() {
 
   // Garantir que a primeira aba está ativa
   document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-demandas').classList.add('active');
+  document.getElementById('tab-inicio').classList.add('active');
 
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.add('active');
@@ -639,6 +810,9 @@ function showTab(id, e) {
   if (id === 'tab-registro') {
     setRegistroView('checkin');
   }
+  if (id === 'tab-inicio') {
+    renderInicio();
+  }
 }
 
 // ============================================
@@ -682,6 +856,7 @@ async function carregarTudo() {
   renderMinhasVendas();
   renderUnicaCoisa();
   renderCalendario();
+  renderInicio();
   iniciarMonitorMeiaNoite();
   salvarCache(); // salvar dados pra modo offline
 }
@@ -2069,8 +2244,16 @@ async function confirmarAgendamento() {
   // Animação + som
   mostrarAnimacaoAgenda(cliente, USUARIO.NOME);
 
+  // Popup de confirmação para o cliente (após animação)
+  if (tipo === 'Cliente') {
+    setTimeout(() => {
+      mostrarPopupAgendamento(cliente, data, hora, USUARIO.NOME);
+    }, 2000);
+  }
+
   // Atualizar calendário
   renderCalendario();
+  renderInicio();
 }
 
 // ============================================
@@ -2679,6 +2862,7 @@ function carregarDoCache() {
     renderMeusClientes();
     renderDemandas();
     renderMinhasVendas();
+    renderInicio();
     return true;
   } catch(e) { return false; }
 }
@@ -2692,6 +2876,344 @@ window.addEventListener('online', () => {
 window.addEventListener('offline', () => {
   document.getElementById('offline-bar').classList.add('show');
 });
+
+// ============================================
+// HAMBURGER SIDE MENU
+// ============================================
+function abrirSideMenu() {
+  const isMaster = USUARIO && (USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente');
+  let items = '';
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-inicio')"><span class="smi-icon">🏠</span> Início</div>`;
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-real')"><span class="smi-icon">🔥</span> Real</div>`;
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-agenda')"><span class="smi-icon">📅</span> Agenda</div>`;
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-vendas')"><span class="smi-icon">💰</span> Vendas</div>`;
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-unica')"><span class="smi-icon">🎯</span> Foco do Dia</div>`;
+  if (isMaster) items += `<div class="side-menu-item" onclick="sideMenuNav('tab-equipe')"><span class="smi-icon">👥</span> Minha Equipe</div>`;
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-pipeline')"><span class="smi-icon">📋</span> Meus Clientes</div>`;
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-registro')"><span class="smi-icon">📝</span> Registro</div>`;
+  document.getElementById('side-menu-items').innerHTML = items;
+  if (USUARIO) {
+    document.getElementById('side-menu-user').textContent = USUARIO.NOME;
+    document.getElementById('side-menu-team').textContent = USUARIO.CARGO + ' — Equipe ' + USUARIO.EQUIPE;
+  }
+  const overlay = document.getElementById('side-menu-overlay');
+  const menu = document.getElementById('side-menu');
+  overlay.style.cssText = '';
+  menu.style.cssText = '';
+  overlay.classList.add('open');
+  menu.classList.add('open');
+}
+
+function fecharSideMenu() {
+  const overlay = document.getElementById('side-menu-overlay');
+  const menu = document.getElementById('side-menu');
+  overlay.classList.remove('open');
+  menu.classList.remove('open');
+  overlay.style.cssText = 'display:none !important;';
+  menu.style.cssText = 'display:none !important;';
+}
+
+function sideMenuNav(tabId) {
+  fecharSideMenu();
+  showTab(tabId);
+  // Ativar tab correspondente na barra inferior se houver
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+}
+
+// ============================================
+// INICIO TAB (KPIs + Demandas)
+// ============================================
+function renderInicio() {
+  if (!USUARIO) return;
+
+  // KPIs
+  const nomeUpper = USUARIO.NOME.toUpperCase();
+  const NOMES_EQUIV = { 'DANDARA CAMPUS': 'DANDARA CAMPOS', 'WILIAN BUENO': 'WILLIAM BUENO' };
+
+  // Comissão estimada (clientes quentes do Real/localStorage)
+  let realData = [];
+  try {
+    realData = JSON.parse(localStorage.getItem('alicerce_real_' + USUARIO.NOME) || '[]');
+  } catch(e) {}
+  const vgvReal = realData.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
+  const comEstimada = vgvReal * 0.017 * 0.86;
+  const clientesQuentes = realData.length;
+
+  // Comissão real (vendas do mês)
+  const mesAtual = new Date();
+  const mesStr = mesAtual.getFullYear() + '-' + String(mesAtual.getMonth() + 1).padStart(2, '0');
+  const vendasMes = MINHAS_VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesStr);
+  const comReal = vendasMes.reduce((s, v) => s + ((parseFloat(v.VGV) || 0) * 0.017 * 0.86), 0);
+
+  const fmtMoney = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+  document.getElementById('inicio-kpis').innerHTML = `
+    <div class="inicio-kpi ik-gold"><div class="ik-val">${fmtMoney(comEstimada)}</div><div class="ik-label">Comissão Estimada</div></div>
+    <div class="inicio-kpi ik-green"><div class="ik-val">${fmtMoney(comReal)}</div><div class="ik-label">Comissão Real</div></div>
+    <div class="inicio-kpi ik-blue"><div class="ik-val">${clientesQuentes}</div><div class="ik-label">Clientes Quentes</div></div>
+  `;
+
+  // Demandas do dia (reutilizar dados)
+  renderInicioDemandas();
+}
+
+function renderInicioDemandas() {
+  if (!USUARIO) return;
+  const isGerente = USUARIO.CARGO === 'Gerente';
+  const isCoordenador = USUARIO.CARGO === 'Coordenador';
+  const todas = getMinhasDemandas();
+
+  if (todas.length === 0) {
+    document.getElementById('inicio-dem-list').innerHTML = '<div class="m-empty">Nenhuma demanda para hoje.</div>';
+    return;
+  }
+
+  const priorOrdem = { 'Alta': 1, 'Media': 2, 'Média': 2, 'Baixa': 3 };
+  const lista = [...todas].sort((a, b) => {
+    const stA = (a.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    const stB = (b.STATUS || '').toLowerCase().includes('conclu') ? 1 : 0;
+    if (stA !== stB) return stA - stB;
+    return (priorOrdem[a.PRIORIDADE] || 9) - (priorOrdem[b.PRIORIDADE] || 9);
+  });
+
+  const showResp = isCoordenador || isGerente;
+  let html = '';
+  lista.forEach(d => {
+    const prior = (d.PRIORIDADE || 'media').toLowerCase();
+    const isConcluida = (d.STATUS || '').toLowerCase().includes('conclu');
+    const borderColor = prior === 'alta' ? 'var(--danger)' : prior === 'baixa' ? 'var(--info)' : 'var(--warning)';
+    const priorTag = prior === 'alta' ? 'tag-divida' : prior === 'baixa' ? 'tag-bacen' : 'tag-pendente';
+    const statusTag = isConcluida ? 'tag-aprovado' : 'tag-pendente';
+    const statusLabel = isConcluida ? 'CONCLUÍDA' : 'PENDENTE';
+    const opacity = isConcluida ? 'opacity:.6;' : '';
+    const podeConc = !isConcluida && (isGerente || isCoordenador || (d.RESPONSAVEL || '').toUpperCase().includes(USUARIO.NOME.toUpperCase()));
+    const demResp = (d.RESPONSAVEL || '').replace(/'/g, "\\'");
+    const demDesc = (d.DESCRICAO || '').replace(/'/g, "\\'");
+    const demData = String(d.DATA || '').substring(0, 10);
+
+    html += `<div class="m-client" style="border-left:4px solid ${borderColor};${opacity}">
+      ${showResp ? `<div style="font-size:.72rem;font-weight:800;color:var(--accent);margin-bottom:4px;">${d.RESPONSAVEL || '-'}</div>` : ''}
+      <div style="font-size:.82rem;color:#fff;line-height:1.4;margin-bottom:8px;">${d.DESCRICAO || '-'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <span class="tag ${priorTag}">${d.PRIORIDADE || 'Média'}</span>
+        <span class="tag ${statusTag}">${statusLabel}</span>
+      </div>
+      ${d.CLIENTE ? `<div style="font-size:.68rem;color:var(--gold);margin-top:6px;">Clientes: ${d.CLIENTE}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+        ${demData ? `<div style="font-size:.62rem;color:var(--textL);">${fmtData(demData)}</div>` : '<div></div>'}
+        ${podeConc ? `<button onclick="concluirDemandaPorConteudo('${demResp}','${demDesc}','${demData}')" style="background:var(--success);color:#000;border:none;border-radius:6px;padding:5px 12px;font-size:.68rem;font-weight:700;cursor:pointer;">Concluir</button>` : ''}
+        ${isConcluida ? `<span style="font-size:.65rem;color:var(--success);font-weight:600;">Concluída</span>` : ''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('inicio-dem-list').innerHTML = html;
+}
+
+// ============================================
+// POPUP AGENDAMENTO CONFIRMADO
+// ============================================
+function mostrarPopupAgendamento(clienteNome, data, hora, corretorNome) {
+  const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const mesesNome = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  // Parsear data (formato YYYY-MM-DD)
+  const partes = data.split('-');
+  const dt = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+  const diaSemana = diasSemana[dt.getDay()];
+  const dia = dt.getDate();
+  const mes = mesesNome[dt.getMonth()];
+  const ano = dt.getFullYear();
+  const dataFormatada = `${diaSemana}, ${dia} de ${mes} de ${ano}`;
+
+  // Protocolo
+  const protocolo = 'AG-' + String(Math.floor(100000 + Math.random() * 900000));
+
+  document.getElementById('popup-ag-cliente').textContent = clienteNome;
+  document.getElementById('popup-ag-data').textContent = dataFormatada;
+  document.getElementById('popup-ag-hora').textContent = hora;
+  document.getElementById('popup-ag-corretor').innerHTML = 'Quando chegar, procure por <strong>' + corretorNome + '</strong>';
+  document.getElementById('popup-ag-protocolo').textContent = 'Protocolo: ' + protocolo;
+  document.getElementById('popup-agendamento').classList.add('open');
+}
+
+function fecharPopupAgendamento() {
+  document.getElementById('popup-agendamento').classList.remove('open');
+}
+
+// ============================================
+// REAL (pipeline quente) — localStorage + API
+// ============================================
+let REAL_CLIENTS = [];
+let REAL_FILTRO = 'todos';
+
+function realStorageKey() { return 'alicerce_real_' + (USUARIO ? USUARIO.NOME : ''); }
+
+function loadReal() {
+  try { REAL_CLIENTS = JSON.parse(localStorage.getItem(realStorageKey())) || []; } catch(e) { REAL_CLIENTS = []; }
+}
+
+function saveReal() { localStorage.setItem(realStorageKey(), JSON.stringify(REAL_CLIENTS)); }
+
+function calcDiasReal(dataEntrada) {
+  if (!dataEntrada) return 0;
+  const d = new Date(dataEntrada + 'T12:00:00');
+  const hoje = new Date();
+  return Math.max(0, Math.floor((hoje - d) / 86400000));
+}
+
+function fmtVgv(v) { return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0}); }
+
+function parseVgvInput(str) {
+  if (!str) return 0;
+  return parseFloat(String(str).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+}
+
+function renderReal() {
+  loadReal();
+  const ativos = REAL_CLIENTS.filter(c => c.status !== 'GERADO');
+  const vgvTotal = REAL_CLIENTS.reduce((s, c) => s + (c.vgv || 0), 0);
+  const diasTotal = ativos.length > 0 ? ativos.reduce((s, c) => s + calcDiasReal(c.dataEntrada), 0) / ativos.length : 0;
+
+  document.getElementById('realKpiCount').textContent = ativos.length;
+  document.getElementById('realKpiVgv').textContent = fmtVgv(vgvTotal);
+  document.getElementById('realKpiDias').textContent = Math.round(diasTotal);
+
+  let lista = REAL_CLIENTS;
+  if (REAL_FILTRO !== 'todos') lista = lista.filter(c => c.status === REAL_FILTRO);
+
+  // Ordenar: N GERADO primeiro, depois GERANDO, depois GERADO
+  const ordem = { 'N GERADO': 0, 'GERANDO': 1, 'GERADO': 2 };
+  lista.sort((a, b) => (ordem[a.status] || 1) - (ordem[b.status] || 1));
+
+  if (lista.length === 0) {
+    document.getElementById('real-list').innerHTML = '<div class="m-empty">Nenhum cliente ' + (REAL_FILTRO !== 'todos' ? 'com status ' + REAL_FILTRO : 'quente cadastrado') + '</div>';
+    return;
+  }
+
+  let html = '';
+  lista.forEach(c => {
+    const dias = calcDiasReal(c.dataEntrada);
+    const diasColor = dias < 7 ? 'var(--success)' : dias < 15 ? 'var(--warning)' : 'var(--danger)';
+    const statusColor = c.status === 'GERADO' ? 'var(--success)' : c.status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
+    const statusBg = c.status === 'GERADO' ? 'rgba(0,230,118,.1)' : c.status === 'N GERADO' ? 'rgba(239,83,80,.1)' : 'rgba(255,167,38,.1)';
+    const opacity = c.status === 'GERADO' ? 'opacity:.6;' : '';
+
+    html += `<div class="m-client" style="border-left:4px solid ${statusColor};${opacity}">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div class="m-client-name">${c.nome || '-'}</div>
+          <div class="m-client-cpf">${c.telefone || 'Sem telefone'}</div>
+        </div>
+        <div style="background:${diasColor};color:#000;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:800;">${dias}d</div>
+      </div>
+      <div class="m-client-renda">${fmtVgv(c.vgv)}</div>
+      <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">${c.empreendimento || '-'}${c.construtora ? ' • ' + c.construtora : ''}</div>
+      ${c.pendencia ? '<div style="font-size:.7rem;color:var(--warning);margin-bottom:6px;">⚠ ' + c.pendencia + '</div>' : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="tag" style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor};">${c.status}</span>
+        <div style="display:flex;gap:8px;">
+          <button onclick="editarReal('${c.id}')" style="background:none;border:none;color:var(--textL);font-size:1rem;cursor:pointer;">✏️</button>
+          <button onclick="deletarReal('${c.id}')" style="background:none;border:none;color:var(--danger);font-size:1rem;cursor:pointer;">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('real-list').innerHTML = html;
+}
+
+function setRealFiltro(f) {
+  REAL_FILTRO = f;
+  document.querySelectorAll('#tab-real .m-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim().toUpperCase() === f.toUpperCase() || (f === 'todos' && b.textContent.trim() === 'Todos'));
+  });
+  renderReal();
+}
+
+function abrirModalReal(editId) {
+  document.getElementById('real-edit-id').value = editId || '';
+  document.getElementById('modal-real-title').textContent = editId ? '✏️ Editar Cliente' : '🔥 Novo Cliente Quente';
+  document.getElementById('real-salvar-btn').textContent = editId ? 'ATUALIZAR' : 'SALVAR';
+  if (editId) {
+    const c = REAL_CLIENTS.find(x => x.id === editId);
+    if (c) {
+      document.getElementById('real-nome').value = c.nome || '';
+      document.getElementById('real-telefone').value = c.telefone || '';
+      document.getElementById('real-vgv').value = fmtVgv(c.vgv);
+      document.getElementById('real-emp').value = c.empreendimento || '';
+      document.getElementById('real-construtora').value = c.construtora || '';
+      document.getElementById('real-status').value = c.status || 'GERANDO';
+      document.getElementById('real-pendencia').value = c.pendencia || '';
+    }
+  } else {
+    ['real-nome','real-telefone','real-vgv','real-emp','real-pendencia'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('real-construtora').value = '';
+    document.getElementById('real-status').value = 'GERANDO';
+  }
+  document.getElementById('modal-real').classList.add('open');
+}
+
+function fecharModalReal() { document.getElementById('modal-real').classList.remove('open'); }
+
+async function salvarReal() {
+  const nome = document.getElementById('real-nome').value.trim();
+  const vgv = parseVgvInput(document.getElementById('real-vgv').value);
+  if (!nome) { alert('Nome do cliente é obrigatório'); return; }
+  if (!vgv) { alert('VGV estimado é obrigatório'); return; }
+
+  const editId = document.getElementById('real-edit-id').value;
+  const novoStatus = document.getElementById('real-status').value;
+  const obj = {
+    nome,
+    telefone: document.getElementById('real-telefone').value.trim(),
+    vgv,
+    empreendimento: document.getElementById('real-emp').value.trim(),
+    construtora: document.getElementById('real-construtora').value,
+    status: novoStatus,
+    pendencia: document.getElementById('real-pendencia').value.trim()
+  };
+
+  let wasGerado = false;
+
+  if (editId) {
+    const idx = REAL_CLIENTS.findIndex(x => x.id === editId);
+    if (idx >= 0) {
+      const nomeOriginal = REAL_CLIENTS[idx].nome;
+      wasGerado = REAL_CLIENTS[idx].status !== 'GERADO' && novoStatus === 'GERADO';
+      REAL_CLIENTS[idx] = { ...REAL_CLIENTS[idx], ...obj };
+      // Atualizar na API
+      try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ acao: 'atualizar_real', busca: { CORRETOR: USUARIO.NOME, CLIENTE: nomeOriginal }, campos: { CLIENTE: obj.nome, TELEFONE: obj.telefone, VGV_ESTIMADO: obj.vgv, EMPREENDIMENTO: obj.empreendimento, CONSTRUTORA: obj.construtora, STATUS: obj.status, PENDENCIA: obj.pendencia } }) }); } catch(e) {}
+    }
+  } else {
+    wasGerado = novoStatus === 'GERADO';
+    obj.id = 'r_' + Date.now();
+    obj.dataEntrada = new Date().toISOString().split('T')[0];
+    obj.corretor = USUARIO.NOME;
+    REAL_CLIENTS.push(obj);
+    // Adicionar na API
+    const params = new URLSearchParams({ acao: 'add_real', dt: obj.dataEntrada, corretor: USUARIO.NOME, cliente: obj.nome, telefone: obj.telefone || '', vgv: obj.vgv, emp: obj.empreendimento || '', construtora: obj.construtora || '', status: obj.status, pendencia: obj.pendencia || '', entrada: obj.dataEntrada, comissao: 'NÃO PAGO' });
+    try { await fetch(API_URL + '?' + params.toString()); } catch(e) {}
+  }
+
+  saveReal();
+  fecharModalReal();
+  renderReal();
+  renderInicio();
+
+  if (wasGerado) { mostrarConfirmacao('🎉 CONTRATO GERADO!'); }
+}
+
+function editarReal(id) { abrirModalReal(id); }
+
+async function deletarReal(id) {
+  const c = REAL_CLIENTS.find(x => x.id === id);
+  if (!c || !confirm('Excluir "' + c.nome + '" do pipeline?')) return;
+  // Deletar na API
+  try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ acao: 'deletar_real', corretor: USUARIO.NOME, cliente: c.nome }) }); } catch(e) {}
+  REAL_CLIENTS = REAL_CLIENTS.filter(x => x.id !== id);
+  saveReal();
+  renderReal();
+  renderInicio();
+}
 
 // ============================================
 // INIT

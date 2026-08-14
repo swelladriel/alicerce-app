@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0f14">
 <title>Alicerce — Painel do Coordenador</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:10px;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -174,7 +175,11 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   .top-bar-label{display:none;}
   .top-bar-sep{display:none;}
   .kanban-col{min-width:170px;max-width:170px;}
+  #cicloKPIs{grid-template-columns:1fr 1fr !important;}
+  #cicloComNeg > div, #cicloComEfe > div{grid-template-columns:1fr !important;}
+  .view-ciclo .charts-grid-ciclo{grid-template-columns:1fr !important;}
 }
+.main-tabs{flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -182,9 +187,16 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
 <div class="login-screen" id="loginScreen">
   <div class="login-logo">ALICERCE</div>
   <div class="login-sub">Painel do Coordenador</div>
-  <div class="login-question">Quem e voce?</div>
+  <div class="login-question">Quem é você?</div>
   <div class="login-grid" id="loginGrid">
     <div style="grid-column:1/3;text-align:center;color:var(--textL);font-size:.8rem;">Carregando equipes...</div>
+  </div>
+  <div id="loginSenhaBox" style="display:none;width:100%;max-width:400px;margin-top:16px;text-align:center;">
+    <div id="loginSenhaNome" style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:12px;"></div>
+    <input type="password" id="loginSenhaInput" placeholder="Digite sua senha" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px 16px;color:var(--text);font-size:.9rem;outline:none;margin-bottom:10px;">
+    <div id="loginSenhaErro" style="color:var(--danger);font-size:.75rem;margin-bottom:10px;display:none;">Senha incorreta</div>
+    <button id="loginSenhaBtn" onclick="confirmarSenha()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.9rem;font-weight:800;cursor:pointer;">ENTRAR</button>
+    <button onclick="voltarLogin()" style="width:100%;background:none;border:1px solid var(--border);color:var(--textL);border-radius:var(--rad);padding:10px;font-size:.78rem;cursor:pointer;margin-top:8px;">Voltar</button>
   </div>
 </div>
 
@@ -204,8 +216,8 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
   <div class="main-tabs" id="mainTabs">
     <div class="main-tab active" data-view="demandas" onclick="setMainView('demandas')">Demandas</div>
     <div class="main-tab" data-view="presenca" onclick="setMainView('presenca')">Presenca</div>
-    <div class="main-tab" data-view="pipeline" onclick="setMainView('pipeline')">Pipeline</div>
     <div class="main-tab" data-view="vendas" onclick="setMainView('vendas')">Vendas</div>
+    <div class="main-tab" data-view="ciclo" onclick="setMainView('ciclo')">Ciclo de Vendas</div>
   </div>
   <div class="view-demandas" id="viewDemandas">
   <div class="main">
@@ -281,6 +293,9 @@ button,a,.tab-btn,.main-tab,.login-btn,.btn-concluir,.cal-day{touch-action:manip
       </div>
     </div>
   </div>
+  <div class="view-ciclo" id="viewCiclo" style="display:none;">
+    <iframe id="cicloIframe" src="" style="width:100%;height:calc(100vh - 95px);border:none;background:var(--bg);"></iframe>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modalDetalhe" style="display:none;">
@@ -352,6 +367,10 @@ let CAL_MES = new Date().getMonth();
 let CAL_ANO = new Date().getFullYear();
 let DIA_SELECIONADO = toBrasilia(new Date()).toISOString().split('T')[0];
 let REFRESH_TIMER = null;
+let REAL_DATA = [];
+let CICLO_STATUS_FILTER = 'todos';
+let cicloChartCorretoresInst = null;
+let cicloChartStatusInst = null;
 
 function toBrasilia(d) {
   const dt = d instanceof Date ? d : new Date(d);
@@ -408,42 +427,87 @@ function pertenceEquipe(nomeCorretor) {
   return equipe.some(m => normNome(m) === norm || norm.includes(normNome(m)) || normNome(m).includes(norm));
 }
 
+let CORRETORES_LOGIN = [];
+let LOGIN_PENDENTE = null;
+
 async function buildLoginGrid() {
   const grid = document.getElementById('loginGrid');
   try {
     const res = await fetch(API_URL + '?acao=corretores');
-    const corretores = await res.json();
-    const coords = corretores.filter(c => (c.STATUS || '').toLowerCase() === 'ativo' && (c.CARGO || '').toLowerCase() === 'coordenador');
-    const gerentes = corretores.filter(c => (c.STATUS || '').toLowerCase() === 'ativo' && (c.CARGO || '').toLowerCase() === 'gerente');
+    CORRETORES_LOGIN = await res.json();
+    const coords = CORRETORES_LOGIN.filter(c => (c.STATUS || '').toLowerCase() === 'ativo' && (c.CARGO || '').toLowerCase() === 'coordenador');
+    const gerentes = CORRETORES_LOGIN.filter(c => (c.STATUS || '').toLowerCase() === 'ativo' && (c.CARGO || '').toLowerCase() === 'gerente');
     const coordMap = { 'Glauco': 'Glauco', 'Edivan': 'Edvan', 'Edvan': 'Edvan', 'Marcelo ': 'Marcelo Arouca', 'Marcelo': 'Marcelo Arouca', 'Adriel': 'Adriel Duarte' };
     let html = '';
     coords.forEach(c => {
       const equipeRaw = (c.EQUIPE || '').trim();
       const loginNome = coordMap[equipeRaw] || c.NOME;
-      html += '<div class="login-btn" onclick="login(\'' + loginNome.replace(/'/g,"\\'") + '\',\'Coordenador\')">' + c.NOME + '<div class="role">Coordenador</div></div>';
+      html += '<div class="login-btn" onclick="pedirSenha(\'' + loginNome.replace(/'/g,"\\'") + '\',\'Coordenador\',\'' + c.NOME.replace(/'/g,"\\'") + '\')">' + c.NOME + '<div class="role">Coordenador</div></div>';
     });
     gerentes.forEach(c => {
       const loginNome = coordMap[(c.EQUIPE || '').trim()] || c.NOME;
-      html += '<div class="login-btn gerente" onclick="login(\'' + loginNome.replace(/'/g,"\\'") + '\',\'Gerente\')">' + c.NOME + '<div class="role">Gerente - ve todas as equipes</div></div>';
+      html += '<div class="login-btn gerente" onclick="pedirSenha(\'' + loginNome.replace(/'/g,"\\'") + '\',\'Gerente\',\'' + c.NOME.replace(/'/g,"\\'") + '\')">' + c.NOME + '<div class="role">Gerente - vê todas as equipes</div></div>';
     });
     grid.innerHTML = html;
   } catch(e) {
-    grid.innerHTML = '<div class="login-btn" onclick="login(\'Glauco\',\'Coordenador\')">Glauco<div class="role">Coordenador</div></div><div class="login-btn" onclick="login(\'Edvan\',\'Coordenador\')">Edvan<div class="role">Coordenador</div></div><div class="login-btn" onclick="login(\'Marcelo Arouca\',\'Coordenador\')">Marcelo Arouca<div class="role">Coordenador</div></div><div class="login-btn gerente" onclick="login(\'Adriel Duarte\',\'Gerente\')">Adriel Duarte<div class="role">Gerente - ve todas as equipes</div></div>';
+    grid.innerHTML = '<div style="grid-column:1/3;text-align:center;color:var(--danger);font-size:.8rem;">Erro ao carregar. <button onclick="location.reload()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;margin-top:8px;">Tentar novamente</button></div>';
   }
 }
 
-function login(nome, cargo) {
+function pedirSenha(loginNome, cargo, nomeExibicao) {
+  LOGIN_PENDENTE = { loginNome, cargo, nomeExibicao };
+  document.getElementById('loginGrid').style.display = 'none';
+  document.querySelector('.login-question').style.display = 'none';
+  document.getElementById('loginSenhaBox').style.display = 'block';
+  document.getElementById('loginSenhaNome').textContent = nomeExibicao;
+  document.getElementById('loginSenhaInput').value = '';
+  document.getElementById('loginSenhaErro').style.display = 'none';
+  setTimeout(() => document.getElementById('loginSenhaInput').focus(), 100);
+}
+
+function voltarLogin() {
+  LOGIN_PENDENTE = null;
+  document.getElementById('loginGrid').style.display = 'grid';
+  document.querySelector('.login-question').style.display = 'block';
+  document.getElementById('loginSenhaBox').style.display = 'none';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && LOGIN_PENDENTE && document.getElementById('loginSenhaBox').style.display !== 'none') confirmarSenha();
+});
+
+function confirmarSenha() {
+  if (!LOGIN_PENDENTE) return;
+  const senha = document.getElementById('loginSenhaInput').value;
+  const usuario = CORRETORES_LOGIN.find(c => c.NOME === LOGIN_PENDENTE.nomeExibicao);
+  const senhaCorreta = String((usuario && usuario.SENHA) || '').trim();
+
+  if (senha !== senhaCorreta) {
+    document.getElementById('loginSenhaErro').style.display = 'block';
+    document.getElementById('loginSenhaInput').value = '';
+    return;
+  }
+
+  login(LOGIN_PENDENTE.loginNome, LOGIN_PENDENTE.cargo, senha);
+}
+
+function login(nome, cargo, senha) {
   COORD = { nome, cargo };
   localStorage.setItem('coordenadorLogado', JSON.stringify(COORD));
+  if (senha) localStorage.setItem('coordenadorSenha', senha);
   mostrarApp();
 }
 
 function logout() {
   COORD = null;
   localStorage.removeItem('coordenadorLogado');
+  localStorage.removeItem('coordenadorSenha');
   if (REFRESH_TIMER) clearInterval(REFRESH_TIMER);
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('appShell').classList.remove('active');
+  document.getElementById('loginGrid').style.display = 'grid';
+  document.querySelector('.login-question').style.display = 'block';
+  document.getElementById('loginSenhaBox').style.display = 'none';
 }
 
 function mostrarApp() {
@@ -461,6 +525,7 @@ async function carregarDados() {
   try {
     const res = await fetch(API_URL + '?acao=tudo');
     DADOS = await res.json();
+    REAL_DATA = DADOS.real || [];
     buildEquipes(DADOS.corretores);
     renderTudo();
   } catch (e) {
@@ -474,6 +539,7 @@ async function carregarDadosSilencioso() {
   try {
     const res = await fetch(API_URL + '?acao=tudo');
     DADOS = await res.json();
+    REAL_DATA = DADOS.real || [];
     buildEquipes(DADOS.corretores);
     renderTudo();
   } catch (e) {}
@@ -490,6 +556,14 @@ function setMainView(view) {
   document.getElementById('viewPresenca').style.display = view === 'presenca' ? '' : 'none';
   document.getElementById('viewPipeline').style.display = view === 'pipeline' ? '' : 'none';
   document.getElementById('viewVendas').style.display = view === 'vendas' ? '' : 'none';
+  document.getElementById('viewCiclo').style.display = view === 'ciclo' ? '' : 'none';
+  if (view === 'ciclo') {
+    const iframe = document.getElementById('cicloIframe');
+    if (!iframe.dataset.loaded) {
+      iframe.src = 'ciclo-vendas.html';
+      iframe.dataset.loaded = '1';
+    }
+  }
 }
 
 function renderAlertasZerados() {
@@ -541,6 +615,7 @@ function renderTudo() {
   try { renderPresenca(); } catch(e) { console.error('renderPresenca:', e); }
   try { renderPipeline(); } catch(e) { console.error('renderPipeline:', e); }
   try { renderVendas(); } catch(e) { console.error('renderVendas:', e); }
+  // Ciclo de Vendas carrega via iframe
 }
 
 let PRESENCA_TAB = 'hoje';
@@ -1801,19 +1876,348 @@ function renderVendas() {
   document.getElementById('vendasLista').innerHTML = listaHtml;
 }
 
-(function init() {
+// ============================================
+// CICLO DE VENDAS
+// ============================================
+const NOMES_EQUIV_CICLO = { 'DANDARA CAMPUS': 'DANDARA CAMPOS', 'WILIAN BUENO': 'WILLIAM BUENO', 'EDVAM SILVA': 'EDVAN SILVA' };
+
+function getRealEquipe() {
+  return REAL_DATA.filter(r => {
+    const corr = (r.CORRETOR || '').trim();
+    return pertenceEquipe(corr);
+  });
+}
+
+function parseVGVCiclo(val) {
+  if (!val) return 0;
+  if (typeof val === 'number') return val;
+  let s = String(val).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+  return parseFloat(s) || 0;
+}
+
+function calcDiasCiclo(item) {
+  let dStr = item.DATA_ENTRADA || item.DATA;
+  if (!dStr) return 0;
+  let s = String(dStr);
+  let d;
+  if (s.includes('T')) { d = new Date(s); }
+  else if (s.includes('/')) { let p = s.split('/'); d = new Date(p[2], p[1]-1, p[0]); }
+  else if (s.includes('-') && s.split('-')[0].length === 4) { d = new Date(s); }
+  else { d = new Date(s); }
+  if (!d || isNaN(d.getTime())) return 0;
+  let hoje = new Date();
+  return Math.max(0, Math.floor((hoje - d) / (1000*60*60*24)));
+}
+
+function fmtMoedaCiclo(v) {
+  if (!v || isNaN(v)) return 'R$ 0';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function setCicloStatusFilter(st) {
+  CICLO_STATUS_FILTER = st;
+  document.querySelectorAll('#cicloStatusTabs .tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.cst === st);
+  });
+  renderCicloTabela();
+}
+
+function getFilteredReal() {
+  let data = getRealEquipe();
+  if (CICLO_STATUS_FILTER !== 'todos') {
+    data = data.filter(r => (r.STATUS || '').toUpperCase().trim() === CICLO_STATUS_FILTER);
+  }
+  const busca = (document.getElementById('cicloBusca') ? document.getElementById('cicloBusca').value : '').toLowerCase().trim();
+  if (busca) {
+    data = data.filter(r => ((r.CLIENTE || '') + ' ' + (r.CORRETOR || '') + ' ' + (r.EMPREENDIMENTO || '')).toLowerCase().includes(busca));
+  }
+  return data;
+}
+
+function renderCiclo() {
+  renderCicloKPIs();
+  renderCicloComissoes();
+  renderCicloCharts();
+  renderCicloTabela();
+}
+
+function renderCicloKPIs() {
+  const data = getRealEquipe();
+  let totalVGV = 0, geradoVGV = 0, gerandoVGV = 0, nGeradoVGV = 0;
+  let geradoN = 0, gerandoN = 0, nGeradoN = 0;
+  data.forEach(item => {
+    const vgv = parseVGVCiclo(item.VGV_ESTIMADO);
+    totalVGV += vgv;
+    const st = (item.STATUS || '').toUpperCase().trim();
+    if (st === 'GERADO') { geradoVGV += vgv; geradoN++; }
+    else if (st === 'GERANDO') { gerandoVGV += vgv; gerandoN++; }
+    else { nGeradoVGV += vgv; nGeradoN++; }
+  });
+  const n = data.length;
+  const med = n > 0 ? totalVGV / n : 0;
+  const pctGerado = totalVGV > 0 ? (geradoVGV/totalVGV*100).toFixed(1) : '0';
+  const pctPipeline = totalVGV > 0 ? (gerandoVGV/totalVGV*100).toFixed(1) : '0';
+  const pctPerda = totalVGV > 0 ? (nGeradoVGV/totalVGV*100).toFixed(1) : '0';
+
+  document.getElementById('cicloKPIs').innerHTML = `
+    <div class="vendas-kpi" style="border-top:3px solid var(--textL);">
+      <div class="vendas-kpi-num" style="font-size:1.2rem;">${fmtMoedaCiclo(totalVGV)}</div>
+      <div class="vendas-kpi-label">VGV Total Negociado</div>
+      <div style="font-size:.6rem;color:var(--textL);margin-top:2px;">${n} operações · Méd: ${fmtVGV(med)}</div>
+    </div>
+    <div class="vendas-kpi" style="border-top:3px solid var(--success);">
+      <div class="vendas-kpi-num" style="font-size:1.2rem;color:var(--success);">${fmtMoedaCiclo(geradoVGV)}</div>
+      <div class="vendas-kpi-label">VGV Gerado (Aprovado)</div>
+      <div style="font-size:.6rem;color:var(--textL);margin-top:2px;">${geradoN} contratos · ${pctGerado}% do total</div>
+    </div>
+    <div class="vendas-kpi" style="border-top:3px solid var(--info);">
+      <div class="vendas-kpi-num" style="font-size:1.2rem;color:var(--info);">${fmtMoedaCiclo(gerandoVGV)}</div>
+      <div class="vendas-kpi-label">VGV Pipeline (Gerando)</div>
+      <div style="font-size:.6rem;color:var(--textL);margin-top:2px;">${gerandoN} em processo · ${pctPipeline}% pipeline</div>
+    </div>
+    <div class="vendas-kpi" style="border-top:3px solid var(--danger);">
+      <div class="vendas-kpi-num" style="font-size:1.2rem;color:var(--danger);">${fmtMoedaCiclo(nGeradoVGV)}</div>
+      <div class="vendas-kpi-label">Perda / Descarte</div>
+      <div style="font-size:.6rem;color:var(--textL);margin-top:2px;">${nGeradoN} descartados · ${pctPerda}% perda</div>
+    </div>`;
+}
+
+function renderCicloComissoes() {
+  if (!COORD) return;
+  const isGerente = COORD.cargo === 'Gerente';
+  const isCoordenador = COORD.cargo === 'Coordenador';
+  const nomeUser = normNome(COORD.nome);
+
+  // Detectar nomes de coordenadores e gerentes da lista de corretores
+  const corretoresList = DADOS.corretores || [];
+  const coordNomes = corretoresList.filter(c => (c.CARGO||'').toLowerCase() === 'coordenador').map(c => normNome(c.NOME || c['NOME COMPLETO'] || ''));
+  const gerenteNomes = corretoresList.filter(c => (c.CARGO||'').toLowerCase() === 'gerente').map(c => normNome(c.NOME || c['NOME COMPLETO'] || ''));
+
+  function calcComissao(items) {
+    let comTotal=0, comMinha=0, comCorretores=0, comCoords=0, vendaPropriaN=0, vendaEquipeN=0;
+    items.forEach(item => {
+      const vgv = parseVGVCiclo(item.VGV_ESTIMADO);
+      const corretor = normNome(item.CORRETOR);
+      const isVendaPropriaCo = coordNomes.includes(corretor);
+      if (isGerente) {
+        const isMinhaVenda = corretor === nomeUser;
+        comTotal += vgv * 0.024 * 0.86;
+        if (isMinhaVenda) { comMinha += vgv * 0.024 * 0.86; vendaPropriaN++; }
+        else { comMinha += vgv * 0.005 * 0.86; vendaEquipeN++; }
+        if (isVendaPropriaCo) { comCorretores += vgv * 0.019 * 0.86; }
+        else if (!isMinhaVenda) { comCorretores += vgv * 0.017 * 0.86; comCoords += vgv * 0.002 * 0.86; }
+      } else if (isCoordenador) {
+        const isMinhaVenda = corretor === nomeUser;
+        comTotal += vgv * 0.019 * 0.86;
+        if (isMinhaVenda) { comMinha += vgv * 0.019 * 0.86; vendaPropriaN++; }
+        else { comMinha += vgv * 0.002 * 0.86; comCorretores += vgv * 0.017 * 0.86; vendaEquipeN++; }
+      }
+    });
+    return {comTotal, comMinha, comCorretores, comCoords, vendaPropriaN, vendaEquipeN};
+  }
+
+  // --- NEGOCIADAS (pipeline Real) ---
+  const realEquipe = getRealEquipe();
+  const neg = calcComissao(realEquipe);
+  let comNegHtml = '';
+  if (isGerente) {
+    comNegHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div class="vendas-kpi" style="border-left:3px solid var(--gold);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--gold);">${fmtMoedaCiclo(neg.comTotal)}</div><div class="vendas-kpi-label">Total (2,4%)</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${realEquipe.length} clientes no pipeline</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid #a855f7;"><div class="vendas-kpi-num" style="font-size:1rem;color:#a855f7;">${fmtMoedaCiclo(neg.comMinha)}</div><div class="vendas-kpi-label">Minha Comissão</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${neg.vendaPropriaN} vendas próprias (2,4%) + ${neg.vendaEquipeN} da equipe (0,5%)</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid var(--info);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--info);">${fmtMoedaCiclo(neg.comCorretores)}</div><div class="vendas-kpi-label">Corretores (1,7%)</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid var(--warning);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--warning);">${fmtMoedaCiclo(neg.comCoords)}</div><div class="vendas-kpi-label">Coordenadores (0,2%)</div></div>
+    </div>`;
+  } else if (isCoordenador) {
+    comNegHtml = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div class="vendas-kpi" style="border-left:3px solid var(--gold);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--gold);">${fmtMoedaCiclo(neg.comTotal)}</div><div class="vendas-kpi-label">Total Equipe (1,9%)</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${realEquipe.length} clientes no pipeline</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid #a855f7;"><div class="vendas-kpi-num" style="font-size:1rem;color:#a855f7;">${fmtMoedaCiclo(neg.comMinha)}</div><div class="vendas-kpi-label">Minha Comissão</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${neg.vendaPropriaN} vendas próprias (1,9%) + ${neg.vendaEquipeN} da equipe (0,2%)</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid var(--info);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--info);">${fmtMoedaCiclo(neg.comCorretores)}</div><div class="vendas-kpi-label">Corretores (1,7%)</div></div>
+    </div>`;
+  }
+  document.getElementById('cicloComNeg').innerHTML = comNegHtml;
+
+  // --- EFETIVADAS (vendas do mês comercial atual) ---
+  const vendasAll = DADOS.vendas || [];
+  const INICIO_MES = '2026-08';
+  const vendasVisiveis = vendasAll.filter(v => {
+    if (!v.CORRETOR) return false;
+    let corr = normNome(v.CORRETOR);
+    const equivKey = (v.CORRETOR || '').toUpperCase().trim();
+    if (NOMES_EQUIV_CICLO[equivKey]) corr = normNome(NOMES_EQUIV_CICLO[equivKey]);
+    if (!pertenceEquipe(v.CORRETOR) && !pertenceEquipe(NOMES_EQUIV_CICLO[equivKey] || '')) return false;
+    const mc = String(v.MES_COMERCIAL || '').substring(0, 7);
+    if (mc !== INICIO_MES) return false;
+    if ((v.STATUS_VENDA || '').toUpperCase().includes('DISTRATO')) return false;
+    return true;
+  });
+
+  let efeTotal=0, efeMinha=0, efeCorretores=0, efeCoords=0, efePropN=0, efeEqN=0;
+  vendasVisiveis.forEach(v => {
+    const vgv = parseFloat(v.VGV) || 0;
+    let corretor = normNome(v.CORRETOR);
+    const equivKey = (v.CORRETOR || '').toUpperCase().trim();
+    if (NOMES_EQUIV_CICLO[equivKey]) corretor = normNome(NOMES_EQUIV_CICLO[equivKey]);
+    const isVendaPropriaCo = coordNomes.includes(corretor);
+    if (isGerente) {
+      const isMinhaVenda = corretor === nomeUser;
+      efeTotal += vgv * 0.024 * 0.86;
+      if (isMinhaVenda) { efeMinha += vgv * 0.024 * 0.86; efePropN++; }
+      else { efeMinha += vgv * 0.005 * 0.86; efeEqN++; }
+      if (isVendaPropriaCo) { efeCorretores += vgv * 0.019 * 0.86; }
+      else if (!isMinhaVenda) { efeCorretores += vgv * 0.017 * 0.86; efeCoords += vgv * 0.002 * 0.86; }
+    } else if (isCoordenador) {
+      const isMinhaVenda = corretor === nomeUser;
+      efeTotal += vgv * 0.019 * 0.86;
+      if (isMinhaVenda) { efeMinha += vgv * 0.019 * 0.86; efePropN++; }
+      else { efeMinha += vgv * 0.002 * 0.86; efeCorretores += vgv * 0.017 * 0.86; efeEqN++; }
+    }
+  });
+
+  let comEfeHtml = '';
+  if (isGerente) {
+    comEfeHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div class="vendas-kpi" style="border-left:3px solid var(--success);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--success);">${fmtMoedaCiclo(efeTotal)}</div><div class="vendas-kpi-label">Total Mês (2,4%)</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${vendasVisiveis.length} vendas no mês</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid #a855f7;"><div class="vendas-kpi-num" style="font-size:1rem;color:#a855f7;">${fmtMoedaCiclo(efeMinha)}</div><div class="vendas-kpi-label">Minha Comissão</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${efePropN} vendas próprias (2,4%) + ${efeEqN} da equipe (0,5%)</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid var(--info);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--info);">${fmtMoedaCiclo(efeCorretores)}</div><div class="vendas-kpi-label">Corretores (1,7%)</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid var(--warning);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--warning);">${fmtMoedaCiclo(efeCoords)}</div><div class="vendas-kpi-label">Coordenadores (0,2%)</div></div>
+    </div>`;
+  } else if (isCoordenador) {
+    comEfeHtml = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div class="vendas-kpi" style="border-left:3px solid var(--success);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--success);">${fmtMoedaCiclo(efeTotal)}</div><div class="vendas-kpi-label">Total Mês (1,9%)</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${vendasVisiveis.length} vendas no mês</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid #a855f7;"><div class="vendas-kpi-num" style="font-size:1rem;color:#a855f7;">${fmtMoedaCiclo(efeMinha)}</div><div class="vendas-kpi-label">Minha Comissão</div><div style="font-size:.55rem;color:var(--textL);margin-top:2px;">${efePropN} vendas próprias (1,9%) + ${efeEqN} da equipe (0,2%)</div></div>
+      <div class="vendas-kpi" style="border-left:3px solid var(--info);"><div class="vendas-kpi-num" style="font-size:1rem;color:var(--info);">${fmtMoedaCiclo(efeCorretores)}</div><div class="vendas-kpi-label">Corretores (1,7%)</div></div>
+    </div>`;
+  }
+  document.getElementById('cicloComEfe').innerHTML = comEfeHtml;
+}
+
+function renderCicloCharts() {
+  const data = getRealEquipe();
+
+  // VGV por Corretor (bar)
+  const corMap = {};
+  data.forEach(item => {
+    const c = (item.CORRETOR || 'N/A').trim();
+    corMap[c] = (corMap[c] || 0) + parseVGVCiclo(item.VGV_ESTIMADO);
+  });
+  const corEntries = Object.entries(corMap).sort((a,b) => b[1]-a[1]);
+  const corLabels = corEntries.map(e => e[0]);
+  const corValues = corEntries.map(e => e[1]);
+
+  if (cicloChartCorretoresInst) cicloChartCorretoresInst.destroy();
+  const ctx1 = document.getElementById('cicloChartCorretores');
+  if (ctx1) {
+    cicloChartCorretoresInst = new Chart(ctx1, {
+      type: 'bar',
+      data: { labels: corLabels, datasets: [{ data: corValues, backgroundColor: '#42a5f5', borderRadius: 6, maxBarThickness: 36 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtMoedaCiclo(ctx.raw) } } },
+        scales: {
+          x: { ticks: { color: '#7a8ba3', font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+          y: { ticks: { color: '#7a8ba3', callback: v => fmtVGV(v) }, grid: { color: 'rgba(255,255,255,.04)' } }
+        }
+      }
+    });
+  }
+
+  // Distribuição por Status (doughnut)
+  let gerado=0, gerando=0, nGerado=0;
+  data.forEach(item => {
+    const vgv = parseVGVCiclo(item.VGV_ESTIMADO);
+    const st = (item.STATUS || '').toUpperCase().trim();
+    if (st === 'GERADO') gerado += vgv;
+    else if (st === 'GERANDO') gerando += vgv;
+    else nGerado += vgv;
+  });
+
+  if (cicloChartStatusInst) cicloChartStatusInst.destroy();
+  const ctx2 = document.getElementById('cicloChartStatus');
+  if (ctx2) {
+    cicloChartStatusInst = new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: ['Gerado', 'Gerando', 'N Gerado'],
+        datasets: [{ data: [gerado, gerando, nGerado], backgroundColor: ['#00e676','#42a5f5','#ef5350'], borderWidth: 0, hoverOffset: 8 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#7a8ba3', font: { size: 11 }, padding: 14, usePointStyle: true } },
+          tooltip: { callbacks: { label: ctx => ctx.label + ': ' + fmtMoedaCiclo(ctx.raw) } }
+        }
+      }
+    });
+  }
+}
+
+function renderCicloTabela() {
+  const data = getFilteredReal();
+  data.sort((a,b) => calcDiasCiclo(b) - calcDiasCiclo(a));
+
+  const tbody = document.getElementById('cicloTableBody');
+  if (!tbody) return;
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--textL);font-size:.8rem;">Nenhum registro encontrado.</td></tr>';
+    return;
+  }
+
+  let html = '';
+  data.forEach(item => {
+    const vgv = parseVGVCiclo(item.VGV_ESTIMADO);
+    const dias = calcDiasCiclo(item);
+    const st = (item.STATUS || '').toUpperCase().trim();
+    const pendencia = item.PENDENCIA || '-';
+
+    // Status tag
+    let stClass = '', stLabel = st || '-';
+    if (st === 'GERADO') stClass = 'background:rgba(0,230,118,.1);color:var(--success);border:1px solid rgba(0,230,118,.2);';
+    else if (st === 'GERANDO') stClass = 'background:rgba(255,167,38,.1);color:var(--warning);border:1px solid rgba(255,167,38,.2);';
+    else stClass = 'background:rgba(239,83,80,.1);color:var(--danger);border:1px solid rgba(239,83,80,.2);';
+
+    // Dias color
+    let diasColor = 'var(--success)';
+    if (dias >= 7 && dias <= 15) diasColor = 'var(--warning)';
+    else if (dias > 15) diasColor = 'var(--danger)';
+
+    html += `<tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+      <td style="padding:10px 12px;font-size:.78rem;font-weight:600;color:var(--accent);">${item.CORRETOR || '-'}</td>
+      <td style="padding:10px 12px;font-size:.78rem;color:#fff;">${item.CLIENTE || '-'}</td>
+      <td style="padding:10px 12px;font-size:.78rem;font-weight:700;color:var(--gold);">${fmtMoedaCiclo(vgv)}</td>
+      <td style="padding:10px 12px;font-size:.75rem;color:var(--textL);">${item.EMPREENDIMENTO || '-'}</td>
+      <td style="padding:10px 12px;"><span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:.6rem;font-weight:700;text-transform:uppercase;${stClass}">${stLabel}</span></td>
+      <td style="padding:10px 12px;font-size:.72rem;color:var(--textL);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${pendencia.replace(/"/g,'&quot;')}">${pendencia}</td>
+      <td style="padding:10px 12px;"><span style="font-size:.78rem;font-weight:800;color:${diasColor};">${dias}d</span></td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+(async function init() {
+  await buildLoginGrid();
   const saved = localStorage.getItem('coordenadorLogado');
-  if (saved) {
+  const senhaS = localStorage.getItem('coordenadorSenha');
+  if (saved && senhaS) {
     try {
       COORD = JSON.parse(saved);
       if (COORD && COORD.nome) {
-        mostrarApp();
-        return;
+        // Validar senha salva
+        const usuario = CORRETORES_LOGIN.find(c => {
+          const n = c.NOME.toUpperCase();
+          return n === COORD.nome.toUpperCase() || n.includes(COORD.nome.toUpperCase()) || COORD.nome.toUpperCase().includes(n);
+        });
+        const senhaCorreta = String((usuario && usuario.SENHA) || '').trim();
+        if (senhaS === senhaCorreta) {
+          mostrarApp();
+          return;
+        }
       }
     } catch(e) {}
+    localStorage.removeItem('coordenadorLogado');
+    localStorage.removeItem('coordenadorSenha');
   }
   document.getElementById('loginScreen').classList.remove('hidden');
-  buildLoginGrid();
 })();
 </script>
 <style>

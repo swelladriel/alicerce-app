@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ciclo de Vendas | Alicerce Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0a0e14;--card:#111820;--border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.15);
+--gold:#d4a853;--gold-light:#e8c97a;--green:#34d399;--red:#f87171;--blue:#60a5fa;--yellow:#fbbf24;
+--text:#f0f0f5;--text2:#9ca3af;--text3:#6b7280;
+--dark-red:#dc2626;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
+
+/* LOGIN */
+.login-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-overlay.hide{display:none}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:40px 36px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(12px)}
+.login-logo{width:60px;height:60px;background:#fff;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:30px;color:var(--bg);margin:0 auto 16px}
+.login-title{font-size:20px;font-weight:700;letter-spacing:1.5px;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text2);margin-bottom:28px}
+.login-group{text-align:left;margin-bottom:16px}
+.login-group label{display:block;font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.login-group select,.login-group input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:14px;outline:none;transition:border-color .2s}
+.login-group select:focus,.login-group input:focus{border-color:var(--gold)}
+.login-group select option{background:#1a2030;color:var(--text)}
+.login-error{color:var(--red);font-size:12px;margin-bottom:12px;min-height:18px}
+.login-btn{width:100%;padding:12px;border-radius:8px;background:var(--gold);color:#111;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:1px;border:none;cursor:pointer;transition:background .2s}
+.login-btn:hover{background:var(--gold-light)}
+.login-btn:disabled{opacity:.5;cursor:default}
+
+/* HEADER */
+.header{position:sticky;top:0;z-index:100;background:rgba(10,14,20,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo{width:38px;height:38px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:var(--bg);flex-shrink:0}
+.header-title{font-size:18px;font-weight:700;letter-spacing:1px}
+.header-sub{font-size:12px;color:var(--text2);font-weight:400;letter-spacing:.5px}
+.header-right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.header-user{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);background:rgba(255,255,255,.04);padding:6px 14px;border-radius:8px;border:1px solid var(--border)}
+.header-user i{color:var(--gold)}
+.btn{padding:8px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-gold{background:var(--gold);color:#111;border:1px solid var(--gold)}
+.btn-gold:hover{background:var(--gold-light)}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--text);color:var(--text)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.btn-danger:hover{background:rgba(248,113,113,.1)}
+
+/* CONTAINER */
+.container{max-width:1400px;margin:0 auto;padding:20px 28px 60px}
+
+/* FILTER PANEL */
+.filter-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:24px;overflow:hidden;backdrop-filter:blur(12px)}
+.filter-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none}
+.filter-header:hover{background:rgba(255,255,255,.02)}
+.filter-header-left{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}
+.filter-header-left i{color:var(--gold)}
+.filter-counter{font-size:12px;color:var(--text2);background:rgba(255,255,255,.05);padding:4px 12px;border-radius:20px}
+.filter-body{padding:0 20px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.filter-body.collapsed{display:none}
+.filter-group label{display:block;font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.filter-group select,.filter-group input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;transition:border-color .2s}
+.filter-group select:focus,.filter-group input:focus{border-color:var(--gold)}
+.filter-group select option{background:#1a2030;color:var(--text)}
+.search-wrap{position:relative}
+.search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px}
+.search-wrap input{padding-left:32px}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;backdrop-filter:blur(12px);transition:transform .2s,border-color .2s}
+.kpi-card:hover{transform:translateY(-2px);border-color:var(--border-hover)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-card.accent-default::before{background:var(--text3)}
+.kpi-card.accent-green::before{background:var(--green)}
+.kpi-card.accent-blue::before{background:var(--blue)}
+.kpi-card.accent-gold::before{background:var(--gold)}
+.kpi-card.accent-red::before{background:var(--red)}
+.kpi-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.kpi-label i{font-size:14px}
+.kpi-value{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.kpi-sub{font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap}
+.kpi-sub span{display:inline-flex;align-items:center;gap:4px}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:28px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;backdrop-filter:blur(12px)}
+.chart-title{font-size:14px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.chart-title i{color:var(--gold);font-size:15px}
+.chart-subtitle{font-size:11px;color:var(--text3);margin-bottom:16px}
+.chart-wrap{position:relative;height:280px}
+
+/* DIAGNOSTICO */
+.diagnostico{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:28px;backdrop-filter:blur(12px)}
+.diagnostico-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.diagnostico-header-left{display:flex;align-items:center;gap:10px}
+.diagnostico-header-left i{color:var(--gold);font-size:18px}
+.diagnostico-header-left h3{font-size:16px;font-weight:700}
+.diagnostico-header-left .sub{font-size:11px;color:var(--text3);display:block}
+.diagnostico-tags{display:flex;gap:8px;flex-wrap:wrap}
+.dtag{font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600}
+.dtag-green{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+.dtag-yellow{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.diag-card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:18px}
+.diag-card h4{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.diag-card p{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px}
+.diag-highlight{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.diag-highlight.red{color:var(--red)}
+.diag-highlight.green{color:var(--green)}
+.diag-highlight.gold{color:var(--gold)}
+
+/* TABLE */
+.table-section{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;backdrop-filter:blur(12px)}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.table-header h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.table-header h3 i{color:var(--gold)}
+.table-info{font-size:12px;color:var(--text3)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:800px}
+thead th{padding:12px 14px;text-align:left;font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;transition:color .2s}
+thead th:hover{color:var(--text)}
+thead th .sort-icon{margin-left:4px;font-size:10px;opacity:.4}
+thead th.sorted .sort-icon{opacity:1;color:var(--gold)}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody tr.rank-1{background:rgba(212,168,83,.06)}
+tbody tr.rank-2{background:rgba(192,192,192,.04)}
+tbody tr.rank-3{background:rgba(205,127,50,.04)}
+tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
+.corretor-badge{font-weight:600;background:rgba(255,255,255,.06);padding:3px 10px;border-radius:6px;font-size:12px;display:inline-block}
+.vgv-val{color:var(--gold);font-weight:700}
+.status-tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block;text-transform:uppercase;letter-spacing:.3px}
+.status-gerado{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+.status-gerando{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.status-ngerado{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.dias-badge{padding:2px 8px;border-radius:6px;font-size:12px;font-weight:700;display:inline-block}
+.dias-green{background:rgba(52,211,153,.12);color:var(--green)}
+.dias-yellow{background:rgba(251,191,36,.1);color:var(--yellow)}
+.dias-red{background:rgba(248,113,113,.1);color:var(--red)}
+.dias-darkred{background:rgba(220,38,38,.15);color:var(--dark-red)}
+.pendencia-text{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text2)}
+.vgv-futuro-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2);margin-left:4px;font-weight:600}
+.actions-cell{display:flex;gap:6px}
+.action-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s}
+.action-btn:hover{border-color:var(--text);color:var(--text)}
+.action-btn.delete:hover{border-color:var(--red);color:var(--red)}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.pagination-left{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)}
+.pagination-left select{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:inherit;font-size:12px}
+.pagination-right{display:flex;gap:4px}
+.page-btn{min-width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.page-btn:hover{border-color:var(--text);color:var(--text)}
+.page-btn.active{background:var(--gold);color:#111;border-color:var(--gold);font-weight:700}
+.page-btn:disabled{opacity:.3;cursor:default}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:28px}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.modal h3 i{color:var(--gold)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-group select option{background:#1a2030}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+
+/* TOAST */
+.toast-container{position:fixed;top:80px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;animation:slideIn .3s ease;min-width:250px;backdrop-filter:blur(12px);border:1px solid}
+.toast-success{background:rgba(52,211,153,.12);color:var(--green);border-color:rgba(52,211,153,.2)}
+.toast-error{background:rgba(248,113,113,.12);color:var(--red);border-color:rgba(248,113,113,.2)}
+.toast-info{background:rgba(96,165,250,.12);color:var(--blue);border-color:rgba(96,165,250,.2)}
+.toast-warning{background:rgba(251,191,36,.1);color:var(--yellow);border-color:rgba(251,191,36,.2)}
+@keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s}
+.loading-overlay.hide{opacity:0;pointer-events:none}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--text2)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .header{flex-direction:column;align-items:flex-start;gap:10px}
+  .charts-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+  .diag-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .container{padding:14px 16px 40px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">A</div>
+    <div class="login-title">CICLO DE VENDAS</div>
+    <div class="login-sub">Alicerce Analytics</div>
+    <div class="login-group">
+      <label>Selecione seu nome</label>
+      <select id="loginUser">
+        <option value="">Carregando...</option>
+      </select>
+    </div>
+    <div class="login-group">
+      <label>Senha</label>
+      <input type="password" id="loginPass" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">ENTRAR</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay hide" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Carregando dados do ciclo de vendas...</div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- HEADER -->
+<header class="header" id="mainHeader" style="display:none">
+  <div class="header-left">
+    <div class="logo">A</div>
+    <div>
+      <div class="header-title">CICLO DE VENDAS</div>
+      <div class="header-sub">Alicerce Analytics</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-user" style="display:none;"><i class="fa-solid fa-user-circle"></i> <span id="headerUserName"></span></div>
+    <button class="btn btn-outline" onclick="limparFiltros()"><i class="fa-solid fa-filter-circle-xmark"></i> Limpar Filtros</button>
+    <button class="btn btn-outline" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="container" id="mainContainer" style="display:none">
+
+  <!-- FILTER PANEL -->
+  <div class="filter-panel">
+    <div class="filter-header" onclick="toggleFilters()">
+      <div class="filter-header-left">
+        <i class="fa-solid fa-sliders"></i>
+        Painel de Filtros Din&acirc;micos Multi-Crit&eacute;rio
+        <i class="fa-solid fa-chevron-down" id="filterChevron" style="font-size:11px;transition:transform .2s"></i>
+      </div>
+      <div class="filter-counter" id="filterCounter">Exibindo 0 de 0 contratos</div>
+    </div>
+    <div class="filter-body" id="filterBody">
+      <div class="filter-group">
+        <label>M&ecirc;s do Ciclo</label>
+        <select id="filtroMes" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Corretor</label>
+        <select id="filtroCorretor" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Status da Venda</label>
+        <select id="filtroStatus" onchange="applyFilters()">
+          <option value="">Todos</option>
+          <option value="GERADO">GERADO</option>
+          <option value="GERANDO">GERANDO</option>
+          <option value="N GERADO">N GERADO</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Empreendimento</label>
+        <select id="filtroEmpre" onchange="applyFilters()"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Buscar Cliente / Obs</label>
+        <div class="search-wrap">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="filtroBusca" placeholder="Buscar..." oninput="applyFilters()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-card accent-default">
+      <div class="kpi-label"><i class="fa-solid fa-chart-line"></i> VGV TOTAL NEGOCIADO</div>
+      <div class="kpi-value" id="kpiTotal">R$ 0</div>
+      <div class="kpi-sub"><span id="kpiTotalOps">0 Opera&ccedil;&otilde;es</span><span id="kpiTotalMed">M&eacute;d: R$ 0</span></div>
+    </div>
+    <div class="kpi-card accent-green">
+      <div class="kpi-label"><i class="fa-solid fa-circle-check"></i> VGV GERADO (APROVADO)</div>
+      <div class="kpi-value" id="kpiGerado">R$ 0</div>
+      <div class="kpi-sub"><span id="kpiGeradoN">0 contratos</span><span id="kpiGeradoPct">0% do total</span></div>
+    </div>
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label"><i class="fa-solid fa-spinner"></i> VGV FUTURO (PIPELINE)</div>
+      <div class="kpi-value" id="kpiPipeline">R$ 0</div>
+      <div class="kpi-sub"><span id="kpiPipelineN">0 em processo</span><span id="kpiPipelinePct">0% pipeline</span></div>
+    </div>
+    <div class="kpi-card accent-red">
+      <div class="kpi-label"><i class="fa-solid fa-triangle-exclamation"></i> PERDA REAL / DESCARTE</div>
+      <div class="kpi-value" id="kpiPerda">R$ 0</div>
+      <div class="kpi-sub"><span id="kpiPerdaN">0 descartados</span><span id="kpiPerdaPct">0% perda</span></div>
+    </div>
+  </div>
+
+  <!-- MAPA DE COMISSÕES NEGOCIADAS (pipeline) -->
+  <div style="margin-bottom:28px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <i class="fa-solid fa-coins" style="color:var(--gold);font-size:18px;"></i>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Mapa de Comissões — Negociadas</div>
+        <div style="font-size:11px;color:var(--text3);">Projeção sobre o pipeline Real (VGV × % − 14%)</div>
+      </div>
+    </div>
+    <div id="comissoesNegGrid" style="display:grid;gap:14px;margin-bottom:0;"></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title"><i class="fa-solid fa-ranking-star"></i> Desempenho de VGV por Corretor</div>
+      <div class="chart-subtitle">Ranking Bruto</div>
+      <div class="chart-wrap"><canvas id="chartCorretores"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><i class="fa-solid fa-chart-pie"></i> Distribui&ccedil;&atilde;o por Status &amp; VGV Futuro</div>
+      <div class="chart-subtitle">Composi&ccedil;&atilde;o da Carteira</div>
+      <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><i class="fa-solid fa-chart-area"></i> Evolu&ccedil;&atilde;o Mensal do Ciclo de Vendas</div>
+      <div class="chart-subtitle">Compara&ccedil;&otilde;es de Ciclo</div>
+      <div class="chart-wrap"><canvas id="chartMensal"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><i class="fa-solid fa-building"></i> Top Empreendimentos (VGV Negociado)</div>
+      <div class="chart-subtitle">Volume Por Produto</div>
+      <div class="chart-wrap"><canvas id="chartEmpre"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MAPA DE COMISSÕES EFETIVADAS (vendas reais) -->
+  <div style="margin-bottom:28px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(12px);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <i class="fa-solid fa-money-bill-wave" style="color:var(--green);font-size:18px;"></i>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Mapa de Comissões — Efetivadas</div>
+        <div style="font-size:11px;color:var(--text3);">Vendas assinadas com construtora (VGV × % − 14%)</div>
+      </div>
+    </div>
+    <div id="comissoesEfeGrid" style="display:grid;gap:14px;margin-bottom:16px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="comissaoAnualGrid"></div>
+  </div>
+
+  <!-- DIAGNOSTICO -->
+  <div class="diagnostico">
+    <div class="diagnostico-header">
+      <div class="diagnostico-header-left">
+        <i class="fa-solid fa-brain"></i>
+        <div>
+          <h3>Diagn&oacute;stico Estrat&eacute;gico</h3>
+          <span class="sub">Intelig&ecirc;ncia de dados aplicada ao ciclo comercial</span>
+        </div>
+      </div>
+      <div class="diagnostico-tags">
+        <span class="dtag dtag-green" id="diagTagConversoes">0 Convers&otilde;es Potenciais Ativas</span>
+        <span class="dtag dtag-yellow" id="diagTagBacen">0 Trava BACEN/SCR em Monitoramento</span>
+      </div>
+    </div>
+    <div class="diag-grid">
+      <div class="diag-card">
+        <h4><i class="fa-solid fa-triangle-exclamation" style="color:var(--yellow)"></i> GARGALO NO CICLO</h4>
+        <p id="diagGargaloText">Sem dados suficientes para an&aacute;lise.</p>
+        <div class="diag-highlight red" id="diagGargaloAcao"><i class="fa-solid fa-bullseye"></i> A&ccedil;&atilde;o sugerida: -</div>
+      </div>
+      <div class="diag-card">
+        <h4><i class="fa-solid fa-users" style="color:var(--green)"></i> PERFORMANCE DA EQUIPE</h4>
+        <p id="diagPerfText">Sem dados suficientes para an&aacute;lise.</p>
+        <div class="diag-highlight green" id="diagPerfDestaque"><i class="fa-solid fa-trophy"></i> Destaque: -</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-section">
+    <div class="table-header">
+      <h3><i class="fa-solid fa-table-list"></i> Tabela Interativa de Controle do Ciclo de Vendas</h3>
+      <span class="table-info" id="tableInfo">Mostrando 0 - 0 de 0 registros</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="mes" onclick="sortTable('mes')">M&ecirc;s <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="corretor" onclick="sortTable('corretor')">Corretor <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="cliente" onclick="sortTable('cliente')">Cliente <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="vgv" onclick="sortTable('vgv')">VGV (R$) <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="empreendimento" onclick="sortTable('empreendimento')">Empreendimento <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="status" onclick="sortTable('status')">Status <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="pendencia" onclick="sortTable('pendencia')">Pend&ecirc;ncia / Aten&ccedil;&atilde;o <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="dias" onclick="sortTable('dias')">Dias Parados <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th>A&ccedil;&otilde;es</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <div class="pagination-left">
+        <span>Exibir</span>
+        <select id="pageSize" onchange="changePageSize()">
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+          <option value="0">Todos</option>
+        </select>
+        <span>por p&aacute;gina</span>
+      </div>
+      <div class="pagination-right" id="paginationBtns"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h3><i class="fa-solid fa-file-circle-plus"></i> <span id="modalTitle">Nova Venda</span></h3>
+    <input type="hidden" id="editIndex" value="-1">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>M&ecirc;s</label>
+        <input type="text" id="fMes" list="dlMeses" placeholder="Ex: AGOSTO">
+        <datalist id="dlMeses"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Corretor</label>
+        <input type="text" id="fCorretor" list="dlCorretores" placeholder="Nome do corretor">
+        <datalist id="dlCorretores"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Cliente</label>
+        <input type="text" id="fCliente" placeholder="Nome do cliente">
+      </div>
+      <div class="form-group">
+        <label>VGV Estimado</label>
+        <input type="number" id="fVGV" placeholder="Ex: 350000">
+      </div>
+      <div class="form-group">
+        <label>Empreendimento</label>
+        <input type="text" id="fEmpreendimento" list="dlEmpres" placeholder="Nome do empreendimento">
+        <datalist id="dlEmpres"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Construtora</label>
+        <input type="text" id="fConstrutora" placeholder="Nome da construtora">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="GERANDO">GERANDO</option>
+          <option value="GERADO">GERADO</option>
+          <option value="N GERADO">N GERADO</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Pend&ecirc;ncia</label>
+        <textarea id="fPendencia" placeholder="Observa&ccedil;&otilde;es sobre pend&ecirc;ncias..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-gold" onclick="salvarVenda()"><i class="fa-solid fa-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === GLOBALS ===
+const API_URL = 'https://script.google.com/macros/s/AKfycbxZbY8RgxfwfZW30gifkMksxCVWTB_GYtHqr0O-zyINgWhMnne6CWqHrkz7VeMm1NdUvw/exec';
+const MESES_PT = ['JANEIRO','FEVEREIRO','MARCO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+
+let allData = [];       // all data from API (raw)
+let visibleData = [];   // filtered by team (login)
+let filteredData = [];  // filtered by UI filters
+let currentPage = 1;
+let pageSize = 10;
+let sortCol = 'dias';
+let sortDir = 'desc';
+let chartCorretores = null;
+let chartStatus = null;
+let chartMensal = null;
+let chartEmpre = null;
+
+// Login state
+let currentUser = null;     // { NOME, CARGO, EQUIPE, SENHA }
+let corretoresList = [];    // all corretores from API
+let teamMembers = [];       // names visible to current user
+let vendasData = [];        // vendas from API
+const NOMES_EQUIV = { 'DANDARA CAMPUS': 'DANDARA CAMPOS', 'WILIAN BUENO': 'WILLIAM BUENO', 'EDVAM SILVA': 'EDVAN SILVA', 'CAIQUE MENDES': 'CAIQUE MENDES' };
+
+// === UTILS ===
+function fmtMoeda(v) {
+  if (!v || isNaN(v)) return 'R$ 0';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtMoedaShort(v) {
+  if (!v || isNaN(v)) return 'R$ 0';
+  if (v >= 1000000) return 'R$ ' + (v / 1000000).toFixed(1).replace('.', ',') + 'M';
+  if (v >= 1000) return 'R$ ' + (v / 1000).toFixed(0) + 'mil';
+  return 'R$ ' + v.toFixed(0);
+}
+
+function parseVGV(val) {
+  if (!val) return 0;
+  if (typeof val === 'number') return val;
+  let s = String(val).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+  return parseFloat(s) || 0;
+}
+
+function parseData(val) {
+  if (!val) return null;
+  let s = String(val);
+  if (s.includes('T')) {
+    let d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  let parts = s.split('/');
+  if (parts.length === 3) {
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+  parts = s.split('-');
+  if (parts.length === 3 && parts[0].length === 4) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  let d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function calcDias(item) {
+  let d = parseData(item.DATA_ENTRADA) || parseData(item.DATA);
+  if (!d) return 0;
+  let hoje = new Date();
+  let diff = Math.floor((hoje - d) / (1000 * 60 * 60 * 24));
+  return Math.max(0, diff);
+}
+
+function getMesFromData(item) {
+  let d = parseData(item.DATA_ENTRADA) || parseData(item.DATA);
+  if (!d) return '';
+  return MESES_PT[d.getMonth()] || '';
+}
+
+function diasClass(dias) {
+  if (dias < 7) return 'dias-green';
+  if (dias <= 15) return 'dias-yellow';
+  if (dias <= 30) return 'dias-red';
+  return 'dias-darkred';
+}
+
+function statusClass(s) {
+  if (!s) return '';
+  let u = s.toUpperCase().trim();
+  if (u === 'GERADO') return 'status-gerado';
+  if (u === 'GERANDO') return 'status-gerando';
+  return 'status-ngerado';
+}
+
+// === TOAST ===
+function showToast(msg, type = 'info') {
+  let c = document.getElementById('toastContainer');
+  let t = document.createElement('div');
+  let icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', info: 'fa-circle-info', warning: 'fa-triangle-exclamation' };
+  t.className = 'toast toast-' + type;
+  t.innerHTML = '<i class="fa-solid ' + (icons[type] || icons.info) + '"></i> ' + msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// === LOGIN ===
+async function loadCorretores() {
+  try {
+    let resp = await fetch(API_URL + '?acao=corretores');
+    let data = await resp.json();
+    if (Array.isArray(data)) {
+      corretoresList = data;
+    } else if (data && data.dados) {
+      corretoresList = data.dados;
+    } else if (data && data.data) {
+      corretoresList = data.data;
+    } else {
+      corretoresList = [];
+    }
+  } catch (err) {
+    console.error('Erro ao carregar corretores:', err);
+    corretoresList = [];
+  }
+
+  // Populate login dropdown with only Coordenador and Gerente
+  let sel = document.getElementById('loginUser');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  let managers = corretoresList.filter(c => {
+    let cargo = (c.CARGO || '').toLowerCase().trim();
+    return cargo === 'coordenador' || cargo === 'gerente';
+  });
+  managers.sort((a, b) => (a.NOME || '').localeCompare(b.NOME || ''));
+  managers.forEach(c => {
+    let opt = document.createElement('option');
+    opt.value = c.NOME;
+    opt.textContent = c.NOME;
+    sel.appendChild(opt);
+  });
+}
+
+function doLogin() {
+  let userName = document.getElementById('loginUser').value;
+  let pass = document.getElementById('loginPass').value;
+  let errorEl = document.getElementById('loginError');
+
+  if (!userName) {
+    errorEl.textContent = 'Selecione seu nome.';
+    return;
+  }
+  if (!pass) {
+    errorEl.textContent = 'Digite sua senha.';
+    return;
+  }
+
+  let user = corretoresList.find(c => c.NOME === userName);
+  if (!user) {
+    errorEl.textContent = 'Usuário não encontrado.';
+    return;
+  }
+
+  let cargo = (user.CARGO || '').toLowerCase().trim();
+  if (cargo !== 'coordenador' && cargo !== 'gerente') {
+    errorEl.textContent = 'Acesso restrito a coordenadores e gerente.';
+    return;
+  }
+
+  if (String(user.SENHA || '').trim() !== pass.trim()) {
+    errorEl.textContent = 'Senha incorreta.';
+    return;
+  }
+
+  // Login success
+  currentUser = user;
+  errorEl.textContent = '';
+
+  // Save to localStorage
+  localStorage.setItem('ciclo_user', userName);
+  localStorage.setItem('ciclo_pass', pass);
+
+  // Build team members
+  buildTeamMembers();
+
+  // Show dashboard
+  showDashboard();
+}
+
+function buildTeamMembers() {
+  if (!currentUser) return;
+  let cargo = (currentUser.CARGO || '').toLowerCase().trim();
+  if (cargo === 'gerente') {
+    // Gerente sees everyone
+    teamMembers = corretoresList.map(c => (c.NOME || '').trim().toLowerCase());
+  } else {
+    // Coordenador sees only their EQUIPE
+    let equipe = (currentUser.EQUIPE || currentUser.NOME || '').trim().toLowerCase();
+    teamMembers = corretoresList
+      .filter(c => (c.EQUIPE || '').trim().toLowerCase() === equipe)
+      .map(c => (c.NOME || '').trim().toLowerCase());
+    // Include self
+    let selfName = (currentUser.NOME || '').trim().toLowerCase();
+    if (!teamMembers.includes(selfName)) teamMembers.push(selfName);
+  }
+}
+
+function showDashboard() {
+  document.getElementById('loginOverlay').classList.add('hide');
+  document.getElementById('mainHeader').style.display = '';
+  document.getElementById('mainContainer').style.display = '';
+  document.getElementById('headerUserName').textContent = currentUser.NOME;
+  document.getElementById('loadingOverlay').classList.remove('hide');
+  loadData();
+}
+
+function doLogout() {
+  localStorage.removeItem('ciclo_user');
+  localStorage.removeItem('ciclo_pass');
+  currentUser = null;
+  teamMembers = [];
+  document.getElementById('mainHeader').style.display = 'none';
+  document.getElementById('mainContainer').style.display = 'none';
+  document.getElementById('loginOverlay').classList.remove('hide');
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
+function tryAutoLogin() {
+  let savedUser = localStorage.getItem('ciclo_user');
+  let savedPass = localStorage.getItem('ciclo_pass');
+  if (!savedUser || !savedPass) return false;
+
+  let user = corretoresList.find(c => c.NOME === savedUser);
+  if (!user) return false;
+
+  let cargo = (user.CARGO || '').toLowerCase().trim();
+  if (cargo !== 'coordenador' && cargo !== 'gerente') return false;
+  if (String(user.SENHA || '').trim() !== savedPass.trim()) return false;
+
+  currentUser = user;
+  buildTeamMembers();
+  showDashboard();
+  return true;
+}
+
+// === FILTER ===
+function toggleFilters() {
+  let body = document.getElementById('filterBody');
+  let chev = document.getElementById('filterChevron');
+  body.classList.toggle('collapsed');
+  chev.style.transform = body.classList.contains('collapsed') ? 'rotate(-90deg)' : 'rotate(0)';
+}
+
+function populateFilters() {
+  let meses = new Set(), corretores = new Set(), empres = new Set();
+  visibleData.forEach(item => {
+    let m = getMesFromData(item);
+    if (m) meses.add(m);
+    if (item.CORRETOR) corretores.add(item.CORRETOR.trim());
+    if (item.EMPREENDIMENTO) empres.add(item.EMPREENDIMENTO.trim());
+  });
+
+  fillSelect('filtroMes', [...meses].sort((a, b) => MESES_PT.indexOf(a) - MESES_PT.indexOf(b)));
+  fillSelect('filtroCorretor', [...corretores].sort());
+  fillSelect('filtroEmpre', [...empres].sort());
+
+  // Datalists for modal
+  fillDatalist('dlMeses', MESES_PT);
+  fillDatalist('dlCorretores', [...corretores].sort());
+  fillDatalist('dlEmpres', [...empres].sort());
+}
+
+function fillSelect(id, options) {
+  let sel = document.getElementById(id);
+  let current = sel.value;
+  while (sel.options.length > 1) sel.remove(1);
+  options.forEach(o => { let opt = document.createElement('option'); opt.value = o; opt.textContent = o; sel.appendChild(opt); });
+  sel.value = current;
+}
+
+function fillDatalist(id, options) {
+  let dl = document.getElementById(id);
+  if (!dl) return;
+  dl.innerHTML = '';
+  options.forEach(o => { let opt = document.createElement('option'); opt.value = o; dl.appendChild(opt); });
+}
+
+function applyFilters() {
+  let mes = document.getElementById('filtroMes').value;
+  let cor = document.getElementById('filtroCorretor').value;
+  let st = document.getElementById('filtroStatus').value;
+  let emp = document.getElementById('filtroEmpre').value;
+  let busca = document.getElementById('filtroBusca').value.toLowerCase().trim();
+
+  filteredData = visibleData.filter(item => {
+    if (mes && getMesFromData(item) !== mes) return false;
+    if (cor && (item.CORRETOR || '').trim() !== cor) return false;
+    if (st && (item.STATUS || '').toUpperCase().trim() !== st) return false;
+    if (emp && (item.EMPREENDIMENTO || '').trim() !== emp) return false;
+    if (busca) {
+      let haystack = [item.CLIENTE, item.PENDENCIA, item.EMPREENDIMENTO, item.CORRETOR, item.CONSTRUTORA].join(' ').toLowerCase();
+      if (!haystack.includes(busca)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('filterCounter').textContent = 'Exibindo ' + filteredData.length + ' de ' + visibleData.length + ' contratos';
+  currentPage = 1;
+  applySorting();
+  renderAll();
+}
+
+function limparFiltros() {
+  document.getElementById('filtroMes').value = '';
+  document.getElementById('filtroCorretor').value = '';
+  document.getElementById('filtroStatus').value = '';
+  document.getElementById('filtroEmpre').value = '';
+  document.getElementById('filtroBusca').value = '';
+  applyFilters();
+  showToast('Filtros limpos com sucesso', 'info');
+}
+
+// === SORT ===
+function applySorting() {
+  filteredData.sort((a, b) => {
+    let va, vb;
+    switch (sortCol) {
+      case 'mes':
+        va = MESES_PT.indexOf(getMesFromData(a));
+        vb = MESES_PT.indexOf(getMesFromData(b));
+        break;
+      case 'corretor':
+        va = (a.CORRETOR || '').toLowerCase();
+        vb = (b.CORRETOR || '').toLowerCase();
+        break;
+      case 'cliente':
+        va = (a.CLIENTE || '').toLowerCase();
+        vb = (b.CLIENTE || '').toLowerCase();
+        break;
+      case 'vgv':
+        va = parseVGV(a.VGV_ESTIMADO);
+        vb = parseVGV(b.VGV_ESTIMADO);
+        break;
+      case 'empreendimento':
+        va = (a.EMPREENDIMENTO || '').toLowerCase();
+        vb = (b.EMPREENDIMENTO || '').toLowerCase();
+        break;
+      case 'status':
+        va = (a.STATUS || '').toLowerCase();
+        vb = (b.STATUS || '').toLowerCase();
+        break;
+      case 'pendencia':
+        va = (a.PENDENCIA || '').toLowerCase();
+        vb = (b.PENDENCIA || '').toLowerCase();
+        break;
+      case 'dias':
+        va = calcDias(a);
+        vb = calcDias(b);
+        break;
+      default:
+        va = 0; vb = 0;
+    }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+function sortTable(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = col;
+    sortDir = 'desc';
+  }
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.col === col);
+  });
+  applySorting();
+  renderTable();
+}
+
+// === RENDER ALL ===
+function renderAll() {
+  renderKPIs();
+  renderCharts();
+  renderDiagnostico();
+  renderTable();
+}
+
+// === KPIs ===
+function renderKPIs() {
+  let totalVGV = 0, geradoVGV = 0, gerandoVGV = 0, nGeradoVGV = 0;
+  let geradoN = 0, gerandoN = 0, nGeradoN = 0;
+
+  filteredData.forEach(item => {
+    let vgv = parseVGV(item.VGV_ESTIMADO);
+    totalVGV += vgv;
+    let st = (item.STATUS || '').toUpperCase().trim();
+    if (st === 'GERADO') { geradoVGV += vgv; geradoN++; }
+    else if (st === 'GERANDO') { gerandoVGV += vgv; gerandoN++; }
+    else { nGeradoVGV += vgv; nGeradoN++; }
+  });
+
+  let n = filteredData.length;
+  let med = n > 0 ? totalVGV / n : 0;
+
+  document.getElementById('kpiTotal').textContent = fmtMoeda(totalVGV);
+  document.getElementById('kpiTotalOps').textContent = n + ' Operações';
+  document.getElementById('kpiTotalMed').textContent = 'Méd: ' + fmtMoedaShort(med);
+
+  document.getElementById('kpiGerado').textContent = fmtMoeda(geradoVGV);
+  document.getElementById('kpiGeradoN').textContent = geradoN + ' contratos';
+  document.getElementById('kpiGeradoPct').textContent = (totalVGV > 0 ? (geradoVGV / totalVGV * 100).toFixed(1) : 0) + '% do total';
+
+  document.getElementById('kpiPipeline').textContent = fmtMoeda(gerandoVGV);
+  document.getElementById('kpiPipelineN').textContent = gerandoN + ' em processo';
+  document.getElementById('kpiPipelinePct').textContent = (totalVGV > 0 ? (gerandoVGV / totalVGV * 100).toFixed(1) : 0) + '% pipeline';
+
+  document.getElementById('kpiPerda').textContent = fmtMoeda(nGeradoVGV);
+  document.getElementById('kpiPerdaN').textContent = nGeradoN + ' descartados';
+  document.getElementById('kpiPerdaPct').textContent = (totalVGV > 0 ? (nGeradoVGV / totalVGV * 100).toFixed(1) : 0) + '% perda';
+
+  // === COMISSÕES ===
+  let isGerente = currentUser && (currentUser.CARGO || '').toLowerCase().trim() === 'gerente';
+  let isCoordenador = currentUser && (currentUser.CARGO || '').toLowerCase().trim() === 'coordenador';
+  let nomeUser = currentUser ? currentUser.NOME.toUpperCase().trim() : '';
+
+  // Identificar coordenadores e gerente pra saber vendas próprias
+  let coordNomes = corretoresList.filter(c => (c.CARGO || '').toLowerCase() === 'coordenador').map(c => c.NOME.toUpperCase().trim());
+  let gerenteNomes = corretoresList.filter(c => (c.CARGO || '').toLowerCase() === 'gerente').map(c => c.NOME.toUpperCase().trim());
+
+  // --- NEGOCIADAS (pipeline Real) ---
+  function calcComissaoNeg(items) {
+    let comTotal = 0, comMinha = 0, comCorretores = 0, comCoords = 0;
+    let vendaPropriaN = 0, vendaEquipeN = 0;
+    items.forEach(item => {
+      let vgv = parseVGV(item.VGV_ESTIMADO);
+      let corretor = (item.CORRETOR || '').toUpperCase().trim();
+      let isVendaPropriaCo = coordNomes.includes(corretor);
+      let isVendaPropriaGe = gerenteNomes.includes(corretor);
+
+      if (isGerente) {
+        let isMinhaVenda = corretor === nomeUser;
+        if (isMinhaVenda) {
+          // Gerente vendeu: ganha 2.4% (tudo)
+          comMinha += vgv * 0.024 * 0.86;
+          vendaPropriaN++;
+        } else {
+          comMinha += vgv * 0.005 * 0.86; // só gestão
+          vendaEquipeN++;
+        }
+        comTotal += vgv * 0.024 * 0.86;
+        if (isVendaPropriaCo) {
+          comCorretores += vgv * 0.019 * 0.86;
+        } else if (isMinhaVenda) {
+          // não soma em corretores nem coords
+        } else {
+          comCorretores += vgv * 0.017 * 0.86;
+          comCoords += vgv * 0.002 * 0.86;
+        }
+      } else if (isCoordenador) {
+        let isMinhaVenda = corretor === nomeUser;
+        if (isMinhaVenda) {
+          comMinha += vgv * 0.019 * 0.86;
+          vendaPropriaN++;
+        } else {
+          comMinha += vgv * 0.002 * 0.86;
+          comCorretores += vgv * 0.017 * 0.86;
+          vendaEquipeN++;
+        }
+        comTotal += vgv * 0.019 * 0.86;
+      }
+    });
+    return { comTotal, comMinha, comCorretores, comCoords, vendaPropriaN, vendaEquipeN };
+  }
+
+  let negR = calcComissaoNeg(filteredData);
+  let comNegGrid = '';
+  if (isGerente) {
+    comNegGrid = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+      <div class="kpi-card" style="border-left:3px solid var(--gold);">
+        <div class="kpi-label"><i class="fa-solid fa-layer-group"></i> TOTAL (2,4%)</div>
+        <div class="kpi-value" style="color:var(--gold);font-size:24px;">${fmtMoeda(negR.comTotal)}</div>
+        <div class="kpi-sub"><span>${n} clientes no pipeline</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid #a855f7;">
+        <div class="kpi-label"><i class="fa-solid fa-crown"></i> MINHA COMISSÃO</div>
+        <div class="kpi-value" style="color:#a855f7;font-size:24px;">${fmtMoeda(negR.comMinha)}</div>
+        <div class="kpi-sub"><span>${negR.vendaPropriaN} vendas próprias (2,4%) + ${negR.vendaEquipeN} da equipe (0,5%)</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid var(--blue);">
+        <div class="kpi-label"><i class="fa-solid fa-user-tie"></i> CORRETORES (1,7%)</div>
+        <div class="kpi-value" style="color:var(--blue);font-size:24px;">${fmtMoeda(negR.comCorretores)}</div>
+        <div class="kpi-sub"><span>Comissão dos corretores</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid var(--yellow);">
+        <div class="kpi-label"><i class="fa-solid fa-users-gear"></i> COORDENADORES (0,2%)</div>
+        <div class="kpi-value" style="color:var(--yellow);font-size:24px;">${fmtMoeda(negR.comCoords)}</div>
+        <div class="kpi-sub"><span>Comissão de coordenação</span></div>
+      </div>
+    </div>`;
+  } else if (isCoordenador) {
+    comNegGrid = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+      <div class="kpi-card" style="border-left:3px solid var(--gold);">
+        <div class="kpi-label"><i class="fa-solid fa-layer-group"></i> TOTAL EQUIPE (1,9%)</div>
+        <div class="kpi-value" style="color:var(--gold);font-size:24px;">${fmtMoeda(negR.comTotal)}</div>
+        <div class="kpi-sub"><span>${n} clientes no pipeline</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid #a855f7;">
+        <div class="kpi-label"><i class="fa-solid fa-star"></i> MINHA COMISSÃO</div>
+        <div class="kpi-value" style="color:#a855f7;font-size:24px;">${fmtMoeda(negR.comMinha)}</div>
+        <div class="kpi-sub"><span>${negR.vendaPropriaN} vendas próprias (1,9%) + ${negR.vendaEquipeN} da equipe (0,2%)</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid var(--blue);">
+        <div class="kpi-label"><i class="fa-solid fa-user-tie"></i> CORRETORES (1,7%)</div>
+        <div class="kpi-value" style="color:var(--blue);font-size:24px;">${fmtMoeda(negR.comCorretores)}</div>
+        <div class="kpi-sub"><span>Comissão dos corretores</span></div>
+      </div>
+    </div>`;
+  }
+  document.getElementById('comissoesNegGrid').innerHTML = comNegGrid;
+
+  // --- EFETIVADAS (vendas do mês comercial atual) ---
+  let INICIO_MES = '2026-08';
+  let vendasVisiveis = vendasData.filter(v => {
+    if (!v.CORRETOR) return false;
+    let corr = v.CORRETOR.toUpperCase().trim();
+    if (NOMES_EQUIV[corr]) corr = NOMES_EQUIV[corr];
+    if (!teamMembers.some(m => m === corr.toLowerCase())) return false;
+    // Só mês comercial atual
+    let mc = String(v.MES_COMERCIAL || '').substring(0, 7);
+    return mc === INICIO_MES;
+  });
+  vendasVisiveis = vendasVisiveis.filter(v => !(v.STATUS_VENDA || '').toUpperCase().includes('DISTRATO'));
+
+  // Calcular comissões efetivadas com mesma lógica
+  let efeTotal = 0, efeMinha = 0, efeCorretores = 0, efeCoords = 0;
+  let efePropN = 0, efeEqN = 0;
+  vendasVisiveis.forEach(v => {
+    let vgv = parseFloat(v.VGV) || 0;
+    let corretor = (v.CORRETOR || '').toUpperCase().trim();
+    if (NOMES_EQUIV[corretor]) corretor = NOMES_EQUIV[corretor];
+    let isVendaPropriaCo = coordNomes.includes(corretor);
+
+    if (isGerente) {
+      let isMinhaVenda = corretor === nomeUser;
+      efeTotal += vgv * 0.024 * 0.86;
+      if (isMinhaVenda) {
+        efeMinha += vgv * 0.024 * 0.86; // gerente vendeu: ganha 2.4%
+        efePropN++;
+      } else {
+        efeMinha += vgv * 0.005 * 0.86; // venda da equipe: só gestão
+        efeEqN++;
+      }
+      if (isVendaPropriaCo) {
+        efeCorretores += vgv * 0.019 * 0.86;
+      } else if (!isMinhaVenda) {
+        efeCorretores += vgv * 0.017 * 0.86;
+        efeCoords += vgv * 0.002 * 0.86;
+      }
+    } else if (isCoordenador) {
+      let isMinhaVenda = corretor === nomeUser;
+      if (isMinhaVenda) {
+        efeMinha += vgv * 0.019 * 0.86;
+        efePropN++;
+      } else {
+        efeMinha += vgv * 0.002 * 0.86;
+        efeCorretores += vgv * 0.017 * 0.86;
+        efeEqN++;
+      }
+      efeTotal += vgv * 0.019 * 0.86;
+    }
+  });
+
+  let comEfeGrid = '';
+  if (isGerente) {
+    comEfeGrid = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+      <div class="kpi-card" style="border-left:3px solid var(--green);">
+        <div class="kpi-label"><i class="fa-solid fa-circle-check"></i> TOTAL MÊS (2,4%)</div>
+        <div class="kpi-value" style="color:var(--green);font-size:24px;">${fmtMoeda(efeTotal)}</div>
+        <div class="kpi-sub"><span>${vendasVisiveis.length} vendas no mês</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid #a855f7;">
+        <div class="kpi-label"><i class="fa-solid fa-crown"></i> MINHA COMISSÃO</div>
+        <div class="kpi-value" style="color:#a855f7;font-size:24px;">${fmtMoeda(efeMinha)}</div>
+        <div class="kpi-sub"><span>${efePropN} vendas próprias (2,4%) + ${efeEqN} da equipe (0,5%)</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid var(--blue);">
+        <div class="kpi-label"><i class="fa-solid fa-user-tie"></i> CORRETORES (1,7%)</div>
+        <div class="kpi-value" style="color:var(--blue);font-size:24px;">${fmtMoeda(efeCorretores)}</div>
+        <div class="kpi-sub"><span>Comissão dos corretores</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid var(--yellow);">
+        <div class="kpi-label"><i class="fa-solid fa-users-gear"></i> COORDENADORES (0,2%)</div>
+        <div class="kpi-value" style="color:var(--yellow);font-size:24px;">${fmtMoeda(efeCoords)}</div>
+        <div class="kpi-sub"><span>Comissão de coordenação</span></div>
+      </div>
+    </div>`;
+  } else if (isCoordenador) {
+    comEfeGrid = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+      <div class="kpi-card" style="border-left:3px solid var(--green);">
+        <div class="kpi-label"><i class="fa-solid fa-circle-check"></i> TOTAL MÊS (1,9%)</div>
+        <div class="kpi-value" style="color:var(--green);font-size:24px;">${fmtMoeda(efeTotal)}</div>
+        <div class="kpi-sub"><span>${vendasVisiveis.length} vendas no mês</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid #a855f7;">
+        <div class="kpi-label"><i class="fa-solid fa-star"></i> MINHA COMISSÃO</div>
+        <div class="kpi-value" style="color:#a855f7;font-size:24px;">${fmtMoeda(efeMinha)}</div>
+        <div class="kpi-sub"><span>${efePropN} vendas próprias (1,9%) + ${efeEqN} da equipe (0,2%)</span></div>
+      </div>
+      <div class="kpi-card" style="border-left:3px solid var(--blue);">
+        <div class="kpi-label"><i class="fa-solid fa-user-tie"></i> CORRETORES (1,7%)</div>
+        <div class="kpi-value" style="color:var(--blue);font-size:24px;">${fmtMoeda(efeCorretores)}</div>
+        <div class="kpi-sub"><span>Comissão dos corretores</span></div>
+      </div>
+    </div>`;
+  }
+  document.getElementById('comissoesEfeGrid').innerHTML = comEfeGrid;
+  document.getElementById('comissaoAnualGrid').innerHTML = '';
+}
+
+// === CHARTS ===
+function renderCharts() {
+  renderChartCorretores();
+  renderChartStatus();
+  renderChartMensal();
+  renderChartEmpre();
+}
+
+function renderChartCorretores() {
+  let map = {};
+  filteredData.forEach(item => {
+    let c = (item.CORRETOR || 'N/A').trim();
+    map[c] = (map[c] || 0) + parseVGV(item.VGV_ESTIMADO);
+  });
+  let entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
+  let labels = entries.map(e => e[0]);
+  let values = entries.map(e => e[1]);
+
+  if (chartCorretores) chartCorretores.destroy();
+  chartCorretores = new Chart(document.getElementById('chartCorretores'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: '#60a5fa',
+        borderRadius: 6,
+        maxBarThickness: 40
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'x',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => fmtMoeda(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+        y: { ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function renderChartStatus() {
+  let gerado = 0, gerando = 0, nGerado = 0;
+  filteredData.forEach(item => {
+    let vgv = parseVGV(item.VGV_ESTIMADO);
+    let st = (item.STATUS || '').toUpperCase().trim();
+    if (st === 'GERADO') gerado += vgv;
+    else if (st === 'GERANDO') gerando += vgv;
+    else nGerado += vgv;
+  });
+
+  if (chartStatus) chartStatus.destroy();
+  chartStatus = new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: {
+      labels: ['VGV Gerado', 'VGV Futuro (Gerando)', 'Perda (N Gerado)'],
+      datasets: [{
+        data: [gerado, gerando, nGerado],
+        backgroundColor: ['#34d399', '#60a5fa', '#f87171'],
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 }, padding: 14, usePointStyle: true } },
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + fmtMoeda(ctx.raw) } }
+      }
+    }
+  });
+}
+
+function renderChartMensal() {
+  let map = {};
+  visibleData.forEach(item => {
+    let d = parseData(item.DATA_ENTRADA) || parseData(item.DATA);
+    if (!d) return;
+    let key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    map[key] = (map[key] || 0) + parseVGV(item.VGV_ESTIMADO);
+  });
+  let keys = Object.keys(map).sort();
+  let labels = keys.map(k => { let p = k.split('-'); return MESES_PT[parseInt(p[1]) - 1] + '/' + p[0].slice(2); });
+  let values = keys.map(k => map[k]);
+
+  if (chartMensal) chartMensal.destroy();
+  chartMensal = new Chart(document.getElementById('chartMensal'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#60a5fa',
+        backgroundColor: 'rgba(96,165,250,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#60a5fa',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => fmtMoeda(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function renderChartEmpre() {
+  let map = {};
+  filteredData.forEach(item => {
+    let e = (item.EMPREENDIMENTO || 'N/A').trim();
+    map[e] = (map[e] || 0) + parseVGV(item.VGV_ESTIMADO);
+  });
+  let entries = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  let labels = entries.map(e => e[0]);
+  let values = entries.map(e => e[1]);
+
+  if (chartEmpre) chartEmpre.destroy();
+  chartEmpre = new Chart(document.getElementById('chartEmpre'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: '#d4a853',
+        borderRadius: 6,
+        maxBarThickness: 28
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => fmtMoeda(ctx.raw) } }
+      },
+      scales: {
+        x: { ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// === DIAGNOSTICO ===
+function renderDiagnostico() {
+  // Conversoes (GERANDO)
+  let conversoes = filteredData.filter(i => (i.STATUS || '').toUpperCase().trim() === 'GERANDO');
+  document.getElementById('diagTagConversoes').textContent = conversoes.length + ' Conversões Potenciais Ativas';
+
+  // --- Card 1: GARGALO NO CICLO ---
+  let nGeradoItems = filteredData.filter(i => (i.STATUS || '').toUpperCase().trim() === 'N GERADO');
+  let stuckItems = filteredData.filter(i => {
+    let st = (i.STATUS || '').toUpperCase().trim();
+    return st === 'N GERADO' || st === 'GERANDO';
+  });
+
+  // Count pendencia keywords
+  let keywords = ['BACEN', 'SCR', 'SAFRA', 'RENDA', 'DOCUMENTO', 'DESISTIU'];
+  let kwCount = {};
+  keywords.forEach(k => kwCount[k] = 0);
+  let bacenTotal = 0;
+
+  stuckItems.forEach(item => {
+    let p = (item.PENDENCIA || '').toUpperCase();
+    keywords.forEach(k => {
+      if (p.includes(k)) kwCount[k]++;
+    });
+    if (p.includes('BACEN') || p.includes('SCR') || p.includes('SAFRA')) bacenTotal++;
+  });
+
+  document.getElementById('diagTagBacen').textContent = bacenTotal + ' Trava BACEN/SCR em Monitoramento';
+
+  let stuckVGV = nGeradoItems.reduce((s, i) => s + parseVGV(i.VGV_ESTIMADO), 0);
+
+  // Most common keyword
+  let topKW = Object.entries(kwCount).sort((a, b) => b[1] - a[1])[0];
+  let topKWName = topKW && topKW[1] > 0 ? topKW[0] : null;
+
+  // Corretor with most stuck
+  let corStuck = {};
+  nGeradoItems.forEach(item => {
+    let c = (item.CORRETOR || 'N/A').trim();
+    if (!corStuck[c]) corStuck[c] = { count: 0, maxDias: 0 };
+    corStuck[c].count++;
+    let d = calcDias(item);
+    if (d > corStuck[c].maxDias) corStuck[c].maxDias = d;
+  });
+  let topStuck = Object.entries(corStuck).sort((a, b) => b[1].count - a[1].count)[0];
+
+  if (nGeradoItems.length === 0) {
+    document.getElementById('diagGargaloText').textContent = 'Sem dados suficientes para análise. Nenhum cliente com status N GERADO identificado.';
+    document.getElementById('diagGargaloAcao').innerHTML = '<i class="fa-solid fa-bullseye"></i> Ação sugerida: Manter monitoramento ativo do pipeline.';
+  } else {
+    let text = nGeradoItems.length + ' cliente(s) estão travados no ciclo, representando ' + fmtMoeda(stuckVGV) + ' em VGV.';
+    if (topKWName) {
+      text += ' Principal gargalo: ' + topKWName + ' (' + kwCount[topKWName] + ' ocorrências).';
+    }
+    if (topStuck) {
+      text += ' ' + topStuck[0] + ' tem ' + topStuck[1].count + ' cliente(s) parado(s) há mais de ' + topStuck[1].maxDias + ' dias.';
+    }
+    document.getElementById('diagGargaloText').textContent = text;
+
+    // Suggested action
+    let acao = 'Revisar clientes travados e definir próximos passos.';
+    if (topKWName === 'BACEN' || topKWName === 'SCR') acao = 'Acompanhar pendências BACEN/SCR junto à VipCred e orientar corretores sobre prazos.';
+    else if (topKWName === 'SAFRA') acao = 'Verificar safra dos clientes e avaliar reenvio de proposta com dados atualizados.';
+    else if (topKWName === 'RENDA') acao = 'Orientar corretores a solicitar comprovantes de renda atualizados dos clientes.';
+    else if (topKWName === 'DOCUMENTO') acao = 'Cobrar documentação pendente dos clientes para destravar o processo.';
+    else if (topKWName === 'DESISTIU') acao = 'Fazer follow-up com clientes desistentes para entender motivo e tentar recuperar.';
+    document.getElementById('diagGargaloAcao').innerHTML = '<i class="fa-solid fa-bullseye"></i> Ação sugerida: ' + acao;
+  }
+
+  // --- Card 2: PERFORMANCE DA EQUIPE ---
+  let corVGV = {};
+  let corCount = {};
+  let corGerado = {};
+  let corDias = {};
+  let corDiasCount = {};
+
+  filteredData.forEach(item => {
+    let c = (item.CORRETOR || 'N/A').trim();
+    let vgv = parseVGV(item.VGV_ESTIMADO);
+    corVGV[c] = (corVGV[c] || 0) + vgv;
+    corCount[c] = (corCount[c] || 0) + 1;
+
+    let st = (item.STATUS || '').toUpperCase().trim();
+    if (st === 'GERADO') corGerado[c] = (corGerado[c] || 0) + 1;
+
+    let dias = calcDias(item);
+    corDias[c] = (corDias[c] || 0) + dias;
+    corDiasCount[c] = (corDiasCount[c] || 0) + 1;
+  });
+
+  if (filteredData.length === 0) {
+    document.getElementById('diagPerfText').textContent = 'Sem dados suficientes para análise.';
+    document.getElementById('diagPerfDestaque').innerHTML = '<i class="fa-solid fa-trophy"></i> Destaque: -';
+  } else {
+    // Top VGV
+    let topVGV = Object.entries(corVGV).sort((a, b) => b[1] - a[1])[0];
+    // Top GERADO
+    let topGerado = Object.entries(corGerado).sort((a, b) => b[1] - a[1])[0];
+    // Most clients in pipeline
+    let corPipeline = {};
+    filteredData.filter(i => (i.STATUS || '').toUpperCase().trim() === 'GERANDO').forEach(i => {
+      let c = (i.CORRETOR || 'N/A').trim();
+      corPipeline[c] = (corPipeline[c] || 0) + 1;
+    });
+    let topPipeline = Object.entries(corPipeline).sort((a, b) => b[1] - a[1])[0];
+
+    // Average days
+    let totalDias = Object.values(corDias).reduce((s, v) => s + v, 0);
+    let totalCount = Object.values(corDiasCount).reduce((s, v) => s + v, 0);
+    let mediaDias = totalCount > 0 ? Math.round(totalDias / totalCount) : 0;
+
+    let text = '';
+    if (topVGV) text += topVGV[0] + ' lidera com ' + fmtMoeda(topVGV[1]) + ' em VGV negociado. ';
+    if (topGerado) text += topGerado[0] + ' tem a melhor conversão com ' + topGerado[1] + ' contrato(s) gerado(s). ';
+    text += 'Média de dias no ciclo: ' + mediaDias + ' dias.';
+
+    document.getElementById('diagPerfText').textContent = text;
+
+    // Destaque
+    let destaque = '-';
+    if (topVGV) destaque = topVGV[0] + ' — maior VGV com ' + fmtMoeda(topVGV[1]);
+    document.getElementById('diagPerfDestaque').innerHTML = '<i class="fa-solid fa-trophy"></i> Destaque: ' + destaque;
+  }
+}
+
+// === TABLE ===
+function renderTable() {
+  let tbody = document.getElementById('tableBody');
+  let ps = pageSize === 0 ? filteredData.length : pageSize;
+  let totalPages = ps > 0 ? Math.ceil(filteredData.length / ps) : 1;
+  if (currentPage > totalPages) currentPage = totalPages || 1;
+  let start = (currentPage - 1) * (ps || filteredData.length);
+  let end = ps > 0 ? Math.min(start + ps, filteredData.length) : filteredData.length;
+  let pageData = filteredData.slice(start, end);
+
+  let html = '';
+  pageData.forEach((item, idx) => {
+    let vgv = parseVGV(item.VGV_ESTIMADO);
+    let dias = calcDias(item);
+    let st = (item.STATUS || '').toUpperCase().trim();
+    let mes = getMesFromData(item);
+    let globalIdx = start + idx;
+    let rankClass = globalIdx === 0 ? 'rank-1' : globalIdx === 1 ? 'rank-2' : globalIdx === 2 ? 'rank-3' : '';
+    let pendencia = item.PENDENCIA || '';
+    let isFuturo = st === 'GERANDO';
+
+    html += '<tr class="' + rankClass + '">';
+    html += '<td>' + mes + '</td>';
+    html += '<td><span class="corretor-badge">' + (item.CORRETOR || '-') + '</span></td>';
+    html += '<td>' + (item.CLIENTE || '-') + '</td>';
+    html += '<td><span class="vgv-val">' + fmtMoeda(vgv) + '</span></td>';
+    html += '<td>' + (item.EMPREENDIMENTO || '-') + '</td>';
+    html += '<td><span class="status-tag ' + statusClass(st) + '">' + (st || '-') + '</span></td>';
+    html += '<td><span class="pendencia-text" title="' + pendencia.replace(/"/g, '&quot;') + '">' + (pendencia || '-') + '</span>';
+    if (isFuturo) html += ' <span class="vgv-futuro-tag">VGV Futuro</span>';
+    html += '</td>';
+    html += '<td><span class="dias-badge ' + diasClass(dias) + '">' + dias + 'd</span></td>';
+    html += '<td><div class="actions-cell">';
+    html += '<button class="action-btn" title="Editar" onclick="editVenda(' + globalIdx + ')"><i class="fa-solid fa-pen-to-square"></i></button>';
+    html += '<button class="action-btn delete" title="Excluir" onclick="deleteVenda(' + globalIdx + ')"><i class="fa-solid fa-trash"></i></button>';
+    html += '</div></td>';
+    html += '</tr>';
+  });
+
+  tbody.innerHTML = html;
+
+  document.getElementById('tableInfo').textContent = 'Mostrando ' + (filteredData.length > 0 ? start + 1 : 0) + ' - ' + end + ' de ' + filteredData.length + ' registros';
+
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  let container = document.getElementById('paginationBtns');
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+  let html = '';
+  html += '<button class="page-btn" onclick="goPage(1)" ' + (currentPage === 1 ? 'disabled' : '') + '>&laquo;</button>';
+  html += '<button class="page-btn" onclick="goPage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>&lsaquo;</button>';
+
+  let startP = Math.max(1, currentPage - 2);
+  let endP = Math.min(totalPages, startP + 4);
+  if (endP - startP < 4) startP = Math.max(1, endP - 4);
+
+  for (let i = startP; i <= endP; i++) {
+    html += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="goPage(' + i + ')">' + i + '</button>';
+  }
+
+  html += '<button class="page-btn" onclick="goPage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>&rsaquo;</button>';
+  html += '<button class="page-btn" onclick="goPage(' + totalPages + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>&raquo;</button>';
+
+  container.innerHTML = html;
+}
+
+function goPage(p) {
+  let ps = pageSize === 0 ? filteredData.length : pageSize;
+  let totalPages = ps > 0 ? Math.ceil(filteredData.length / ps) : 1;
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderTable();
+}
+
+function changePageSize() {
+  pageSize = parseInt(document.getElementById('pageSize').value);
+  currentPage = 1;
+  renderTable();
+}
+
+// === MODAL ===
+function openModal(idx) {
+  document.getElementById('modalOverlay').classList.add('show');
+  if (idx !== undefined && idx >= 0) {
+    document.getElementById('modalTitle').textContent = 'Editar Venda';
+    document.getElementById('editIndex').value = idx;
+    let item = filteredData[idx];
+    document.getElementById('fMes').value = getMesFromData(item);
+    document.getElementById('fCorretor').value = item.CORRETOR || '';
+    document.getElementById('fCliente').value = item.CLIENTE || '';
+    document.getElementById('fVGV').value = parseVGV(item.VGV_ESTIMADO);
+    document.getElementById('fEmpreendimento').value = item.EMPREENDIMENTO || '';
+    document.getElementById('fConstrutora').value = item.CONSTRUTORA || '';
+    document.getElementById('fStatus').value = (item.STATUS || 'GERANDO').toUpperCase().trim();
+    document.getElementById('fPendencia').value = item.PENDENCIA || '';
+  } else {
+    document.getElementById('modalTitle').textContent = 'Nova Venda';
+    document.getElementById('editIndex').value = -1;
+    document.getElementById('fMes').value = '';
+    document.getElementById('fCorretor').value = '';
+    document.getElementById('fCliente').value = '';
+    document.getElementById('fVGV').value = '';
+    document.getElementById('fEmpreendimento').value = '';
+    document.getElementById('fConstrutora').value = '';
+    document.getElementById('fStatus').value = 'GERANDO';
+    document.getElementById('fPendencia').value = '';
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function editVenda(idx) {
+  openModal(idx);
+}
+
+async function deleteVenda(idx) {
+  let item = filteredData[idx];
+  if (!confirm('Excluir venda de ' + (item.CLIENTE || '?') + '?')) return;
+
+  try {
+    let payload = { acao: 'deletar_real', CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR, VGV_ESTIMADO: item.VGV_ESTIMADO };
+    await postAPI(payload);
+    showToast('Venda excluída com sucesso', 'success');
+    await loadData();
+  } catch (err) {
+    showToast('Erro ao excluir: ' + err.message, 'error');
+  }
+}
+
+async function salvarVenda() {
+  let payload = {
+    acao: document.getElementById('editIndex').value == -1 ? 'adicionar_real' : 'atualizar_real',
+    DATA: new Date().toISOString(),
+    CORRETOR: document.getElementById('fCorretor').value,
+    CLIENTE: document.getElementById('fCliente').value,
+    VGV_ESTIMADO: document.getElementById('fVGV').value,
+    EMPREENDIMENTO: document.getElementById('fEmpreendimento').value,
+    CONSTRUTORA: document.getElementById('fConstrutora').value,
+    STATUS: document.getElementById('fStatus').value,
+    PENDENCIA: document.getElementById('fPendencia').value,
+    DATA_ENTRADA: new Date().toISOString()
+  };
+
+  if (!payload.CORRETOR || !payload.CLIENTE) {
+    showToast('Corretor e Cliente são obrigatórios', 'warning');
+    return;
+  }
+
+  if (document.getElementById('editIndex').value != -1) {
+    let orig = filteredData[parseInt(document.getElementById('editIndex').value)];
+    payload.CLIENTE_ORIGINAL = orig.CLIENTE;
+    payload.CORRETOR_ORIGINAL = orig.CORRETOR;
+  }
+
+  try {
+    await postAPI(payload);
+    showToast('Venda salva com sucesso!', 'success');
+    closeModal();
+    await loadData();
+  } catch (err) {
+    showToast('Erro ao salvar: ' + err.message, 'error');
+  }
+}
+
+async function postAPI(payload) {
+  try {
+    let resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    return await resp.text();
+  } catch (e) {
+    let params = new URLSearchParams(payload);
+    let resp = await fetch(API_URL + '?' + params.toString());
+    return await resp.text();
+  }
+}
+
+// === EXPORT CSV ===
+function exportCSV() {
+  let BOM = '\uFEFF';
+  let header = 'Mês;Corretor;Cliente;VGV;Empreendimento;Status;Pendência;Dias Parados\n';
+  let rows = filteredData.map(item => {
+    let vgv = parseVGV(item.VGV_ESTIMADO);
+    let dias = calcDias(item);
+    return [
+      getMesFromData(item),
+      (item.CORRETOR || ''),
+      (item.CLIENTE || ''),
+      vgv,
+      (item.EMPREENDIMENTO || ''),
+      (item.STATUS || ''),
+      (item.PENDENCIA || '').replace(/;/g, ','),
+      dias
+    ].join(';');
+  }).join('\n');
+
+  let blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8;' });
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement('a');
+  a.href = url;
+  a.download = 'ciclo-vendas-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exportado com sucesso', 'success');
+}
+
+// === LOAD DATA ===
+async function loadData() {
+  try {
+    let resp = await fetch(API_URL + '?acao=real');
+    let data = await resp.json();
+    if (Array.isArray(data)) {
+      allData = data;
+    } else if (data && data.dados && Array.isArray(data.dados)) {
+      allData = data.dados;
+    } else if (data && data.data && Array.isArray(data.data)) {
+      allData = data.data;
+    } else {
+      allData = [];
+    }
+  } catch (err) {
+    console.error('Erro ao carregar dados:', err);
+    showToast('Erro ao carregar dados da API', 'error');
+    allData = [];
+  }
+
+  // Load vendas for comissão efetivada
+  try {
+    let respV = await fetch(API_URL + '?acao=vendas');
+    let dataV = await respV.json();
+    vendasData = Array.isArray(dataV) ? dataV : (dataV.vendas || []);
+  } catch(e) { vendasData = []; }
+
+  // Filter by team
+  if (currentUser) {
+    let cargo = (currentUser.CARGO || '').toLowerCase().trim();
+    if (cargo === 'gerente') {
+      visibleData = allData.slice();
+    } else {
+      visibleData = allData.filter(item => {
+        let corName = (item.CORRETOR || '').trim().toLowerCase();
+        return teamMembers.includes(corName);
+      });
+    }
+  } else {
+    visibleData = allData.slice();
+  }
+
+  populateFilters();
+  applyFilters();
+  document.getElementById('loadingOverlay').classList.add('hide');
+}
+
+// === INIT ===
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadCorretores();
+  if (!tryAutoLogin()) {
+    // Stay on login screen
+  }
+});
+</script>
+</body>
+</html>
