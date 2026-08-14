@@ -1777,8 +1777,9 @@ async function salvarClienteCRM() {
 
 function renderVendas() {
   const vendas = (DADOS.vendas || []).filter(v => {
-    const dataVenda = String(v.DATA_VENDA || '').substring(0, 10);
-    if (dataVenda < INICIO_MES_COMERCIAL) return false;
+    const mesComercial = String(v.MES_COMERCIAL || '').substring(0, 7);
+    const inicioMes = INICIO_MES_COMERCIAL.substring(0, 7);
+    if (mesComercial < inicioMes) return false;
     const status = (v.STATUS_VENDA || '').toLowerCase();
     if (status.includes('distrato')) return false;
     const corretorMapped = mapNomeVenda(v.CORRETOR);
