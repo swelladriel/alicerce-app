@@ -79,8 +79,9 @@ body {
   position: absolute; top: 130px; left: 0; right: 0; bottom: 0;
   padding: 10px 36px; opacity: 0; transform: translateY(30px);
   transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
-  overflow: hidden;
+  overflow-y: auto; overflow-x: hidden;
 }
+.tv-page::-webkit-scrollbar { display: none; }
 
 .tv-page.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
@@ -610,6 +611,9 @@ function calcularRanking() {
 // ============================================
 // RENDER RANKING
 // ============================================
+function fmtPts(val) { return val > 0 ? '+' + val : val < 0 ? String(val) : '0'; }
+function ptClass(val) { return val < 0 ? 'rank-cat-neg' : 'rank-cat-pts'; }
+
 function renderRanking() {
   const ranking = calcularRanking();
   if (!ranking.length) return;
@@ -619,9 +623,6 @@ function renderRanking() {
   const medals = ['🥇', '🥈', '🥉'];
   const classes = ['first', 'second', 'third'];
   const labels = ['1º LUGAR', '2º LUGAR', '3º LUGAR'];
-
-  function fmtPts(val) { return val > 0 ? '+' + val : val < 0 ? String(val) : '0'; }
-  function ptClass(val) { return val < 0 ? 'rank-cat-neg' : 'rank-cat-pts'; }
 
   document.getElementById('podium').innerHTML = top3.map((p, i) => `
     <div class="podium-card ${classes[i]}" style="">
