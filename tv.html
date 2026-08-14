@@ -469,9 +469,11 @@ function calcularRanking() {
   const pontuacao = {};
 
   corretores.forEach(c => {
+    const entrada = parseDataISO(c['DATA ENTRADA'] || c['DATA_ENTRADA']) || INICIO_CHECKIN_945;
     pontuacao[c.NOME] = {
       nome: c.NOME, total: 0, agendamentos: 0, atendimentos: 0, atendVideos: 0, pastas: 0,
-      vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, atrasos: 0
+      vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, atrasos: 0,
+      dataEntrada: entrada < INICIO_CHECKIN_945 ? INICIO_CHECKIN_945 : entrada
     };
   });
 
@@ -526,8 +528,9 @@ function calcularRanking() {
   });
 
   Object.values(pontuacao).forEach(p => {
+    const meusUteis = diasUteis.filter(d => d >= p.dataEntrada);
     const diasComCheckin = checkinsPorCorretorDia[p.nome] ? [...checkinsPorCorretorDia[p.nome]].filter(d => !isFds(d)).length : 0;
-    const ausencias = Math.max(0, diasUteis.length - diasComCheckin);
+    const ausencias = Math.max(0, meusUteis.length - diasComCheckin);
     p.ptCheckin += ausencias * -5;
     if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3;
   });
@@ -596,8 +599,9 @@ function calcularRanking() {
   });
   Object.values(pontuacao).forEach(p => {
     const s = diasCom945[p.nome] || new Set();
+    const meusUteis = diasUteis.filter(d => d >= p.dataEntrada);
     p.dias945 = s.size;
-    p.pt945 = (s.size * 2) + (diasUteis.filter(d => !s.has(d)).length * -2);
+    p.pt945 = (s.size * 2) + (meusUteis.filter(d => !s.has(d)).length * -2);
   });
 
   // TOTAL

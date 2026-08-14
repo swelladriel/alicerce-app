@@ -1895,7 +1895,9 @@ function renderRanking() {
   const pontuacao = {};
 
   corretoresAtivos.forEach(c => {
-    pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, pontos: 0, ptCheckin: 0, ptAgenda: 0, ptAtend: 0, ptPasta: 0, ptVenda: 0, pt945: 0, checkins: 0, agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, consorcios: 0, dias945: 0, atrasos: 0 };
+    const entrada = parseDataISO(c['DATA ENTRADA'] || c['DATA_ENTRADA']) || INICIO_CHECKIN_945;
+    pontuacao[c.NOME] = { nome: c.NOME, equipe: c.EQUIPE, cargo: c.CARGO, pontos: 0, ptCheckin: 0, ptAgenda: 0, ptAtend: 0, ptPasta: 0, ptVenda: 0, pt945: 0, checkins: 0, agendamentos: 0, atendimentos: 0, pastas: 0, vendas: 0, consorcios: 0, dias945: 0, atrasos: 0,
+      dataEntrada: entrada < INICIO_CHECKIN_945 ? INICIO_CHECKIN_945 : entrada };
   });
 
   // Dias úteis (seg-sex) a partir de INICIO_CHECKIN_945 (pra check-in e 945)
@@ -1948,10 +1950,11 @@ function renderRanking() {
     checkinsPorCorretorDia[nome].add(dia);
   });
 
-  // Penalizar ausências e atrasos (só dias úteis seg-sex, nunca sáb/dom)
+  // Penalizar ausências e atrasos (só dias úteis seg-sex, nunca sáb/dom, respeitando data de entrada)
   Object.values(pontuacao).forEach(p => {
+    const meusUteis = diasUteisCheckin.filter(d => d >= p.dataEntrada);
     const diasComCheckin = checkinsPorCorretorDia[p.nome] ? [...checkinsPorCorretorDia[p.nome]].filter(d => !isFimDeSemana(d)).length : 0;
-    const ausencias = Math.max(0, diasUteisCheckin.length - diasComCheckin);
+    const ausencias = Math.max(0, meusUteis.length - diasComCheckin);
     p.ptCheckin += ausencias * -5;
     if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3;
   });
@@ -2036,8 +2039,9 @@ function renderRanking() {
   Object.values(pontuacao).forEach(p => {
     const todosDias = diasCom945[p.nome] ? diasCom945[p.nome] : new Set();
     const diasFez = todosDias.size;
-    // Contar só dias úteis sem 945 pra penalizar (não penaliza sáb/dom)
-    const diasUteisSem945 = diasUteisCheckin.filter(d => !todosDias.has(d)).length;
+    // Contar só dias úteis sem 945 pra penalizar (não penaliza sáb/dom, respeita data entrada)
+    const meusUteis945 = diasUteisCheckin.filter(d => d >= p.dataEntrada);
+    const diasUteisSem945 = meusUteis945.filter(d => !todosDias.has(d)).length;
     p.dias945 = diasFez;
     p.pt945 = (diasFez * 2) + (diasUteisSem945 * -2);
   });
