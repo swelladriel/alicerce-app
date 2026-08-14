@@ -477,6 +477,11 @@ function calcularRanking() {
     };
   });
 
+  // Mapa case-insensitive: "PEDRO NAZARO" → "Pedro Nazaro"
+  const nomeMap = {};
+  corretores.forEach(c => { nomeMap[c.NOME.toUpperCase()] = c.NOME; nomeMap[c.NOME] = c.NOME; });
+  function findCorr(nome) { return nomeMap[nome] || nomeMap[(nome || '').toUpperCase()] || null; }
+
   const hoje = new Date();
   const hojeStr = hoje.toISOString().substring(0, 10);
 
@@ -503,8 +508,8 @@ function calcularRanking() {
   const checkinsPorCorretorDia = {};
   const checkinDedup = new Set();
   REGISTROS.filter(r => r.TIPO === 'checkin' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
-    const nome = r.CORRETOR;
-    if (!pontuacao[nome]) return;
+    const nome = findCorr(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
     const dia = parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10);
     const chave = `${nome}|${dia}`;
     if (checkinDedup.has(chave)) return;
@@ -538,11 +543,12 @@ function calcularRanking() {
   // AGENDAMENTOS +3 (dedup corretor+cliente no mês)
   const agendaDedup = new Set();
   AGENDA.filter(a => (parseDataISO(a.DATA) || '') >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente').forEach(a => {
-    if (!pontuacao[a.CORRETOR]) return;
-    const chave = `${a.CORRETOR}|${String(a.CLIENTE || '').trim().toUpperCase()}`;
+    const nome = findCorr(a.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
+    const chave = `${nome}|${String(a.CLIENTE || '').trim().toUpperCase()}`;
     if (agendaDedup.has(chave)) return;
     agendaDedup.add(chave);
-    pontuacao[a.CORRETOR].agendamentos++;
+    pontuacao[nome].agendamentos++;
   });
 
   // ATENDIMENTOS: presencial +5, vídeo +2 (dedup corretor+cliente no mês)
@@ -553,16 +559,17 @@ function calcularRanking() {
     const cl = String(r.CLIENTE || r.CLIENTES || '').toLowerCase();
     return !cl.includes('teste');
   }).forEach(r => {
-    if (!pontuacao[r.CORRETOR]) return;
-    const chave = `${r.CORRETOR}|${String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase()}`;
+    const nome = findCorr(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
+    const chave = `${nome}|${String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase()}`;
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
     const obs = (r.OBSERVACOES || '').toLowerCase();
     const tipoAt = (r.TIPO_ATENDIMENTO || '').toLowerCase();
     if (obs.includes('video') || obs.includes('vídeo') || tipoAt.includes('video')) {
-      pontuacao[r.CORRETOR].atendVideos++;
+      pontuacao[nome].atendVideos++;
     } else {
-      pontuacao[r.CORRETOR].atendimentos++;
+      pontuacao[nome].atendimentos++;
     }
   });
 
@@ -593,9 +600,10 @@ function calcularRanking() {
   // 945
   const diasCom945 = {};
   REGISTROS.filter(r => r.TIPO === '945-individual' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
-    if (!pontuacao[r.CORRETOR]) return;
-    if (!diasCom945[r.CORRETOR]) diasCom945[r.CORRETOR] = new Set();
-    diasCom945[r.CORRETOR].add(parseDataISO(r.DATA));
+    const nome = findCorr(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
+    if (!diasCom945[nome]) diasCom945[nome] = new Set();
+    diasCom945[nome].add(parseDataISO(r.DATA));
   });
   Object.values(pontuacao).forEach(p => {
     const s = diasCom945[p.nome] || new Set();
@@ -694,10 +702,16 @@ function calcularRankingSemanal() {
     pontuacao[c.NOME] = { nome: c.NOME, agendamentos: 0, atendimentos: 0, atendVideos: 0, pastas: 0, vendas: 0, consorcios: 0, checkins: 0, dias945: 0, ptCheckin: 0, pt945: 0, total: 0 };
   });
 
+  // Mapa case-insensitive
+  const nomeMapS = {};
+  corretores.forEach(c => { nomeMapS[c.NOME.toUpperCase()] = c.NOME; nomeMapS[c.NOME] = c.NOME; });
+  function findCorrS(nome) { return nomeMapS[nome] || nomeMapS[(nome || '').toUpperCase()] || null; }
+
   // CHECK-INS da semana
   (DADOS.registros || []).filter(r => r.TIPO === 'checkin' && (parseDataISO(r.DATA) || '') >= inicioSemana && (parseDataISO(r.DATA) || '') <= hoje).forEach(r => {
-    if (!pontuacao[r.CORRETOR]) return;
-    pontuacao[r.CORRETOR].checkins++;
+    const nome = findCorrS(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
+    pontuacao[nome].checkins++;
     const h = parseHora(r.HORA || r.DATA);
     const [hh, mm] = h.split(':').map(Number);
     const minutos = hh * 60 + (mm || 0);
@@ -708,32 +722,34 @@ function calcularRankingSemanal() {
     if (minutos < 570) pts = 5 * multiplicador;
     else if (minutos < 600) pts = 3 * multiplicador;
     else if (minutos < 630) pts = 1 * multiplicador;
-    pontuacao[r.CORRETOR].ptCheckin += pts;
+    pontuacao[nome].ptCheckin += pts;
   });
 
   // AGENDAMENTOS da semana
   const agendaDedup = new Set();
   (DADOS.agenda || []).filter(a => (parseDataISO(a.DATA) || '') >= inicioSemana && (parseDataISO(a.DATA) || '') <= hoje && (a.TIPO || '').toLowerCase().includes('client')).forEach(a => {
-    if (!pontuacao[a.CORRETOR]) return;
-    const chave = a.CORRETOR + '|' + (a.CLIENTE || '').toUpperCase();
+    const nome = findCorrS(a.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
+    const chave = nome + '|' + (a.CLIENTE || '').toUpperCase();
     if (agendaDedup.has(chave)) return;
     agendaDedup.add(chave);
-    pontuacao[a.CORRETOR].agendamentos++;
+    pontuacao[nome].agendamentos++;
   });
 
   // ATENDIMENTOS da semana: presencial +5, vídeo +2
   const atendDedup = new Set();
   (DADOS.registros || []).filter(r => r.TIPO === 'atendimento-confirmado' && (parseDataISO(r.DATA) || '') >= inicioSemana).forEach(r => {
-    if (!pontuacao[r.CORRETOR]) return;
-    const chave = r.CORRETOR + '|' + (r.CLIENTE || r.CLIENTES || '').toUpperCase();
+    const nome = findCorrS(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
+    const chave = nome + '|' + (r.CLIENTE || r.CLIENTES || '').toUpperCase();
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
     const obs = (r.OBSERVACOES || '').toLowerCase();
     const tipoAt = (r.TIPO_ATENDIMENTO || '').toLowerCase();
     if (obs.includes('video') || obs.includes('vídeo') || tipoAt.includes('video')) {
-      pontuacao[r.CORRETOR].atendVideos++;
+      pontuacao[nome].atendVideos++;
     } else {
-      pontuacao[r.CORRETOR].atendimentos++;
+      pontuacao[nome].atendimentos++;
     }
   });
 
@@ -749,9 +765,10 @@ function calcularRankingSemanal() {
   // 945 da semana
   const dias945 = {};
   (DADOS.registros || []).filter(r => r.TIPO === '945-individual' && (parseDataISO(r.DATA) || '') >= inicioSemana).forEach(r => {
-    if (!pontuacao[r.CORRETOR]) return;
-    if (!dias945[r.CORRETOR]) dias945[r.CORRETOR] = new Set();
-    dias945[r.CORRETOR].add(parseDataISO(r.DATA));
+    const nome = findCorrS(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
+    if (!dias945[nome]) dias945[nome] = new Set();
+    dias945[nome].add(parseDataISO(r.DATA));
   });
   Object.values(pontuacao).forEach(p => {
     const s = dias945[p.nome] || new Set();

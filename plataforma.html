@@ -1900,6 +1900,11 @@ function renderRanking() {
       dataEntrada: entrada < INICIO_CHECKIN_945 ? INICIO_CHECKIN_945 : entrada };
   });
 
+  // Mapa case-insensitive: "PEDRO NAZARO" → "Pedro Nazaro"
+  const nomeMap = {};
+  corretoresAtivos.forEach(c => { nomeMap[c.NOME.toUpperCase()] = c.NOME; nomeMap[c.NOME] = c.NOME; });
+  function findCorr(nome) { return nomeMap[nome] || nomeMap[(nome || '').toUpperCase()] || null; }
+
   // Dias úteis (seg-sex) a partir de INICIO_CHECKIN_945 (pra check-in e 945)
   const diasUteisCheckin = [];
   const dtInicioCheckin = new Date(INICIO_CHECKIN_945 + 'T12:00:00');
@@ -1926,8 +1931,8 @@ function renderRanking() {
   const checkinsPorCorretorDia = {};
   const checkinDedup = new Set();
   REGISTROS.filter(r => r.TIPO === 'checkin' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
-    const nome = r.CORRETOR;
-    if (!pontuacao[nome]) return;
+    const nome = findCorr(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
     const dia = parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10);
     const chave = `${nome}|${dia}`;
     if (checkinDedup.has(chave)) return;
@@ -1966,8 +1971,8 @@ function renderRanking() {
   });
   const agendaDedup = new Set();
   agendaMes.forEach(a => {
-    const nome = a.CORRETOR;
-    if (!pontuacao[nome]) return;
+    const nome = findCorr(a.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
     const cliente = String(a.CLIENTE || '').trim().toUpperCase();
     const chave = `${nome}|${cliente}`;
     if (agendaDedup.has(chave)) return;
@@ -1989,8 +1994,8 @@ function renderRanking() {
   });
   const atendDedup = new Set();
   atendMes.forEach(r => {
-    const nome = r.CORRETOR;
-    if (!pontuacao[nome]) return;
+    const nome = findCorr(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
     const cliente = String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase();
     const chave = `${nome}|${cliente}`;
     if (atendDedup.has(chave)) return;
@@ -2031,8 +2036,8 @@ function renderRanking() {
   // === 945: +2 fez, -2 não fez (só a partir de INICIO_CHECKIN_945, sem penalizar sáb/dom) ===
   const diasCom945 = {};
   REGISTROS.filter(r => r.TIPO === '945-individual' && (parseDataISO(r.DATA) || '') >= INICIO_CHECKIN_945).forEach(r => {
-    const nome = r.CORRETOR;
-    if (!pontuacao[nome]) return;
+    const nome = findCorr(r.CORRETOR);
+    if (!nome || !pontuacao[nome]) return;
     if (!diasCom945[nome]) diasCom945[nome] = new Set();
     diasCom945[nome].add(parseDataISO(r.DATA) || String(r.DATA || '').substring(0, 10));
   });
