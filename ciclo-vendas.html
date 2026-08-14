@@ -1156,7 +1156,7 @@ function renderChartCorretores() {
       },
       scales: {
         x: { ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
-        y: { ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        y: { max: 3000000, ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } }
       }
     }
   });
@@ -1231,7 +1231,7 @@ function renderChartMensal() {
       },
       scales: {
         x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } },
-        y: { ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        y: { max: 10000000, ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } }
       }
     }
   });
@@ -1267,7 +1267,7 @@ function renderChartEmpre() {
         tooltip: { callbacks: { label: ctx => fmtMoeda(ctx.raw) } }
       },
       scales: {
-        x: { ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        x: { max: 6000000, ticks: { color: '#6b7280', callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.04)' } },
         y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { display: false } }
       }
     }
