@@ -887,36 +887,52 @@ function renderAll() {
 
 // === KPIs ===
 function renderKPIs() {
-  let totalVGV = 0, geradoVGV = 0, gerandoVGV = 0, nGeradoVGV = 0;
-  let geradoN = 0, gerandoN = 0, nGeradoN = 0;
+  let totalVGV = 0, gerandoVGV = 0, nGeradoVGV = 0;
+  let gerandoN = 0, nGeradoN = 0;
 
+  // Pipeline Real: só conta GERANDO e N GERADO (GERADO no pipeline é ignorado)
   filteredData.forEach(item => {
     let vgv = parseVGV(item.VGV_ESTIMADO);
-    totalVGV += vgv;
     let st = (item.STATUS || '').toUpperCase().trim();
-    if (st === 'GERADO') { geradoVGV += vgv; geradoN++; }
-    else if (st === 'GERANDO') { gerandoVGV += vgv; gerandoN++; }
-    else { nGeradoVGV += vgv; nGeradoN++; }
+    if (st === 'GERANDO') { gerandoVGV += vgv; gerandoN++; totalVGV += vgv; }
+    else if (st !== 'GERADO') { nGeradoVGV += vgv; nGeradoN++; totalVGV += vgv; }
+    // GERADO no Real não conta — VGV Gerado vem da aba Vendas
   });
 
+  // VGV GERADO = vendas efetivadas do mês comercial (aba Vendas)
+  let INICIO_MES = '2026-08';
+  let vendasVisiveis = vendasData.filter(v => {
+    if (!v.CORRETOR) return false;
+    let corr = v.CORRETOR.toUpperCase().trim();
+    if (NOMES_EQUIV[corr]) corr = NOMES_EQUIV[corr];
+    if (!teamMembers.some(m => m === corr.toLowerCase())) return false;
+    let mc = String(v.MES_COMERCIAL || '').substring(0, 7);
+    return mc === INICIO_MES;
+  }).filter(v => !(v.STATUS_VENDA || '').toUpperCase().includes('DISTRATO'));
+
+  let geradoVGV = 0, geradoN = vendasVisiveis.length;
+  vendasVisiveis.forEach(v => { geradoVGV += parseFloat(v.VGV) || 0; });
+
+  // Total inclui pipeline + vendas efetivadas
+  let totalComVendas = totalVGV + geradoVGV;
   let n = filteredData.length;
   let med = n > 0 ? totalVGV / n : 0;
 
-  document.getElementById('kpiTotal').textContent = fmtMoeda(totalVGV);
-  document.getElementById('kpiTotalOps').textContent = n + ' Operações';
-  document.getElementById('kpiTotalMed').textContent = 'Méd: ' + fmtMoedaShort(med);
+  document.getElementById('kpiTotal').textContent = fmtMoeda(totalComVendas);
+  document.getElementById('kpiTotalOps').textContent = n + ' no pipeline + ' + geradoN + ' vendas';
+  document.getElementById('kpiTotalMed').textContent = 'Pipeline: ' + fmtMoedaShort(totalVGV);
 
   document.getElementById('kpiGerado').textContent = fmtMoeda(geradoVGV);
-  document.getElementById('kpiGeradoN').textContent = geradoN + ' contratos';
-  document.getElementById('kpiGeradoPct').textContent = (totalVGV > 0 ? (geradoVGV / totalVGV * 100).toFixed(1) : 0) + '% do total';
+  document.getElementById('kpiGeradoN').textContent = geradoN + ' vendas';
+  document.getElementById('kpiGeradoPct').textContent = (totalComVendas > 0 ? (geradoVGV / totalComVendas * 100).toFixed(1) : 0) + '% do total';
 
   document.getElementById('kpiPipeline').textContent = fmtMoeda(gerandoVGV);
   document.getElementById('kpiPipelineN').textContent = gerandoN + ' em processo';
-  document.getElementById('kpiPipelinePct').textContent = (totalVGV > 0 ? (gerandoVGV / totalVGV * 100).toFixed(1) : 0) + '% pipeline';
+  document.getElementById('kpiPipelinePct').textContent = (totalComVendas > 0 ? (gerandoVGV / totalComVendas * 100).toFixed(1) : 0) + '% pipeline';
 
   document.getElementById('kpiPerda').textContent = fmtMoeda(nGeradoVGV);
   document.getElementById('kpiPerdaN').textContent = nGeradoN + ' descartados';
-  document.getElementById('kpiPerdaPct').textContent = (totalVGV > 0 ? (nGeradoVGV / totalVGV * 100).toFixed(1) : 0) + '% perda';
+  document.getElementById('kpiPerdaPct').textContent = (totalComVendas > 0 ? (nGeradoVGV / totalComVendas * 100).toFixed(1) : 0) + '% perda';
 
   // === COMISSÕES ===
   let isGerente = currentUser && (currentUser.CARGO || '').toLowerCase().trim() === 'gerente';
