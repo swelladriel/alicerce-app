@@ -829,6 +829,26 @@ async function carregarTudo() {
   UNICA_COISA = dados.unicaCoisa || [];
   AGENDA = dados.agenda || [];
 
+  // Carregar Real da API e popular REAL_CLIENTS
+  const realAPI = dados.real || [];
+  const nomeUpperReal = USUARIO.NOME.toUpperCase();
+  REAL_CLIENTS = realAPI.filter(r => {
+    const corr = (r.CORRETOR || '').toUpperCase();
+    return corr === nomeUpperReal || corr.includes(nomeUpperReal) || nomeUpperReal.includes(corr);
+  }).map(r => ({
+    id: 'r_' + (r.CLIENTE || '').replace(/\s+/g, '_') + '_' + (r.DATA_ENTRADA || ''),
+    nome: r.CLIENTE || '',
+    telefone: r.TELEFONE || '',
+    vgv: parseFloat(r.VGV_ESTIMADO) || 0,
+    empreendimento: r.EMPREENDIMENTO || '',
+    construtora: r.CONSTRUTORA || '',
+    status: r.STATUS || 'GERANDO',
+    pendencia: r.PENDENCIA || '',
+    dataEntrada: String(r.DATA_ENTRADA || r.DATA || '').substring(0, 10),
+    corretor: r.CORRETOR || USUARIO.NOME,
+    comissaoStatus: r.COMISSAO_STATUS || 'NÃO PAGO'
+  }));
+
   // Filtrar meus clientes
   const nomeUpper = USUARIO.NOME.toUpperCase();
   const nomeCompleto = (USUARIO['NOME COMPLETO'] || '').toUpperCase();
@@ -856,6 +876,7 @@ async function carregarTudo() {
   renderMinhasVendas();
   renderUnicaCoisa();
   renderCalendario();
+  renderReal();
   renderInicio();
   iniciarMonitorMeiaNoite();
   salvarCache(); // salvar dados pra modo offline
@@ -2930,14 +2951,10 @@ function renderInicio() {
   const nomeUpper = USUARIO.NOME.toUpperCase();
   const NOMES_EQUIV = { 'DANDARA CAMPUS': 'DANDARA CAMPOS', 'WILIAN BUENO': 'WILLIAM BUENO' };
 
-  // Comissão estimada (clientes quentes do Real/localStorage)
-  let realData = [];
-  try {
-    realData = JSON.parse(localStorage.getItem('alicerce_real_' + USUARIO.NOME) || '[]');
-  } catch(e) {}
-  const vgvReal = realData.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
+  // Comissão estimada (clientes quentes do Real/API)
+  const vgvReal = REAL_CLIENTS.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
   const comEstimada = vgvReal * 0.017 * 0.86;
-  const clientesQuentes = realData.length;
+  const clientesQuentes = REAL_CLIENTS.length;
 
   // Comissão real (vendas do mês)
   const mesAtual = new Date();
@@ -3046,13 +3063,14 @@ function fecharPopupAgendamento() {
 let REAL_CLIENTS = [];
 let REAL_FILTRO = 'todos';
 
-function realStorageKey() { return 'alicerce_real_' + (USUARIO ? USUARIO.NOME : ''); }
-
 function loadReal() {
-  try { REAL_CLIENTS = JSON.parse(localStorage.getItem(realStorageKey())) || []; } catch(e) { REAL_CLIENTS = []; }
+  // REAL_CLIENTS já é carregado da API no carregarTudo() — nada a fazer aqui
 }
 
-function saveReal() { localStorage.setItem(realStorageKey(), JSON.stringify(REAL_CLIENTS)); }
+function saveReal() {
+  // Salvamento feito via API em cada ação (salvarReal/deletarReal)
+  // localStorage removido — fonte única é a planilha
+}
 
 function calcDiasReal(dataEntrada) {
   if (!dataEntrada) return 0;
