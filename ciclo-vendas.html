@@ -1035,8 +1035,8 @@ function renderKPIs() {
   document.getElementById('comissoesNegGrid').innerHTML = comNegGrid;
 
   // --- EFETIVADAS (vendas do mês comercial atual) ---
-  let INICIO_MES = '2026-08';
-  let vendasVisiveis = vendasData.filter(v => {
+  // INICIO_MES já declarado acima
+  vendasVisiveis = vendasData.filter(v => {
     if (!v.CORRETOR) return false;
     let corr = v.CORRETOR.toUpperCase().trim();
     if (NOMES_EQUIV[corr]) corr = NOMES_EQUIV[corr];
