@@ -6,7 +6,9 @@
 <title>Alicerce — App Desktop</title>
 <style>
 :root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:12px;--sidebar-w:220px;}
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{touch-action:manipulation;}
+button,a,[onclick],select,input,.nav-item,.tab,.card,.btn,.filter-btn,.kpi-card{touch-action:manipulation;cursor:pointer;-webkit-user-select:none;user-select:none;}
 html,body{height:100%;}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
 
