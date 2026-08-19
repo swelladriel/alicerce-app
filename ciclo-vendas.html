@@ -9,7 +9,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{touch-action:manipulation}
+button,a,[onclick],select,input,.nav-item,.tab,.card,.btn,.filter-btn,.kpi-card{touch-action:manipulation;cursor:pointer;-webkit-user-select:none;user-select:none}
 :root{
 --bg:#0a0e14;--card:#111820;--border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.15);
 --gold:#d4a853;--gold-light:#e8c97a;--green:#34d399;--red:#f87171;--blue:#60a5fa;--yellow:#fbbf24;
@@ -1688,4 +1690,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 </body>
-</html><!-- deploy 1787066047 -->
+</html>
