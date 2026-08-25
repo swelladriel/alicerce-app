@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reunião Semanal — 29/07/2026</title>
+<title>Reunião Semanal — 27/08/2026</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -262,7 +262,6 @@ body {
 .cta-box h2 { font-size: 32px; font-weight: 900; color: var(--gold); }
 .cta-box p { font-size: 18px; color: var(--gray); margin-top: 10px; }
 
-/* Timeline visual */
 .timeline { position: relative; padding-left: 30px; margin: 16px 0; }
 .timeline::before {
   content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
@@ -276,523 +275,489 @@ body {
 .timeline-item .t-period { font-size: 13px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
 .timeline-item .t-desc { font-size: 17px; line-height: 1.5; }
 
-/* Cenario visual A vs B */
 .scenario-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: start; margin: 16px 0; }
 .scenario-box { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; }
 .scenario-vs { display: flex; align-items: center; font-size: 28px; font-weight: 900; color: var(--gray2); padding-top: 40px; }
+
+/* Gamificação table */
+.gam-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.gam-table th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gray2); padding: 8px 12px; border-bottom: 1px solid var(--glass-border); }
+.gam-table td { padding: 8px 12px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.gam-table .old { text-decoration: line-through; color: rgba(255,255,255,0.25); font-size: 12px; }
+.gam-table .new { color: var(--green); font-weight: 800; }
+.gam-table .same { color: rgba(255,255,255,0.5); }
+
+/* Coord card */
+.coord-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; text-align: center; }
+.coord-card .nome { font-size: 22px; font-weight: 800; color: var(--white); margin-bottom: 4px; }
+.coord-card .cargo { font-size: 11px; color: var(--gray2); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+.coord-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.coord-stat .v { font-size: 28px; font-weight: 900; }
+.coord-stat .l { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Email box */
+.email-box { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 18px 22px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 15px; line-height: 2; }
+.email-box .field { color: var(--blue); font-weight: 700; }
+.email-box .value { color: var(--white); }
+
+/* Doc list */
+.doc-list { list-style: none; padding: 0; margin: 10px 0; }
+.doc-list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 5px; font-size: 15px; }
+.doc-list .num { width: 30px; height: 30px; border-radius: 50%; background: rgba(52,211,153,0.15); color: var(--green); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; flex-shrink: 0; }
+
+/* Valor card for culture section */
+.valor-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px 20px; margin-bottom: 8px; }
+.valor-card .viver { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.12); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: rgba(52,211,153,0.85); margin-top: 6px; line-height: 1.6; }
+.valor-card .não { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.12); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: rgba(248,113,113,0.75); margin-top: 6px; line-height: 1.6; }
+.valor-card .vl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; opacity: .7; }
 </style>
 </head>
 <body>
 
-<!-- SLIDE 1: CAPA -->
+<!-- ============================================ -->
+<!-- SLIDE 1 — CAPA -->
+<!-- ============================================ -->
 <div class="slide slide-capa active" id="s1">
   <div class="logo">A</div>
   <h1>Reunião Semanal</h1>
-  <div class="subtitle">Alicerce — Swell Consultoria</div>
-  <div class="date">29 de Julho de 2026 &bull; Quarta-feira</div>
+  <div class="subtitle">Alicerce</div>
+  <div class="date">27 de Agosto de 2026 &bull; Quarta-feira</div>
 </div>
 
-<!-- SLIDE 2: AGENDA -->
-<div class="slide" id="s2">
-  <div class="slide-header">
-    <div class="bloco-tag">Agenda do Dia</div>
-    <h1>O que vamos ver <span class="gold">hoje</span></h1>
-  </div>
-  <div class="cards-grid cards-4" style="margin-top:20px;">
-    <div class="card card-gold">
-      <div class="card-label">Bloco 1</div>
-      <div class="card-value gold" style="font-size:22px;">Abertura</div>
-      <div class="card-sub">Celebrações e clima da semana</div>
-    </div>
-    <div class="card card-green">
-      <div class="card-label">Bloco 2</div>
-      <div class="card-value green" style="font-size:22px;">Vendas</div>
-      <div class="card-sub">Ranking, VGV, meta e projeção</div>
-    </div>
-    <div class="card card-blue">
-      <div class="card-label">Bloco 3</div>
-      <div class="card-value blue" style="font-size:22px;">Gamificação</div>
-      <div class="card-sub">Funil da semana e alerta de bolos</div>
-    </div>
-    <div class="card" style="border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.05);">
-      <div class="card-label">Bloco 4</div>
-      <div class="card-value" style="font-size:22px;color:#a855f7;">Mentalidade</div>
-      <div class="card-sub">Bolo é filtro + Disciplina de Follow-up</div>
-    </div>
-  </div>
-</div>
-
-<!-- SEPARADOR BLOCO 1 -->
-<div class="slide separador" id="s2b">
-  <div class="icon" style="font-size:48px;">&#9728;</div>
+<!-- ============================================ -->
+<!-- SLIDE 2 — SEPARADOR BLOCO 1 -->
+<!-- ============================================ -->
+<div class="slide separador" id="s2">
+  <div class="icon">&#128200;</div>
   <h1 style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Abertura</h1>
-  <div class="sub">Celebrações e clima da semana</div>
+  <div class="sub">KPIs da Semana e Destaques</div>
   <div style="margin-top:30px;font-size:12px;color:var(--gray2);letter-spacing:3px;text-transform:uppercase;">Bloco 1 de 4</div>
 </div>
 
-<!-- SLIDE 3: CELEBRAÇÕES -->
+<!-- ============================================ -->
+<!-- SLIDE 3 — KPIs DA SEMANA -->
+<!-- ============================================ -->
 <div class="slide" id="s3">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 1 &bull; Abertura</div>
-    <h1>Celebrações da <span class="gold">semana</span></h1>
+    <h1>KPIs da Semana <span class="gold">20/08 a 26/08</span></h1>
   </div>
-  <div class="cards-grid cards-3" style="margin-top:10px;">
-    <div class="card card-gold">
-      <div class="card-label">Vendas no mês</div>
-      <div class="card-value gold">19</div>
-      <div class="card-sub">11 corretores venderam</div>
-    </div>
-    <div class="card card-gold">
-      <div class="card-label">VGV acumulado</div>
-      <div class="card-value gold">R$ 3,78M</div>
-      <div class="card-sub">Volume geral de vendas</div>
-    </div>
-    <div class="card card-green">
+  <div class="cards-grid cards-4" style="margin-top:20px;">
+    <div class="card card-blue" style="text-align:center;">
       <div class="card-label">Agendamentos</div>
-      <div class="card-value green">286</div>
-      <div class="card-sub">Desde 03/07</div>
+      <div class="card-value blue">72</div>
+    </div>
+    <div class="card card-green" style="text-align:center;">
+      <div class="card-label">Pastas Subidas</div>
+      <div class="card-value green">39</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-label">Check-ins</div>
+      <div class="card-value" style="color:var(--white);">82</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="card-label">Registros 945</div>
+      <div class="card-value" style="color:var(--white);">54</div>
     </div>
   </div>
-  <div class="cards-grid cards-4" style="margin-top:16px;">
-    <div class="card">
-      <div class="card-label">Atendimentos</div>
-      <div class="card-value blue">136</div>
-      <div class="card-sub">Confirmados</div>
+  <div style="margin-top:20px;">
+    <div style="font-size:14px;color:var(--gold);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Vendas da Semana</div>
+    <div class="vendas-list">
+      <div class="venda-item"><div><div class="v-name">Edvan Silva</div><div class="v-client">Nathalia Izabela</div></div><div class="v-vgv">R$ 284k</div></div>
+      <div class="venda-item"><div><div class="v-name">Edvan Silva</div><div class="v-client">Jozélia Aparecida</div></div><div class="v-vgv">R$ 300k</div></div>
+      <div class="venda-item"><div><div class="v-name">Maria Clara</div><div class="v-client">Grasieli Ribeiro</div></div><div class="v-vgv">R$ 275k</div></div>
+      <div class="venda-item"><div><div class="v-name">Izabella Chaves</div><div class="v-client">Adrielle Fernanda</div></div><div class="v-vgv">R$ 400k</div></div>
     </div>
-    <div class="card">
-      <div class="card-label">Pastas subidas</div>
-      <div class="card-value" style="color:#f59e0b;">4</div>
-      <div class="card-sub">Clientes em análise</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Check-ins</div>
-      <div class="card-value" style="color:var(--white);">241</div>
-      <div class="card-sub">Desde 11/07</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Registros 945</div>
-      <div class="card-value" style="color:var(--white);">194</div>
-      <div class="card-sub">Transcrições</div>
-    </div>
+    <div style="margin-top:12px;text-align:center;font-size:16px;font-weight:700;color:var(--gold);">4 vendas na semana &bull; VGV Semana: R$ 1,26M</div>
   </div>
 </div>
 
-<!-- SLIDE 4: VENDAS DA SEMANA -->
+<!-- ============================================ -->
+<!-- SLIDE 4 — TOP AGENDAMENTOS -->
+<!-- ============================================ -->
 <div class="slide" id="s4">
   <div class="slide-header">
-    <div class="bloco-tag">Bloco 1 &bull; Quem brilhou esta semana</div>
-    <h1>Vendas da <span class="gold">semana</span></h1>
+    <div class="bloco-tag">Bloco 1 &bull; Abertura</div>
+    <h1>Top <span class="gold">Agendamentos</span></h1>
   </div>
-  <div style="font-size:15px;color:var(--gray);margin-bottom:16px;">Semana 22 a 28 de julho — 4 vendas fechadas, R$ 905K em VGV</div>
-  <div class="vendas-list">
-    <div class="venda-item" style="border-color:rgba(212,168,83,0.4);background:rgba(212,168,83,0.06);">
-      <div><div class="v-name">Edvan Silva</div><div class="v-client">Amaro Ramos dos Santos — Conquista Florianópolis</div></div>
-      <div class="v-vgv">R$ 287K</div>
-    </div>
-    <div class="venda-item">
-      <div><div class="v-name">Camila Craveiro</div><div class="v-client">Denis Grasmann de Moraes — Estação Rio</div></div>
-      <div class="v-vgv">R$ 207K</div>
-    </div>
-    <div class="venda-item">
-      <div><div class="v-name">Dandara Campos</div><div class="v-client">Cintia Ferreira dos Santos — Bosque Jacarepaguá</div></div>
-      <div class="v-vgv">R$ 206K</div>
-    </div>
-    <div class="venda-item">
-      <div><div class="v-name">Josimar Machado</div><div class="v-client">Rony dos Santos — Solar Trindade</div></div>
-      <div class="v-vgv">R$ 205K</div>
-    </div>
-  </div>
-  <div class="highlight-box" style="margin-top:14px;">
-    <div class="big-text" style="font-size:20px;">Destaque: Edvan Silva lidera a semana com R$ 287K! Camila Craveiro abre conta no mês — primeira venda! Josimar Machado fecha hoje mesmo (28/07).</div>
-  </div>
+  <table class="ranking-table" style="margin-top:16px;">
+    <thead><tr><th>Pos</th><th>Corretor</th><th style="text-align:right;">Total</th></tr></thead>
+    <tbody>
+      <tr><td class="pos" style="color:var(--gold);">1</td><td class="nome">Gabriel Souza</td><td class="pts">15</td></tr>
+      <tr><td class="pos" style="color:#c0c0c0;">2</td><td class="nome">Davi Ribeiro</td><td class="pts">8</td></tr>
+      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Isaac de Sá</td><td class="pts">8</td></tr>
+      <tr><td class="pos">4</td><td class="nome">Felipe Guimarães</td><td class="pts" style="color:var(--gray);">7</td></tr>
+      <tr><td class="pos">5</td><td class="nome">Joyce Brisa</td><td class="pts" style="color:var(--gray);">5</td></tr>
+      <tr><td class="pos">6</td><td class="nome">Pedro Nazaro</td><td class="pts" style="color:var(--gray);">4</td></tr>
+      <tr><td class="pos">7</td><td class="nome">Edvan Silva</td><td class="pts" style="color:var(--gray);">4</td></tr>
+      <tr><td class="pos">8</td><td class="nome">Ricardo Braga</td><td class="pts" style="color:var(--gray);">3</td></tr>
+    </tbody>
+  </table>
 </div>
 
-<!-- SLIDE 5: TOP AGENDAMENTOS E ATENDIMENTOS DA SEMANA -->
+<!-- ============================================ -->
+<!-- SLIDE 5 — TOP PASTAS -->
+<!-- ============================================ -->
 <div class="slide" id="s5">
   <div class="slide-header">
-    <div class="bloco-tag">Bloco 1 &bull; Quem brilhou esta semana</div>
-    <h1>Agendamentos e <span class="gold">Atendimentos</span></h1>
+    <div class="bloco-tag">Bloco 1 &bull; Abertura</div>
+    <h1>Top <span class="gold">Pastas</span></h1>
   </div>
-  <div class="comparison">
-    <div class="comp-side" style="border-color:rgba(96,165,250,0.3);">
-      <h3 style="color:var(--blue);">Top Agendamentos (22-28/07)</h3>
-      <table class="ranking-table" style="margin-top:10px;">
-        <tbody>
-          <tr><td class="pos" style="color:var(--gold);">1º</td><td class="nome">Marcelo Arouca</td><td class="pts" style="color:var(--blue);">8</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Maria Clara</td><td class="pts" style="color:var(--blue);">6</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Gabriel Souza</td><td class="pts" style="color:var(--blue);">6</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">William Bueno</td><td class="pts" style="color:var(--blue);">6</td></tr>
-          <tr><td class="pos">5º</td><td class="nome">Dandara Campos</td><td class="pts" style="color:var(--blue);">5</td></tr>
-          <tr><td class="pos">6º</td><td class="nome">Kayque Nascimento</td><td class="pts" style="color:var(--blue);">4</td></tr>
-          <tr><td class="pos">6º</td><td class="nome">Suzy Franklyn</td><td class="pts" style="color:var(--blue);">4</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="comp-side" style="border-color:rgba(52,211,153,0.3);">
-      <h3 style="color:var(--green);">Top Atendimentos (22-28/07)</h3>
-      <table class="ranking-table" style="margin-top:10px;">
-        <tbody>
-          <tr><td class="pos" style="color:var(--gold);">1º</td><td class="nome">Marcelo Arouca</td><td class="pts" style="color:var(--green);">6</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Gabriel Souza</td><td class="pts" style="color:var(--green);">3</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Kayque Nascimento</td><td class="pts" style="color:var(--green);">3</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Josimar Machado</td><td class="pts" style="color:var(--green);">3</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Dandara Campos</td><td class="pts" style="color:var(--green);">3</td></tr>
-          <tr><td class="pos">6º</td><td class="nome">Edvan Silva</td><td class="pts" style="color:var(--green);">2</td></tr>
-          <tr><td class="pos">6º</td><td class="nome">William Bueno</td><td class="pts" style="color:var(--green);">2</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <div class="highlight-box" style="margin-top:12px;">
-    <div class="big-text" style="font-size:20px;">Marcelo Arouca dominou a semana: 8 agendamentos e 6 atendimentos. Gabriel Souza e Kayque Nascimento consistentes no topo.</div>
-  </div>
+  <table class="ranking-table" style="margin-top:16px;">
+    <thead><tr><th>Pos</th><th>Corretor</th><th style="text-align:right;">Total</th></tr></thead>
+    <tbody>
+      <tr><td class="pos" style="color:var(--gold);">1</td><td class="nome">Gabriel Souza</td><td class="pts">7</td></tr>
+      <tr><td class="pos" style="color:#c0c0c0;">2</td><td class="nome">Joyce Brisa</td><td class="pts">6</td></tr>
+      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Felipe Guimarães</td><td class="pts">4</td></tr>
+      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Erica Collins</td><td class="pts">4</td></tr>
+      <tr><td class="pos">3</td><td class="nome">Marcelo Arouca</td><td class="pts" style="color:var(--gray);">4</td></tr>
+      <tr><td class="pos">6</td><td class="nome">Davi Ribeiro</td><td class="pts" style="color:var(--gray);">3</td></tr>
+    </tbody>
+  </table>
 </div>
 
-<!-- SLIDE 6: PRESENÇA DA SEMANA -->
+<!-- ============================================ -->
+<!-- SLIDE 6 — ESPAÇO ABERTO -->
+<!-- ============================================ -->
 <div class="slide" id="s6">
   <div class="slide-header">
-    <div class="bloco-tag">Bloco 1 &bull; Quem brilhou esta semana</div>
-    <h1>Presença da <span class="gold">semana</span></h1>
+    <div class="bloco-tag">Bloco 1 &bull; Abertura</div>
+    <h1>Espaço <span class="gold">Aberto</span></h1>
   </div>
-  <div style="font-size:15px;color:var(--gray);margin-bottom:12px;">98 check-ins em 6 dias (média ~16/dia) + 71 registros 945</div>
-  <div class="comparison">
-    <div class="comp-side" style="border-color:rgba(52,211,153,0.3);">
-      <h3 style="color:var(--green);">Top Check-ins (22-28/07)</h3>
-      <table class="ranking-table" style="margin-top:10px;">
-        <tbody>
-          <tr><td class="pos" style="color:var(--gold);">1º</td><td class="nome">Gabriel Souza</td><td class="pts" style="color:var(--green);">6</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Dandara Campos</td><td class="pts" style="color:var(--green);">5</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Davi Ribeiro</td><td class="pts" style="color:var(--green);">5</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Maria Clara</td><td class="pts" style="color:var(--green);">5</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Suzy Franklyn</td><td class="pts" style="color:var(--green);">5</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">William Bueno</td><td class="pts" style="color:var(--green);">5</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Kayque Nascimento</td><td class="pts" style="color:var(--green);">5</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="comp-side" style="border-color:rgba(96,165,250,0.3);">
-      <h3 style="color:var(--blue);">Top 945 (22-28/07)</h3>
-      <table class="ranking-table" style="margin-top:10px;">
-        <tbody>
-          <tr><td class="pos" style="color:var(--gold);">1º</td><td class="nome">Kayque Nascimento</td><td class="pts" style="color:var(--blue);">19</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Gabriel Souza</td><td class="pts" style="color:var(--blue);">17</td></tr>
-          <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Marcelo Arouca</td><td class="pts" style="color:var(--blue);">17</td></tr>
-          <tr><td class="pos">4º</td><td class="nome">William Bueno</td><td class="pts" style="color:var(--blue);">15</td></tr>
-          <tr><td class="pos">5º</td><td class="nome">Dandara Campos</td><td class="pts" style="color:var(--blue);">14</td></tr>
-          <tr><td class="pos">5º</td><td class="nome">Maria Clara</td><td class="pts" style="color:var(--blue);">14</td></tr>
-          <tr><td class="pos">7º</td><td class="nome">Suzy Franklyn</td><td class="pts" style="color:var(--blue);">13</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <div class="highlight-box" style="text-align:center;margin-top:20px;">
+    <div class="big-text" style="font-size:22px;">Qual a sua maior dificuldade hoje?</div>
+    <div class="small-text" style="margin-top:8px;">Esse é o momento de falar. Troca de ideias, dúvidas, sugestões.</div>
   </div>
-  <div class="highlight-box" style="margin-top:12px;">
-    <div class="big-text" style="font-size:20px;">Kayque Nascimento é o rei do 945: 19 registros na semana! Gabriel Souza o mais presente: 6 check-ins em 6 dias.</div>
-  </div>
+  <ul class="bullet-list" style="margin-top:20px;">
+    <li>O que está funcionando pra você?</li>
+    <li>Onde você está travando?</li>
+    <li>O que você precisa pra vender mais?</li>
+  </ul>
 </div>
 
-<!-- SEPARADOR BLOCO 2 -->
-<div class="slide separador" id="s6b">
-  <div class="icon" style="font-size:48px;">&#128176;</div>
-  <h1 style="background:linear-gradient(135deg,var(--green),#6ee7b7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Vendas</h1>
-  <div class="sub">Ranking, VGV, meta e projeção</div>
+<!-- ============================================ -->
+<!-- SLIDE 7 — SEPARADOR BLOCO 2 -->
+<!-- ============================================ -->
+<div class="slide separador" id="s7">
+  <div class="icon">&#128176;</div>
+  <h1 style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Vendas</h1>
+  <div class="sub">Meta vs Realizado — Agosto 2026</div>
   <div style="margin-top:30px;font-size:12px;color:var(--gray2);letter-spacing:3px;text-transform:uppercase;">Bloco 2 de 4</div>
 </div>
 
-<!-- SLIDE 7: META vs REALIZADO -->
-<div class="slide" id="s7">
+<!-- ============================================ -->
+<!-- SLIDE 8 — META VS REALIZADO -->
+<!-- ============================================ -->
+<div class="slide" id="s8">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 2 &bull; Vendas</div>
     <h1>Meta vs <span class="gold">Realizado</span></h1>
   </div>
-  <div class="cards-grid cards-4" style="margin-bottom:20px;">
-    <div class="card card-gold">
-      <div class="card-label">Meta do mês</div>
-      <div class="card-value gold">R$ 7,0M</div>
-      <div class="card-sub">Mês comercial</div>
-    </div>
-    <div class="card card-green">
-      <div class="card-label">Realizado</div>
-      <div class="card-value green">R$ 3,78M</div>
-      <div class="card-sub">19 vendas fechadas</div>
-    </div>
-    <div class="card card-red">
-      <div class="card-label">Falta</div>
-      <div class="card-value red">R$ 3,22M</div>
-      <div class="card-sub">Semana final</div>
+  <div class="highlight-box" style="text-align:center;margin-top:16px;">
+    <div class="big-text" style="font-size:28px;color:var(--gold);">17 vendas &bull; R$ 3.554.632</div>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" style="width:50.8%;background:linear-gradient(90deg,var(--green-dark),var(--green));">50,8%</div>
+  </div>
+  <div style="text-align:center;font-size:14px;color:var(--gray);">Meta: R$ 7.000.000</div>
+  <div class="cards-grid cards-2" style="margin-top:20px;">
+    <div class="card">
+      <div class="card-label">Vendas Corretor</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-top:8px;">
+        Davi Ribeiro — 2 vendas<br>
+        Isaac de Sá — 1 venda<br>
+        Erica Collins — 1 venda<br>
+        Maria Clara — 1 venda<br>
+        Natã Oliveira — 1 venda<br>
+        Izabella Chaves — 1 venda
+      </div>
     </div>
     <div class="card">
-      <div class="card-label">Progresso</div>
-      <div class="card-value" style="color:var(--white);">54%</div>
-      <div class="card-sub">54% da meta com 19 vendas</div>
+      <div class="card-label">Vendas Liderança</div>
+      <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-top:8px;">
+        Edvan Silva — 3 vendas<br>
+        Marcelo Arouca — 2 vendas<br>
+        Glauco Ribeiro — 2 vendas<br>
+        Adriel Duarte — 1 venda<br>
+        Gabriel Ribeiro — 1 consórcio<br>
+        Cristiano Fernandes — 1 consórcio
+      </div>
     </div>
-  </div>
-  <div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-      <span style="font-size:13px;color:var(--gray);">Progresso da Meta</span>
-      <span style="font-size:13px;color:var(--gold);font-weight:700;">54%</span>
-    </div>
-    <div class="progress-bar">
-      <div class="progress-fill" style="width:54%;background:linear-gradient(90deg,var(--gold),var(--gold-light));">54%</div>
-    </div>
-  </div>
-  <div class="highlight-box" style="margin-top:16px;">
-    <div class="big-text" style="font-size:22px;">Semana final do mês comercial. Cada venda conta!</div>
-    <div class="small-text">Faltam R$ 3,22M para bater a meta. Foco total nesta reta final.</div>
   </div>
 </div>
 
-<!-- SLIDE 8: RANKING VENDAS COM PÓDIO -->
-<div class="slide" id="s8">
-  <div class="slide-header">
-    <div class="bloco-tag">Bloco 2 &bull; Vendas</div>
-    <h1>Quem <span class="gold">vendeu</span></h1>
-  </div>
-  <div class="podio">
-    <div class="podio-item podio-2">
-      <div class="podio-name">Isaac de Sá</div>
-      <div class="podio-detail">3 vendas</div>
-      <div class="podio-bar"><div class="podio-pos">2º</div><div class="podio-pts">R$ 571K</div></div>
-    </div>
-    <div class="podio-item podio-1">
-      <div class="podio-name">Edvan Silva</div>
-      <div class="podio-detail">2 vendas (1 consórcio)</div>
-      <div class="podio-bar"><div class="podio-pos">1º</div><div class="podio-pts">R$ 587K</div></div>
-    </div>
-    <div class="podio-item podio-3">
-      <div class="podio-name">Davi Ribeiro</div>
-      <div class="podio-detail">3 vendas (1 consórcio)</div>
-      <div class="podio-bar"><div class="podio-pos">3º</div><div class="podio-pts">R$ 543K</div></div>
-    </div>
-  </div>
-  <div class="vendas-list" style="margin-top:10px;">
-    <div class="venda-item"><div><div class="v-name">Gabriel Souza</div><div class="v-client">3 vendas (2 consórcios)</div></div><div class="v-vgv">R$ 423K</div></div>
-    <div class="venda-item"><div><div class="v-name">Felipe Guimarães</div><div class="v-client">2 vendas (1 consórcio)</div></div><div class="v-vgv">R$ 318K</div></div>
-    <div class="venda-item"><div><div class="v-name">Gabriel Ribeiro</div><div class="v-client">1 venda (consórcio)</div></div><div class="v-vgv">R$ 250K</div></div>
-    <div class="venda-item"><div><div class="v-name">Marcelo Arouca</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 244K</div></div>
-    <div class="venda-item"><div><div class="v-name">Glauco Ribeiro</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 230K</div></div>
-    <div class="venda-item"><div><div class="v-name">Camila Craveiro</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 207K</div></div>
-    <div class="venda-item"><div><div class="v-name">Dandara Campos</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 206K</div></div>
-    <div class="venda-item"><div><div class="v-name">Josimar Machado</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 205K</div></div>
-  </div>
-</div>
-
-<!-- SLIDE 9: DETALHES DAS VENDAS DA SEMANA -->
+<!-- ============================================ -->
+<!-- SLIDE 9 — RANKING VENDAS PÓDIO -->
+<!-- ============================================ -->
 <div class="slide" id="s9">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 2 &bull; Vendas</div>
-    <h1>Detalhes das vendas da <span class="gold">semana</span></h1>
+    <h1>Ranking <span class="gold">Vendas</span></h1>
   </div>
-  <div style="font-size:15px;color:var(--gray);margin-bottom:20px;">4 vendas fechadas entre 22 e 28 de julho</div>
-  <div class="vendas-list" style="grid-template-columns:1fr;">
-    <div class="venda-item" style="border-color:rgba(212,168,83,0.4);background:rgba(212,168,83,0.06);padding:20px 24px;">
-      <div>
-        <div class="v-name" style="font-size:16px;">Edvan Silva</div>
-        <div class="v-client" style="font-size:14px;">Cliente: Amaro Ramos dos Santos</div>
-        <div class="v-client" style="font-size:13px;color:var(--gold);">Empreendimento: Conquista Florianópolis</div>
+  <div class="podio">
+    <div class="podio-item podio-2">
+      <div class="podio-name">Izabella Chaves</div>
+      <div class="podio-detail">1 venda</div>
+      <div class="podio-bar">
+        <div class="podio-pos">2</div>
+        <div class="podio-pts">R$ 400k</div>
       </div>
-      <div class="v-vgv" style="font-size:20px;">R$ 286.600</div>
     </div>
-    <div class="venda-item" style="padding:20px 24px;">
-      <div>
-        <div class="v-name" style="font-size:16px;">Camila Craveiro</div>
-        <div class="v-client" style="font-size:14px;">Cliente: Denis Grasmann de Moraes</div>
-        <div class="v-client" style="font-size:13px;color:var(--gold);">Empreendimento: Estação Rio</div>
+    <div class="podio-item podio-1">
+      <div class="podio-name">Edvan Silva</div>
+      <div class="podio-detail">3 vendas</div>
+      <div class="podio-bar">
+        <div class="podio-pos">1</div>
+        <div class="podio-pts">R$ 624k</div>
       </div>
-      <div class="v-vgv" style="font-size:20px;">R$ 206.544</div>
     </div>
-    <div class="venda-item" style="padding:20px 24px;">
-      <div>
-        <div class="v-name" style="font-size:16px;">Dandara Campos</div>
-        <div class="v-client" style="font-size:14px;">Cliente: Cintia Ferreira dos Santos</div>
-        <div class="v-client" style="font-size:13px;color:var(--gold);">Empreendimento: Bosque Jacarepaguá</div>
+    <div class="podio-item podio-3">
+      <div class="podio-name">Davi Ribeiro</div>
+      <div class="podio-detail">2 vendas</div>
+      <div class="podio-bar">
+        <div class="podio-pos">3</div>
+        <div class="podio-pts">R$ 395k</div>
       </div>
-      <div class="v-vgv" style="font-size:20px;">R$ 205.964</div>
-    </div>
-    <div class="venda-item" style="padding:20px 24px;">
-      <div>
-        <div class="v-name" style="font-size:16px;">Josimar Machado</div>
-        <div class="v-client" style="font-size:14px;">Cliente: Rony dos Santos</div>
-        <div class="v-client" style="font-size:13px;color:var(--gold);">Empreendimento: Solar Trindade</div>
-      </div>
-      <div class="v-vgv" style="font-size:20px;">R$ 205.414</div>
     </div>
   </div>
-  <div class="highlight-box" style="margin-top:16px;">
-    <div class="big-text" style="font-size:22px;">VGV total da semana: R$ 905K</div>
+  <div class="vendas-list" style="margin-top:16px;">
+    <div class="venda-item"><div><div class="v-name">Marcelo Arouca</div><div class="v-client">2 vendas</div></div><div class="v-vgv">R$ 383k</div></div>
+    <div class="venda-item"><div><div class="v-name">Glauco Ribeiro</div><div class="v-client">2 vendas</div></div><div class="v-vgv">R$ 353k</div></div>
+    <div class="venda-item"><div><div class="v-name">Maria Clara</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 275k</div></div>
+    <div class="venda-item"><div><div class="v-name">Natã Oliveira</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 230k</div></div>
+    <div class="venda-item"><div><div class="v-name">Adriel Duarte</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 180k</div></div>
+    <div class="venda-item"><div><div class="v-name">Isaac de Sá</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 175k</div></div>
+    <div class="venda-item"><div><div class="v-name">Erica Collins</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 160k</div></div>
+    <div class="venda-item"><div><div class="v-name">Gabriel Ribeiro</div><div class="v-client">1 consórcio</div></div><div class="v-vgv">R$ 160k</div></div>
   </div>
 </div>
 
-<!-- SEPARADOR BLOCO 3 -->
-<div class="slide separador" id="s9b">
-  <div class="icon" style="font-size:48px;">&#127942;</div>
-  <h1 style="background:linear-gradient(135deg,var(--blue),#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Gamificação</h1>
-  <div class="sub">Ranking de pontos, funil e alerta de bolos</div>
+<!-- ============================================ -->
+<!-- SLIDE 10 — SEPARADOR BLOCO 3 -->
+<!-- ============================================ -->
+<div class="slide separador" id="s10">
+  <div class="icon">&#127942;</div>
+  <h1 style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Gamificação</h1>
+  <div class="sub">Ranking Mensal — Agosto 2026</div>
   <div style="margin-top:30px;font-size:12px;color:var(--gray2);letter-spacing:3px;text-transform:uppercase;">Bloco 3 de 4</div>
 </div>
 
-<!-- SLIDE 10: RANKING GAMIFICAÇÃO -->
-<div class="slide" id="s10">
-  <div class="slide-header">
-    <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
-    <h1>Ranking de <span class="gold">Pontos</span> do Mês</h1>
-  </div>
-  <div class="podio" style="margin-bottom:8px;">
-    <div class="podio-item podio-2">
-      <div class="podio-name">Davi Ribeiro</div>
-      <div class="podio-detail">558 pts</div>
-      <div class="podio-bar"><div class="podio-pos">2º</div><div class="podio-pts">558</div></div>
-    </div>
-    <div class="podio-item podio-1">
-      <div class="podio-name">Gabriel Souza</div>
-      <div class="podio-detail">659 pts</div>
-      <div class="podio-bar"><div class="podio-pos">1º</div><div class="podio-pts">659</div></div>
-    </div>
-    <div class="podio-item podio-3">
-      <div class="podio-name">Dandara Campos</div>
-      <div class="podio-detail">288 pts</div>
-      <div class="podio-bar"><div class="podio-pos">3º</div><div class="podio-pts">288</div></div>
-    </div>
-  </div>
-  <table class="ranking-table">
-    <thead><tr><th>POS</th><th>CORRETOR</th><th>CK</th><th>945</th><th>AG</th><th>AT</th><th>PA</th><th>VD</th><th style="text-align:right;">TOTAL</th></tr></thead>
-    <tbody>
-      <tr><td class="pos" style="color:var(--gold);">1º</td><td class="nome">Gabriel Souza</td><td>105</td><td>32</td><td>108</td><td>110</td><td>264</td><td>40</td><td class="pts">659</td></tr>
-      <tr><td class="pos" style="color:#c0c0c0;">2º</td><td class="nome">Davi Ribeiro</td><td>104</td><td>30</td><td>111</td><td>55</td><td>208</td><td>50</td><td class="pts">558</td></tr>
-      <tr><td class="pos" style="color:#cd7f32;">3º</td><td class="nome">Dandara Campos</td><td>70</td><td>26</td><td>45</td><td>35</td><td>112</td><td>0</td><td class="pts">288</td></tr>
-      <tr><td class="pos">4º</td><td class="nome">Kayque Nascimento</td><td>16</td><td>12</td><td>54</td><td>60</td><td>96</td><td>0</td><td class="pts">238</td></tr>
-      <tr><td class="pos">5º</td><td class="nome">Joyce Brisa</td><td>-14</td><td>6</td><td>27</td><td>30</td><td>168</td><td>0</td><td class="pts">217</td></tr>
-      <tr><td class="pos">6º</td><td class="nome">William Bueno</td><td>48</td><td>24</td><td>54</td><td>25</td><td>24</td><td>0</td><td class="pts">175</td></tr>
-      <tr><td class="pos">7º</td><td class="nome">Victor Pereira</td><td>52</td><td>24</td><td>54</td><td>0</td><td>32</td><td>0</td><td class="pts">162</td></tr>
-      <tr><td class="pos">8º</td><td class="nome">Gabriel Ribeiro</td><td>43</td><td>2</td><td>36</td><td>35</td><td>32</td><td>10</td><td class="pts">158</td></tr>
-      <tr><td class="pos">9º</td><td class="nome">Maria Clara</td><td>16</td><td>20</td><td>69</td><td>15</td><td>24</td><td>0</td><td class="pts">144</td></tr>
-      <tr><td class="pos">10º</td><td class="nome">Isaac de Sá</td><td>7</td><td>-8</td><td>27</td><td>15</td><td>24</td><td>60</td><td class="pts">125</td></tr>
-      <tr><td class="pos">11º</td><td class="nome">Josimar Machado</td><td>-2</td><td>-8</td><td>18</td><td>20</td><td>72</td><td>20</td><td class="pts">120</td></tr>
-      <tr><td class="pos">12º</td><td class="nome">Felipe Guimarães</td><td>-18</td><td>-8</td><td>24</td><td>25</td><td>72</td><td>0</td><td class="pts">95</td></tr>
-    </tbody>
-  </table>
-  <div class="highlight-box" style="margin-top:10px;">
-    <div class="big-text" style="font-size:18px;">Gabriel Souza lidera com 659 pts — presença + volume + conversão. Davi Ribeiro forte 2º com 558. Dandara consistente no top 3.</div>
-  </div>
-</div>
-
-<!-- SLIDE 11: FUNIL DA SEMANA -->
+<!-- ============================================ -->
+<!-- SLIDE 11 — RANKING TOP 10 -->
+<!-- ============================================ -->
 <div class="slide" id="s11">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
-    <h1>Funil da <span class="gold">semana</span></h1>
+    <h1>Ranking <span class="gold">Top 10</span></h1>
   </div>
-  <div class="funnel">
+  <table class="ranking-table" style="margin-top:12px;">
+    <thead><tr>
+      <th style="font-size:9px;">POS</th>
+      <th style="font-size:9px;">CORRETOR</th>
+      <th style="font-size:9px;text-align:right;">CK</th>
+      <th style="font-size:9px;text-align:right;">945</th>
+      <th style="font-size:9px;text-align:right;">AG</th>
+      <th style="font-size:9px;text-align:right;">AT</th>
+      <th style="font-size:9px;text-align:right;">PA</th>
+      <th style="font-size:9px;text-align:right;">VE</th>
+      <th style="font-size:9px;text-align:right;">TOT</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="pos" style="color:var(--gold);font-size:12px;">1</td><td class="nome" style="font-size:12px;">Davi Ribeiro</td><td style="font-size:12px;text-align:right;">89</td><td style="font-size:12px;text-align:right;">34</td><td style="font-size:12px;text-align:right;">38</td><td style="font-size:12px;text-align:right;">45</td><td style="font-size:12px;text-align:right;">130</td><td style="font-size:12px;text-align:right;">80</td><td class="pts" style="font-size:12px;">416</td></tr>
+      <tr><td class="pos" style="color:#c0c0c0;font-size:12px;">2</td><td class="nome" style="font-size:12px;">Gabriel Souza</td><td style="font-size:12px;text-align:right;">102</td><td style="font-size:12px;text-align:right;">40</td><td style="font-size:12px;text-align:right;">43</td><td style="font-size:12px;text-align:right;">30</td><td style="font-size:12px;text-align:right;">165</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;">380</td></tr>
+      <tr><td class="pos" style="color:#cd7f32;font-size:12px;">3</td><td class="nome" style="font-size:12px;">Isaac de Sá</td><td style="font-size:12px;text-align:right;">52</td><td style="font-size:12px;text-align:right;">30</td><td style="font-size:12px;text-align:right;">21</td><td style="font-size:12px;text-align:right;">25</td><td style="font-size:12px;text-align:right;">40</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;">208</td></tr>
+      <tr><td class="pos" style="font-size:12px;">4</td><td class="nome" style="font-size:12px;">Joyce Brisa</td><td style="font-size:12px;text-align:right;">21</td><td style="font-size:12px;text-align:right;">26</td><td style="font-size:12px;text-align:right;">9</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">140</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">206</td></tr>
+      <tr><td class="pos" style="font-size:12px;">5</td><td class="nome" style="font-size:12px;">Felipe Guimarães</td><td style="font-size:12px;text-align:right;">38</td><td style="font-size:12px;text-align:right;">18</td><td style="font-size:12px;text-align:right;">14</td><td style="font-size:12px;text-align:right;">5</td><td style="font-size:12px;text-align:right;">50</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">125</td></tr>
+      <tr><td class="pos" style="font-size:12px;">6</td><td class="nome" style="font-size:12px;">Gabriel Ribeiro</td><td style="font-size:12px;text-align:right;">45</td><td style="font-size:12px;text-align:right;">26</td><td style="font-size:12px;text-align:right;">14</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">10</td><td class="pts" style="font-size:12px;color:var(--gray);">115</td></tr>
+      <tr><td class="pos" style="font-size:12px;">7</td><td class="nome" style="font-size:12px;">Erica Collins</td><td style="font-size:12px;text-align:right;">1</td><td style="font-size:12px;text-align:right;">18</td><td style="font-size:12px;text-align:right;">6</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">30</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">95</td></tr>
+      <tr><td class="pos" style="font-size:12px;">8</td><td class="nome" style="font-size:12px;">Maria Clara</td><td style="font-size:12px;text-align:right;">31</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">4</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">85</td></tr>
+      <tr><td class="pos" style="font-size:12px;">9</td><td class="nome" style="font-size:12px;">Suzy Franklyn</td><td style="font-size:12px;text-align:right;">40</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">4</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">64</td></tr>
+      <tr><td class="pos" style="font-size:12px;">10</td><td class="nome" style="font-size:12px;">Natã Oliveira</td><td style="font-size:12px;text-align:right;">2</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">3</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">5</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">60</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:8px;font-size:11px;color:var(--gray2);">CK=Check-in &bull; 945=Registro &bull; AG=Agendamento &bull; AT=Atendimento &bull; PA=Pasta &bull; VE=Venda</div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 12 — RANKING 11-25 -->
+<!-- ============================================ -->
+<div class="slide" id="s12">
+  <div class="slide-header">
+    <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
+    <h1>Ranking <span class="gold">11 a 25</span></h1>
+  </div>
+  <table class="ranking-table" style="margin-top:12px;">
+    <thead><tr><th>POS</th><th>CORRETOR</th><th style="text-align:right;">TOTAL</th></tr></thead>
+    <tbody>
+      <tr><td class="pos" style="font-size:12px;">11</td><td class="nome" style="font-size:13px;">Ricardo Braga</td><td class="pts" style="color:var(--gray);">58</td></tr>
+      <tr><td class="pos" style="font-size:12px;">12</td><td class="nome" style="font-size:13px;">Izabella Chaves</td><td class="pts" style="color:var(--gray);">56</td></tr>
+      <tr><td class="pos" style="font-size:12px;">13</td><td class="nome" style="font-size:13px;">Kerlly Martins</td><td class="pts" style="color:var(--gray);">54</td></tr>
+      <tr><td class="pos" style="font-size:12px;">14</td><td class="nome" style="font-size:13px;">Pedro Nazaro</td><td class="pts" style="color:var(--gray);">53</td></tr>
+      <tr><td class="pos" style="font-size:12px;">15</td><td class="nome" style="font-size:13px;">Marcos Reis</td><td class="pts" style="color:var(--gray);">52</td></tr>
+      <tr><td class="pos" style="font-size:12px;">16</td><td class="nome" style="font-size:13px;">Kayque Nascimento</td><td class="pts" style="color:var(--gray);">37</td></tr>
+      <tr><td class="pos" style="font-size:12px;">17</td><td class="nome" style="font-size:13px;">Vitória Farias</td><td class="pts" style="color:var(--gray);">33</td></tr>
+      <tr><td class="pos" style="font-size:12px;">18</td><td class="nome" style="font-size:13px;">Bruna Pacheco</td><td class="pts" style="color:var(--gray);">30</td></tr>
+      <tr><td class="pos" style="font-size:12px;">19</td><td class="nome" style="font-size:13px;">Kauã Portes</td><td class="pts" style="color:var(--gray);">27</td></tr>
+      <tr><td class="pos" style="font-size:12px;">20</td><td class="nome" style="font-size:13px;">Josimar Machado</td><td class="pts" style="color:var(--gray);">26</td></tr>
+      <tr><td class="pos" style="font-size:12px;">21</td><td class="nome" style="font-size:13px;">Juan Martinez</td><td class="pts" style="color:var(--gray);">22</td></tr>
+      <tr><td class="pos" style="font-size:12px;">22</td><td class="nome" style="font-size:13px;">Ravine Telles</td><td class="pts" style="color:var(--gray);">17</td></tr>
+      <tr><td class="pos" style="font-size:12px;">23</td><td class="nome" style="font-size:13px;">Pablo Henrique</td><td class="pts" style="color:var(--gray);">15</td></tr>
+      <tr><td class="pos" style="font-size:12px;">24</td><td class="nome" style="font-size:13px;">Cristiano Fernandes</td><td class="pts" style="color:var(--gray);">12</td></tr>
+      <tr><td class="pos" style="font-size:12px;">25</td><td class="nome" style="font-size:13px;">Guilherme Vitorino</td><td class="pts" style="color:var(--gray);">4</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 13 — FUNIL -->
+<!-- ============================================ -->
+<div class="slide" id="s13">
+  <div class="slide-header">
+    <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
+    <h1>Funil de <span class="gold">Conversão</span></h1>
+  </div>
+  <div class="funnel" style="margin-top:24px;">
     <div class="funnel-step">
-      <div class="funnel-num" style="color:var(--blue);">70</div>
+      <div class="funnel-num" style="color:var(--blue);">220</div>
       <div class="funnel-label">Agendamentos</div>
     </div>
-    <div style="text-align:center;">
-      <div class="funnel-arrow">&rarr;</div>
+    <div class="funnel-arrow">
+      <div>&rarr;</div>
+      <div class="funnel-pct">18,6%</div>
     </div>
     <div class="funnel-step">
-      <div class="funnel-num" style="color:#f59e0b;">4</div>
-      <div class="funnel-label">Pastas</div>
-    </div>
-    <div style="text-align:center;">
-      <div class="funnel-arrow">&rarr;</div>
-      <div class="funnel-pct">64%</div>
-    </div>
-    <div class="funnel-step">
-      <div class="funnel-num" style="color:var(--gold);">45</div>
+      <div class="funnel-num" style="color:var(--green);">41</div>
       <div class="funnel-label">Atendimentos</div>
     </div>
-    <div style="text-align:center;">
-      <div class="funnel-arrow">&rarr;</div>
+    <div class="funnel-arrow">
+      <div>&rarr;</div>
+      <div class="funnel-pct">&nbsp;</div>
     </div>
     <div class="funnel-step">
-      <div class="funnel-num" style="color:var(--green);">4</div>
+      <div class="funnel-num" style="color:var(--gold);">351</div>
+      <div class="funnel-label">Pastas</div>
+    </div>
+    <div class="funnel-arrow">
+      <div>&rarr;</div>
+      <div class="funnel-pct">4,8%</div>
+    </div>
+    <div class="funnel-step">
+      <div class="funnel-num" style="color:var(--gold);">17</div>
       <div class="funnel-label">Vendas</div>
     </div>
   </div>
-  <div class="cards-grid cards-3" style="margin-top:16px;">
-    <div class="card card-red" style="text-align:center;">
-      <div class="card-label">Bolos (no-shows)</div>
-      <div class="card-value red">44</div>
-      <div class="card-sub">Clientes que não compareceram</div>
-    </div>
-    <div class="card card-green" style="text-align:center;">
-      <div class="card-label">Taxa de comparecimento</div>
-      <div class="card-value green">64%</div>
-      <div class="card-sub">45 de 70 compareceram</div>
-    </div>
-    <div class="card card-gold" style="text-align:center;">
-      <div class="card-label">Conversão</div>
-      <div class="card-value gold">9%</div>
-      <div class="card-sub">4 vendas de 45 atendimentos</div>
-    </div>
-  </div>
-  <div class="highlight-box" style="margin-top:14px;">
-    <div class="big-text" style="font-size:20px;">Taxa de comparecimento: 64%. 44 bolos — vamos trabalhar o follow-up pré-agendamento!</div>
+  <div style="margin-top:20px;text-align:center;font-size:15px;color:var(--gray);line-height:1.7;">
+    De cada 100 agendamentos, 18,6 viram atendimento presencial.<br>
+    De cada 100 pastas subidas, 4,8 viram venda.<br>
+    <span style="color:var(--gold);font-weight:700;">Volume no topo do funil = resultado lá embaixo.</span>
   </div>
 </div>
 
-<!-- SLIDE 12: ALERTA DE BOLOS -->
-<div class="slide" id="s12">
-  <div class="slide-header">
-    <div class="bloco-tag">Bloco 3 &bull; Alerta</div>
-    <h1><span class="gold">44 Bolos</span> na semana</h1>
-  </div>
-  <div style="font-size:16px;color:var(--gray);margin-bottom:16px;">Quem mais recebeu bolo — oportunidade de melhorar o follow-up</div>
-  <div class="cards-grid cards-4" style="margin-bottom:16px;">
-    <div class="card card-red" style="text-align:center;">
-      <div class="card-label">Maria Clara</div>
-      <div class="card-value red">4</div>
-      <div class="card-sub">bolos</div>
-    </div>
-    <div class="card card-red" style="text-align:center;">
-      <div class="card-label">William Bueno</div>
-      <div class="card-value red">4</div>
-      <div class="card-sub">bolos</div>
-    </div>
-    <div class="card card-red" style="text-align:center;">
-      <div class="card-label">Suzy Franklyn</div>
-      <div class="card-value red">4</div>
-      <div class="card-sub">bolos</div>
-    </div>
-    <div class="card card-red" style="text-align:center;">
-      <div class="card-label">Gabriel Ribeiro</div>
-      <div class="card-value red">4</div>
-      <div class="card-sub">bolos</div>
-    </div>
-  </div>
-  <div class="cards-grid cards-3" style="margin-bottom:16px;">
-    <div class="card" style="text-align:center;">
-      <div class="card-label">Marcelo Arouca</div>
-      <div class="card-value" style="color:var(--red);">3</div>
-    </div>
-    <div class="card" style="text-align:center;">
-      <div class="card-label">Gabriel Souza</div>
-      <div class="card-value" style="color:var(--red);">3</div>
-    </div>
-    <div class="card" style="text-align:center;">
-      <div class="card-label">+ outros</div>
-      <div class="card-value" style="color:var(--gray);">22</div>
-    </div>
-  </div>
-  <div class="highlight-box">
-    <div class="big-text" style="font-size:20px;">3 ações para reduzir bolos:</div>
-    <ul class="bullet-list" style="margin-top:10px;">
-      <li style="font-size:16px;"><strong>Confirmar via WhatsApp</strong> na véspera do agendamento</li>
-      <li style="font-size:16px;"><strong>Ligar 1h antes</strong> do horário marcado</li>
-      <li style="font-size:16px;"><strong>Remarcar no mesmo dia</strong> — não deixar o cliente esfriar</li>
-    </ul>
-  </div>
-</div>
-
-<!-- SEPARADOR BLOCO 4 -->
-<div class="slide separador" id="s12b">
-  <div class="icon" style="font-size:48px;">&#127891;</div>
-  <h1 style="background:linear-gradient(135deg,#a855f7,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Treinamento</h1>
-  <div class="sub">SUP — Primeiro Atendimento</div>
+<!-- ============================================ -->
+<!-- SLIDE 14 — SEPARADOR BLOCO 4 -->
+<!-- ============================================ -->
+<div class="slide separador" id="s14">
+  <div class="icon">&#129504;</div>
+  <h1 style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Mentalidade</h1>
+  <div class="sub">A Força do Hábito</div>
   <div style="margin-top:30px;font-size:12px;color:var(--gray2);letter-spacing:3px;text-transform:uppercase;">Bloco 4 de 4</div>
 </div>
 
-<!-- SLIDES DO TREINAMENTO SUP SERÃO INSERIDOS AQUI -->
+<!-- ============================================ -->
+<!-- SLIDE 15 — EFEITO COMPOSTO -->
+<!-- ============================================ -->
+<div class="slide" id="s15">
+  <div class="slide-header">
+    <div class="bloco-tag">Bloco 4 &bull; Mentalidade</div>
+    <h1>Efeito <span class="gold">Composto</span></h1>
+  </div>
+  <div class="quote" style="margin-top:16px;">
+    "Pequenas disciplinas diárias, repetidas com consistência, levam a grandes conquistas."
+  </div>
+  <div class="quote-author">— Darren Hardy</div>
+  <div class="highlight-box" style="margin-top:24px;">
+    <div class="math-flow">
+      <div class="math-box">
+        <div class="num">1</div>
+        <div class="label">cliente por dia</div>
+      </div>
+      <div class="math-op">&rarr;</div>
+      <div class="math-box">
+        <div class="num">5</div>
+        <div class="label">por semana</div>
+      </div>
+      <div class="math-op">&rarr;</div>
+      <div class="math-box">
+        <div class="num">20</div>
+        <div class="label">por mês</div>
+      </div>
+      <div class="math-op">&rarr;</div>
+      <div class="math-box">
+        <div class="num">240</div>
+        <div class="label">por ano</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:16px;text-align:center;font-size:17px;color:var(--gray);line-height:1.6;">
+    Quem faz o básico todo dia, vende. Quem espera a sorte, espera pra sempre.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 16 — PRESENÇA E DISCIPLINA -->
+<!-- ============================================ -->
+<div class="slide" id="s16">
+  <div class="slide-header">
+    <div class="bloco-tag">Bloco 4 &bull; Mentalidade</div>
+    <h1>Presença e <span class="gold">Disciplina</span></h1>
+  </div>
+  <div class="cards-grid cards-2" style="margin-top:16px;">
+    <div class="card card-green">
+      <div class="card-label">Quem está fazendo</div>
+      <div style="font-size:15px;color:var(--gray);line-height:1.7;margin-top:8px;">
+        82 check-ins, 54 registros 945 nesta semana. 72 agendamentos. O processo funciona.
+      </div>
+    </div>
+    <div class="card card-red">
+      <div class="card-label">Quem está faltando</div>
+      <div style="font-size:15px;color:var(--gray);line-height:1.7;margin-top:8px;">
+        7 de 25 fizeram 945 hoje. O básico é todo dia. Quem não planta, não colhe.
+      </div>
+    </div>
+  </div>
+  <div class="highlight-box" style="text-align:center;margin-top:16px;">
+    <div class="big-text" style="font-size:20px;">Disciplina é fazer o que precisa ser feito, mesmo quando ninguém está olhando.</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 17 — FOCO DA SEMANA -->
+<!-- ============================================ -->
+<div class="slide" id="s17">
+  <div class="slide-header">
+    <div class="bloco-tag">Bloco 4 &bull; Mentalidade</div>
+    <h1>Foco da <span class="gold">Semana</span></h1>
+  </div>
+  <ul class="bullet-list" style="margin-top:20px;">
+    <li><strong>Fechar as vendas no pipeline</strong> — Joyce tem 3 prontas, Gabriel tem 2 BACEN aprovados</li>
+    <li><strong>Subir pastas</strong> — quem não sobe pasta não gera venda</li>
+    <li><strong>945 todo dia</strong> — quem planeja o dia, controla o resultado</li>
+  </ul>
+  <div class="cta-box" style="margin-top:24px;">
+    <h2>Meta: 4 vendas esta semana. Vamos.</h2>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 18 — ENCERRAMENTO -->
+<!-- ============================================ -->
+<div class="slide slide-capa" id="s18">
+  <div class="logo">A</div>
+  <h1 style="font-size:42px;">Alicerce</h1>
+  <div class="subtitle" style="margin-top:8px;font-size:22px;color:var(--gold);">Construindo na Rocha</div>
+  <div style="margin-top:30px;font-size:17px;color:var(--gray);line-height:1.8;">Dono. Equipe. Disciplina. Treino. Mentalidade.</div>
+  <div class="date" style="margin-top:40px;font-size:16px;letter-spacing:2px;">&#127959; Bora construir.</div>
+</div>
 
 <!-- NAVEGAÇÃO -->
 <div class="nav">
