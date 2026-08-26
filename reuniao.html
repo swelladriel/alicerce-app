@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reunião Semanal — 27/08/2026</title>
+<title>Reunião Semanal — 26/08/2026</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -279,7 +279,6 @@ body {
 .scenario-box { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; }
 .scenario-vs { display: flex; align-items: center; font-size: 28px; font-weight: 900; color: var(--gray2); padding-top: 40px; }
 
-/* Gamificação table */
 .gam-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
 .gam-table th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gray2); padding: 8px 12px; border-bottom: 1px solid var(--glass-border); }
 .gam-table td { padding: 8px 12px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); }
@@ -287,7 +286,6 @@ body {
 .gam-table .new { color: var(--green); font-weight: 800; }
 .gam-table .same { color: rgba(255,255,255,0.5); }
 
-/* Coord card */
 .coord-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; text-align: center; }
 .coord-card .nome { font-size: 22px; font-weight: 800; color: var(--white); margin-bottom: 4px; }
 .coord-card .cargo { font-size: 11px; color: var(--gray2); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
@@ -295,17 +293,14 @@ body {
 .coord-stat .v { font-size: 28px; font-weight: 900; }
 .coord-stat .l { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
 
-/* Email box */
 .email-box { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 18px 22px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 15px; line-height: 2; }
 .email-box .field { color: var(--blue); font-weight: 700; }
 .email-box .value { color: var(--white); }
 
-/* Doc list */
 .doc-list { list-style: none; padding: 0; margin: 10px 0; }
 .doc-list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 5px; font-size: 15px; }
 .doc-list .num { width: 30px; height: 30px; border-radius: 50%; background: rgba(52,211,153,0.15); color: var(--green); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; flex-shrink: 0; }
 
-/* Valor card for culture section */
 .valor-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px 20px; margin-bottom: 8px; }
 .valor-card .viver { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.12); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: rgba(52,211,153,0.85); margin-top: 6px; line-height: 1.6; }
 .valor-card .não { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.12); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: rgba(248,113,113,0.75); margin-top: 6px; line-height: 1.6; }
@@ -321,7 +316,7 @@ body {
   <div class="logo">A</div>
   <h1>Reunião Semanal</h1>
   <div class="subtitle">Alicerce</div>
-  <div class="date">27 de Agosto de 2026 &bull; Quarta-feira</div>
+  <div class="date">26 de Agosto de 2026 &bull; Quarta-feira</div>
 </div>
 
 <!-- ============================================ -->
@@ -340,35 +335,37 @@ body {
 <div class="slide" id="s3">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 1 &bull; Abertura</div>
-    <h1>KPIs da Semana <span class="gold">20/08 a 26/08</span></h1>
+    <h1>KPIs da Semana <span class="gold">19/08 a 25/08</span></h1>
   </div>
   <div class="cards-grid cards-4" style="margin-top:20px;">
     <div class="card card-blue" style="text-align:center;">
       <div class="card-label">Agendamentos</div>
-      <div class="card-value blue">72</div>
+      <div class="card-value blue">71</div>
     </div>
     <div class="card card-green" style="text-align:center;">
+      <div class="card-label">Atendimentos</div>
+      <div class="card-value green">21</div>
+    </div>
+    <div class="card card-gold" style="text-align:center;">
       <div class="card-label">Pastas Subidas</div>
-      <div class="card-value green">39</div>
+      <div class="card-value gold">52</div>
     </div>
     <div class="card" style="text-align:center;">
       <div class="card-label">Check-ins</div>
-      <div class="card-value" style="color:var(--white);">82</div>
-    </div>
-    <div class="card" style="text-align:center;">
-      <div class="card-label">Registros 945</div>
-      <div class="card-value" style="color:var(--white);">54</div>
+      <div class="card-value" style="color:var(--white);">102</div>
     </div>
   </div>
   <div style="margin-top:20px;">
     <div style="font-size:14px;color:var(--gold);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Vendas da Semana</div>
     <div class="vendas-list">
+      <div class="venda-item"><div><div class="v-name">Davi Ribeiro</div><div class="v-client">Lucas Liduino</div></div><div class="v-vgv">R$ 198k</div></div>
       <div class="venda-item"><div><div class="v-name">Edvan Silva</div><div class="v-client">Nathalia Izabela</div></div><div class="v-vgv">R$ 284k</div></div>
       <div class="venda-item"><div><div class="v-name">Edvan Silva</div><div class="v-client">Jozélia Aparecida</div></div><div class="v-vgv">R$ 300k</div></div>
       <div class="venda-item"><div><div class="v-name">Maria Clara</div><div class="v-client">Grasieli Ribeiro</div></div><div class="v-vgv">R$ 275k</div></div>
       <div class="venda-item"><div><div class="v-name">Izabella Chaves</div><div class="v-client">Adrielle Fernanda</div></div><div class="v-vgv">R$ 400k</div></div>
+      <div class="venda-item"><div><div class="v-name">Gabriel Ribeiro</div><div class="v-client">Allex Sullivan</div></div><div class="v-vgv">R$ 140k</div></div>
     </div>
-    <div style="margin-top:12px;text-align:center;font-size:16px;font-weight:700;color:var(--gold);">4 vendas na semana &bull; VGV Semana: R$ 1,26M</div>
+    <div style="margin-top:12px;text-align:center;font-size:16px;font-weight:700;color:var(--gold);">6 vendas na semana &bull; VGV Semana: R$ 1,60M</div>
   </div>
 </div>
 
@@ -384,13 +381,13 @@ body {
     <thead><tr><th>Pos</th><th>Corretor</th><th style="text-align:right;">Total</th></tr></thead>
     <tbody>
       <tr><td class="pos" style="color:var(--gold);">1</td><td class="nome">Gabriel Souza</td><td class="pts">15</td></tr>
-      <tr><td class="pos" style="color:#c0c0c0;">2</td><td class="nome">Davi Ribeiro</td><td class="pts">8</td></tr>
-      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Isaac de Sá</td><td class="pts">8</td></tr>
-      <tr><td class="pos">4</td><td class="nome">Felipe Guimarães</td><td class="pts" style="color:var(--gray);">7</td></tr>
+      <tr><td class="pos" style="color:#c0c0c0;">2</td><td class="nome">Isaac de Sá</td><td class="pts">8</td></tr>
+      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Felipe Guimarães</td><td class="pts">7</td></tr>
+      <tr><td class="pos">4</td><td class="nome">Davi Ribeiro</td><td class="pts" style="color:var(--gray);">6</td></tr>
       <tr><td class="pos">5</td><td class="nome">Joyce Brisa</td><td class="pts" style="color:var(--gray);">5</td></tr>
       <tr><td class="pos">6</td><td class="nome">Pedro Nazaro</td><td class="pts" style="color:var(--gray);">4</td></tr>
-      <tr><td class="pos">7</td><td class="nome">Edvan Silva</td><td class="pts" style="color:var(--gray);">4</td></tr>
-      <tr><td class="pos">8</td><td class="nome">Ricardo Braga</td><td class="pts" style="color:var(--gray);">3</td></tr>
+      <tr><td class="pos">7</td><td class="nome">Ricardo Braga</td><td class="pts" style="color:var(--gray);">3</td></tr>
+      <tr><td class="pos">8</td><td class="nome">Erica Collins</td><td class="pts" style="color:var(--gray);">3</td></tr>
     </tbody>
   </table>
 </div>
@@ -406,27 +403,51 @@ body {
   <table class="ranking-table" style="margin-top:16px;">
     <thead><tr><th>Pos</th><th>Corretor</th><th style="text-align:right;">Total</th></tr></thead>
     <tbody>
+      <tr><td class="pos" style="color:var(--gold);">1</td><td class="nome">Joyce Brisa</td><td class="pts">7</td></tr>
       <tr><td class="pos" style="color:var(--gold);">1</td><td class="nome">Gabriel Souza</td><td class="pts">7</td></tr>
-      <tr><td class="pos" style="color:#c0c0c0;">2</td><td class="nome">Joyce Brisa</td><td class="pts">6</td></tr>
-      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Felipe Guimarães</td><td class="pts">4</td></tr>
-      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Erica Collins</td><td class="pts">4</td></tr>
-      <tr><td class="pos">3</td><td class="nome">Marcelo Arouca</td><td class="pts" style="color:var(--gray);">4</td></tr>
-      <tr><td class="pos">6</td><td class="nome">Davi Ribeiro</td><td class="pts" style="color:var(--gray);">3</td></tr>
+      <tr><td class="pos" style="color:#cd7f32;">3</td><td class="nome">Davi Ribeiro</td><td class="pts">5</td></tr>
+      <tr><td class="pos">4</td><td class="nome">Felipe Guimarães</td><td class="pts" style="color:var(--gray);">4</td></tr>
+      <tr><td class="pos">4</td><td class="nome">Erica Collins</td><td class="pts" style="color:var(--gray);">4</td></tr>
+      <tr><td class="pos">6</td><td class="nome">Izabella Chaves</td><td class="pts" style="color:var(--gray);">3</td></tr>
+      <tr><td class="pos">6</td><td class="nome">Ricardo Braga</td><td class="pts" style="color:var(--gray);">3</td></tr>
     </tbody>
   </table>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 6 — ESPAÇO ABERTO -->
+<!-- SLIDE 6 — TOP ATENDIMENTOS -->
 <!-- ============================================ -->
 <div class="slide" id="s6">
+  <div class="slide-header">
+    <div class="bloco-tag">Bloco 1 &bull; Abertura</div>
+    <h1>Top <span class="gold">Atendimentos</span></h1>
+  </div>
+  <table class="ranking-table" style="margin-top:16px;">
+    <thead><tr><th>Pos</th><th>Corretor</th><th style="text-align:right;">Total</th></tr></thead>
+    <tbody>
+      <tr><td class="pos" style="color:var(--gold);">1</td><td class="nome">Davi Ribeiro</td><td class="pts">4</td></tr>
+      <tr><td class="pos" style="color:#c0c0c0;">2</td><td class="nome">Ricardo Braga</td><td class="pts">3</td></tr>
+      <tr><td class="pos" style="color:#c0c0c0;">2</td><td class="nome">Gabriel Souza</td><td class="pts">3</td></tr>
+      <tr><td class="pos">4</td><td class="nome">Maria Clara</td><td class="pts" style="color:var(--gray);">2</td></tr>
+      <tr><td class="pos">5</td><td class="nome">Felipe Guimarães</td><td class="pts" style="color:var(--gray);">1</td></tr>
+      <tr><td class="pos">5</td><td class="nome">Guilherme Vitorino</td><td class="pts" style="color:var(--gray);">1</td></tr>
+      <tr><td class="pos">5</td><td class="nome">VIitoria Farias</td><td class="pts" style="color:var(--gray);">1</td></tr>
+      <tr><td class="pos">5</td><td class="nome">Ravine Telles</td><td class="pts" style="color:var(--gray);">1</td></tr>
+      <tr><td class="pos">5</td><td class="nome">Erica Collins</td><td class="pts" style="color:var(--gray);">1</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 7 — ESPAÇO ABERTO -->
+<!-- ============================================ -->
+<div class="slide" id="s7">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 1 &bull; Abertura</div>
     <h1>Espaço <span class="gold">Aberto</span></h1>
   </div>
   <div class="highlight-box" style="text-align:center;margin-top:20px;">
     <div class="big-text" style="font-size:22px;">Qual a sua maior dificuldade hoje?</div>
-    <div class="small-text" style="margin-top:8px;">Esse é o momento de falar. Troca de ideias, dúvidas, sugestões.</div>
   </div>
   <ul class="bullet-list" style="margin-top:20px;">
     <li>O que está funcionando pra você?</li>
@@ -436,9 +457,9 @@ body {
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 7 — SEPARADOR BLOCO 2 -->
+<!-- SLIDE 8 — SEPARADOR BLOCO 2 -->
 <!-- ============================================ -->
-<div class="slide separador" id="s7">
+<div class="slide separador" id="s8">
   <div class="icon">&#128176;</div>
   <h1 style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Vendas</h1>
   <div class="sub">Meta vs Realizado — Agosto 2026</div>
@@ -446,50 +467,50 @@ body {
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 8 — META VS REALIZADO -->
+<!-- SLIDE 9 — META VS REALIZADO -->
 <!-- ============================================ -->
-<div class="slide" id="s8">
+<div class="slide" id="s9">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 2 &bull; Vendas</div>
     <h1>Meta vs <span class="gold">Realizado</span></h1>
   </div>
   <div class="highlight-box" style="text-align:center;margin-top:16px;">
-    <div class="big-text" style="font-size:28px;color:var(--gold);">17 vendas &bull; R$ 3.554.632</div>
+    <div class="big-text" style="font-size:28px;color:var(--gold);">18 vendas &bull; R$ 3.694.632</div>
   </div>
   <div class="progress-bar">
-    <div class="progress-fill" style="width:50.8%;background:linear-gradient(90deg,var(--green-dark),var(--green));">50,8%</div>
+    <div class="progress-fill" style="width:52.8%;background:linear-gradient(90deg,var(--green-dark),var(--green));">52,8%</div>
   </div>
   <div style="text-align:center;font-size:14px;color:var(--gray);">Meta: R$ 7.000.000</div>
   <div class="cards-grid cards-2" style="margin-top:20px;">
-    <div class="card">
-      <div class="card-label">Vendas Corretor</div>
+    <div class="card card-green">
+      <div class="card-label">Vendas Corretores</div>
       <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-top:8px;">
         Davi Ribeiro — 2 vendas<br>
+        Gabriel Ribeiro — 2 vendas<br>
+        Maria Clara — 1 venda<br>
         Isaac de Sá — 1 venda<br>
         Erica Collins — 1 venda<br>
-        Maria Clara — 1 venda<br>
         Natã Oliveira — 1 venda<br>
-        Izabella Chaves — 1 venda
+        Cristiano Fernandes — 1 venda
       </div>
     </div>
-    <div class="card">
+    <div class="card card-gold">
       <div class="card-label">Vendas Liderança</div>
       <div style="font-size:14px;color:var(--gray);line-height:1.8;margin-top:8px;">
         Edvan Silva — 3 vendas<br>
-        Marcelo Arouca — 2 vendas<br>
         Glauco Ribeiro — 2 vendas<br>
+        Marcelo Arouca — 2 vendas<br>
         Adriel Duarte — 1 venda<br>
-        Gabriel Ribeiro — 1 consórcio<br>
-        Cristiano Fernandes — 1 consórcio
+        Izabella Chaves — 1 venda
       </div>
     </div>
   </div>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 9 — RANKING VENDAS PÓDIO -->
+<!-- SLIDE 10 — RANKING VENDAS PÓDIO -->
 <!-- ============================================ -->
-<div class="slide" id="s9">
+<div class="slide" id="s10">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 2 &bull; Vendas</div>
     <h1>Ranking <span class="gold">Vendas</span></h1>
@@ -521,31 +542,78 @@ body {
     </div>
   </div>
   <div class="vendas-list" style="margin-top:16px;">
-    <div class="venda-item"><div><div class="v-name">Marcelo Arouca</div><div class="v-client">2 vendas</div></div><div class="v-vgv">R$ 383k</div></div>
-    <div class="venda-item"><div><div class="v-name">Glauco Ribeiro</div><div class="v-client">2 vendas</div></div><div class="v-vgv">R$ 353k</div></div>
+    <div class="venda-item"><div><div class="v-name">Glauco Ribeiro</div><div class="v-client">2 vendas</div></div><div class="v-vgv">R$ 391k</div></div>
+    <div class="venda-item"><div><div class="v-name">Marcelo Arouca</div><div class="v-client">2 vendas</div></div><div class="v-vgv">R$ 324k</div></div>
+    <div class="venda-item"><div><div class="v-name">Gabriel Ribeiro</div><div class="v-client">2 vendas</div></div><div class="v-vgv">R$ 300k</div></div>
     <div class="venda-item"><div><div class="v-name">Maria Clara</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 275k</div></div>
-    <div class="venda-item"><div><div class="v-name">Natã Oliveira</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 230k</div></div>
-    <div class="venda-item"><div><div class="v-name">Adriel Duarte</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 180k</div></div>
-    <div class="venda-item"><div><div class="v-name">Isaac de Sá</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 175k</div></div>
-    <div class="venda-item"><div><div class="v-name">Erica Collins</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 160k</div></div>
-    <div class="venda-item"><div><div class="v-name">Gabriel Ribeiro</div><div class="v-client">1 consórcio</div></div><div class="v-vgv">R$ 160k</div></div>
+    <div class="venda-item"><div><div class="v-name">Isaac de Sá</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 250k</div></div>
+    <div class="venda-item"><div><div class="v-name">Erica Collins</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 228k</div></div>
+    <div class="venda-item"><div><div class="v-name">Natã Oliveira</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 200k</div></div>
+    <div class="venda-item"><div><div class="v-name">Adriel Duarte</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 188k</div></div>
+    <div class="venda-item"><div><div class="v-name">Cristiano Fernandes</div><div class="v-client">1 venda</div></div><div class="v-vgv">R$ 120k</div></div>
   </div>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 10 — SEPARADOR BLOCO 3 -->
+<!-- SLIDE 11 — SEPARADOR BLOCO 3 -->
 <!-- ============================================ -->
-<div class="slide separador" id="s10">
+<div class="slide separador" id="s11">
   <div class="icon">&#127942;</div>
   <h1 style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Gamificação</h1>
-  <div class="sub">Ranking Mensal — Agosto 2026</div>
+  <div class="sub">Rankings — Agosto 2026</div>
   <div style="margin-top:30px;font-size:12px;color:var(--gray2);letter-spacing:3px;text-transform:uppercase;">Bloco 3 de 4</div>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 11 — RANKING TOP 10 -->
+<!-- SLIDE 12 — RANKING SEMANAL (Campeão da Semana) -->
 <!-- ============================================ -->
-<div class="slide" id="s11">
+<div class="slide" id="s12">
+  <div class="slide-header">
+    <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
+    <h1>Campeão da <span class="gold">Semana</span></h1>
+  </div>
+  <div style="text-align:center;margin:8px 0 4px;">
+    <span style="font-size:14px;color:var(--gray);">Semana</span>
+    <span style="font-size:14px;color:var(--gold);font-weight:700;"> 19/08 a 25/08</span>
+  </div>
+  <div class="highlight-box" style="text-align:center;margin:8px 0 12px;">
+    <div class="big-text" style="font-size:26px;color:var(--gold);">&#127942; Davi Ribeiro — 138 pts</div>
+  </div>
+  <div class="podio">
+    <div class="podio-item podio-2">
+      <div class="podio-name">Gabriel Souza</div>
+      <div class="podio-detail">CK:35 945:14 AG:15 AT:15 PA:35 VE:0</div>
+      <div class="podio-bar">
+        <div class="podio-pos">2</div>
+        <div class="podio-pts">114 pts</div>
+      </div>
+    </div>
+    <div class="podio-item podio-1">
+      <div class="podio-name">Davi Ribeiro</div>
+      <div class="podio-detail">CK:35 945:12 AG:6 AT:20 PA:25 VE:40</div>
+      <div class="podio-bar">
+        <div class="podio-pos">1</div>
+        <div class="podio-pts">138 pts</div>
+      </div>
+    </div>
+    <div class="podio-item podio-3">
+      <div class="podio-name">Gabriel Ribeiro</div>
+      <div class="podio-detail">CK:16 945:4 AG:3 AT:0 PA:5 VE:40</div>
+      <div class="podio-bar">
+        <div class="podio-pos">3</div>
+        <div class="podio-pts">68 pts</div>
+      </div>
+    </div>
+  </div>
+  <div class="highlight-box" style="text-align:center;margin-top:8px;">
+    <div class="big-text" style="font-size:18px;">&#127860; Almoço pro campeão: Davi Ribeiro</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 13 — RANKING MENSAL TOP 10 -->
+<!-- ============================================ -->
+<div class="slide" id="s13">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
     <h1>Ranking <span class="gold">Top 10</span></h1>
@@ -563,25 +631,25 @@ body {
       <th style="font-size:9px;text-align:right;">TOT</th>
     </tr></thead>
     <tbody>
-      <tr><td class="pos" style="color:var(--gold);font-size:12px;">1</td><td class="nome" style="font-size:12px;">Davi Ribeiro</td><td style="font-size:12px;text-align:right;">89</td><td style="font-size:12px;text-align:right;">34</td><td style="font-size:12px;text-align:right;">38</td><td style="font-size:12px;text-align:right;">45</td><td style="font-size:12px;text-align:right;">130</td><td style="font-size:12px;text-align:right;">80</td><td class="pts" style="font-size:12px;">416</td></tr>
-      <tr><td class="pos" style="color:#c0c0c0;font-size:12px;">2</td><td class="nome" style="font-size:12px;">Gabriel Souza</td><td style="font-size:12px;text-align:right;">102</td><td style="font-size:12px;text-align:right;">40</td><td style="font-size:12px;text-align:right;">43</td><td style="font-size:12px;text-align:right;">30</td><td style="font-size:12px;text-align:right;">165</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;">380</td></tr>
-      <tr><td class="pos" style="color:#cd7f32;font-size:12px;">3</td><td class="nome" style="font-size:12px;">Isaac de Sá</td><td style="font-size:12px;text-align:right;">52</td><td style="font-size:12px;text-align:right;">30</td><td style="font-size:12px;text-align:right;">21</td><td style="font-size:12px;text-align:right;">25</td><td style="font-size:12px;text-align:right;">40</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;">208</td></tr>
-      <tr><td class="pos" style="font-size:12px;">4</td><td class="nome" style="font-size:12px;">Joyce Brisa</td><td style="font-size:12px;text-align:right;">21</td><td style="font-size:12px;text-align:right;">26</td><td style="font-size:12px;text-align:right;">9</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">140</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">206</td></tr>
-      <tr><td class="pos" style="font-size:12px;">5</td><td class="nome" style="font-size:12px;">Felipe Guimarães</td><td style="font-size:12px;text-align:right;">38</td><td style="font-size:12px;text-align:right;">18</td><td style="font-size:12px;text-align:right;">14</td><td style="font-size:12px;text-align:right;">5</td><td style="font-size:12px;text-align:right;">50</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">125</td></tr>
-      <tr><td class="pos" style="font-size:12px;">6</td><td class="nome" style="font-size:12px;">Gabriel Ribeiro</td><td style="font-size:12px;text-align:right;">45</td><td style="font-size:12px;text-align:right;">26</td><td style="font-size:12px;text-align:right;">14</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">10</td><td class="pts" style="font-size:12px;color:var(--gray);">115</td></tr>
-      <tr><td class="pos" style="font-size:12px;">7</td><td class="nome" style="font-size:12px;">Erica Collins</td><td style="font-size:12px;text-align:right;">1</td><td style="font-size:12px;text-align:right;">18</td><td style="font-size:12px;text-align:right;">6</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">30</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">95</td></tr>
-      <tr><td class="pos" style="font-size:12px;">8</td><td class="nome" style="font-size:12px;">Maria Clara</td><td style="font-size:12px;text-align:right;">31</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">4</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">85</td></tr>
-      <tr><td class="pos" style="font-size:12px;">9</td><td class="nome" style="font-size:12px;">Suzy Franklyn</td><td style="font-size:12px;text-align:right;">40</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">4</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">64</td></tr>
-      <tr><td class="pos" style="font-size:12px;">10</td><td class="nome" style="font-size:12px;">Natã Oliveira</td><td style="font-size:12px;text-align:right;">2</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">3</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">5</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">60</td></tr>
+      <tr><td class="pos" style="color:var(--gold);font-size:12px;">1</td><td class="nome" style="font-size:12px;">Davi Ribeiro</td><td style="font-size:12px;text-align:right;">79</td><td style="font-size:12px;text-align:right;">34</td><td style="font-size:12px;text-align:right;">36</td><td style="font-size:12px;text-align:right;">70</td><td style="font-size:12px;text-align:right;">135</td><td style="font-size:12px;text-align:right;">80</td><td class="pts" style="font-size:12px;">434</td></tr>
+      <tr><td class="pos" style="color:#c0c0c0;font-size:12px;">2</td><td class="nome" style="font-size:12px;">Gabriel Souza</td><td style="font-size:12px;text-align:right;">82</td><td style="font-size:12px;text-align:right;">38</td><td style="font-size:12px;text-align:right;">41</td><td style="font-size:12px;text-align:right;">70</td><td style="font-size:12px;text-align:right;">165</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;">396</td></tr>
+      <tr><td class="pos" style="color:#cd7f32;font-size:12px;">3</td><td class="nome" style="font-size:12px;">Isaac de Sá</td><td style="font-size:12px;text-align:right;">34</td><td style="font-size:12px;text-align:right;">24</td><td style="font-size:12px;text-align:right;">19</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">45</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;">182</td></tr>
+      <tr><td class="pos" style="font-size:12px;">4</td><td class="nome" style="font-size:12px;">Joyce Brisa</td><td style="font-size:12px;text-align:right;">-5</td><td style="font-size:12px;text-align:right;">18</td><td style="font-size:12px;text-align:right;">8</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">140</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">171</td></tr>
+      <tr><td class="pos" style="font-size:12px;">5</td><td class="nome" style="font-size:12px;">Gabriel Ribeiro</td><td style="font-size:12px;text-align:right;">34</td><td style="font-size:12px;text-align:right;">16</td><td style="font-size:12px;text-align:right;">14</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">50</td><td class="pts" style="font-size:12px;color:var(--gray);">154</td></tr>
+      <tr><td class="pos" style="font-size:12px;">6</td><td class="nome" style="font-size:12px;">Erica Collins</td><td style="font-size:12px;text-align:right;">-3</td><td style="font-size:12px;text-align:right;">26</td><td style="font-size:12px;text-align:right;">12</td><td style="font-size:12px;text-align:right;">35</td><td style="font-size:12px;text-align:right;">30</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">140</td></tr>
+      <tr><td class="pos" style="font-size:12px;">7</td><td class="nome" style="font-size:12px;">Ricardo Braga</td><td style="font-size:12px;text-align:right;">11</td><td style="font-size:12px;text-align:right;">28</td><td style="font-size:12px;text-align:right;">6</td><td style="font-size:12px;text-align:right;">20</td><td style="font-size:12px;text-align:right;">25</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">90</td></tr>
+      <tr><td class="pos" style="font-size:12px;">8</td><td class="nome" style="font-size:12px;">Pedro Nazaro</td><td style="font-size:12px;text-align:right;">55</td><td style="font-size:12px;text-align:right;">14</td><td style="font-size:12px;text-align:right;">6</td><td style="font-size:12px;text-align:right;">5</td><td style="font-size:12px;text-align:right;">0</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">80</td></tr>
+      <tr><td class="pos" style="font-size:12px;">9</td><td class="nome" style="font-size:12px;">Felipe Guimarães</td><td style="font-size:12px;text-align:right;">3</td><td style="font-size:12px;text-align:right;">2</td><td style="font-size:12px;text-align:right;">13</td><td style="font-size:12px;text-align:right;">10</td><td style="font-size:12px;text-align:right;">50</td><td style="font-size:12px;text-align:right;">0</td><td class="pts" style="font-size:12px;color:var(--gray);">78</td></tr>
+      <tr><td class="pos" style="font-size:12px;">10</td><td class="nome" style="font-size:12px;">Natã Oliveira</td><td style="font-size:12px;text-align:right;">-15</td><td style="font-size:12px;text-align:right;">6</td><td style="font-size:12px;text-align:right;">4</td><td style="font-size:12px;text-align:right;">5</td><td style="font-size:12px;text-align:right;">5</td><td style="font-size:12px;text-align:right;">40</td><td class="pts" style="font-size:12px;color:var(--gray);">45</td></tr>
     </tbody>
   </table>
   <div style="margin-top:8px;font-size:11px;color:var(--gray2);">CK=Check-in &bull; 945=Registro &bull; AG=Agendamento &bull; AT=Atendimento &bull; PA=Pasta &bull; VE=Venda</div>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 12 — RANKING 11-25 -->
+<!-- SLIDE 14 — RANKING 11-25 -->
 <!-- ============================================ -->
-<div class="slide" id="s12">
+<div class="slide" id="s14">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
     <h1>Ranking <span class="gold">11 a 25</span></h1>
@@ -589,44 +657,44 @@ body {
   <table class="ranking-table" style="margin-top:12px;">
     <thead><tr><th>POS</th><th>CORRETOR</th><th style="text-align:right;">TOTAL</th></tr></thead>
     <tbody>
-      <tr><td class="pos" style="font-size:12px;">11</td><td class="nome" style="font-size:13px;">Ricardo Braga</td><td class="pts" style="color:var(--gray);">58</td></tr>
-      <tr><td class="pos" style="font-size:12px;">12</td><td class="nome" style="font-size:13px;">Izabella Chaves</td><td class="pts" style="color:var(--gray);">56</td></tr>
-      <tr><td class="pos" style="font-size:12px;">13</td><td class="nome" style="font-size:13px;">Kerlly Martins</td><td class="pts" style="color:var(--gray);">54</td></tr>
-      <tr><td class="pos" style="font-size:12px;">14</td><td class="nome" style="font-size:13px;">Pedro Nazaro</td><td class="pts" style="color:var(--gray);">53</td></tr>
-      <tr><td class="pos" style="font-size:12px;">15</td><td class="nome" style="font-size:13px;">Marcos Reis</td><td class="pts" style="color:var(--gray);">52</td></tr>
-      <tr><td class="pos" style="font-size:12px;">16</td><td class="nome" style="font-size:13px;">Kayque Nascimento</td><td class="pts" style="color:var(--gray);">37</td></tr>
-      <tr><td class="pos" style="font-size:12px;">17</td><td class="nome" style="font-size:13px;">Vitória Farias</td><td class="pts" style="color:var(--gray);">33</td></tr>
-      <tr><td class="pos" style="font-size:12px;">18</td><td class="nome" style="font-size:13px;">Bruna Pacheco</td><td class="pts" style="color:var(--gray);">30</td></tr>
-      <tr><td class="pos" style="font-size:12px;">19</td><td class="nome" style="font-size:13px;">Kauã Portes</td><td class="pts" style="color:var(--gray);">27</td></tr>
-      <tr><td class="pos" style="font-size:12px;">20</td><td class="nome" style="font-size:13px;">Josimar Machado</td><td class="pts" style="color:var(--gray);">26</td></tr>
-      <tr><td class="pos" style="font-size:12px;">21</td><td class="nome" style="font-size:13px;">Juan Martinez</td><td class="pts" style="color:var(--gray);">22</td></tr>
-      <tr><td class="pos" style="font-size:12px;">22</td><td class="nome" style="font-size:13px;">Ravine Telles</td><td class="pts" style="color:var(--gray);">17</td></tr>
-      <tr><td class="pos" style="font-size:12px;">23</td><td class="nome" style="font-size:13px;">Pablo Henrique</td><td class="pts" style="color:var(--gray);">15</td></tr>
-      <tr><td class="pos" style="font-size:12px;">24</td><td class="nome" style="font-size:13px;">Cristiano Fernandes</td><td class="pts" style="color:var(--gray);">12</td></tr>
-      <tr><td class="pos" style="font-size:12px;">25</td><td class="nome" style="font-size:13px;">Guilherme Vitorino</td><td class="pts" style="color:var(--gray);">4</td></tr>
+      <tr><td class="pos" style="font-size:12px;">11</td><td class="nome" style="font-size:13px;">Izabella Chaves</td><td class="pts" style="color:var(--gray);">36</td></tr>
+      <tr><td class="pos" style="font-size:12px;">12</td><td class="nome" style="font-size:13px;">Suzy Franklyn</td><td class="pts" style="color:var(--gray);">35</td></tr>
+      <tr><td class="pos" style="font-size:12px;">13</td><td class="nome" style="font-size:13px;">Maria Clara</td><td class="pts" style="color:var(--gray);">27</td></tr>
+      <tr><td class="pos" style="font-size:12px;">14</td><td class="nome" style="font-size:13px;">Juan Martinez</td><td class="pts" style="color:var(--gray);">2</td></tr>
+      <tr><td class="pos" style="font-size:12px;">15</td><td class="nome" style="font-size:13px;">Ravine Telles</td><td class="pts" style="color:var(--gray);">0</td></tr>
+      <tr><td class="pos" style="font-size:12px;">16</td><td class="nome" style="font-size:13px;">Bruna Pacheco</td><td class="pts" style="color:var(--gray);">-11</td></tr>
+      <tr><td class="pos" style="font-size:12px;">17</td><td class="nome" style="font-size:13px;">Marcos Reis</td><td class="pts" style="color:var(--gray);">-12</td></tr>
+      <tr><td class="pos" style="font-size:12px;">18</td><td class="nome" style="font-size:13px;">Kerlly Martins</td><td class="pts" style="color:var(--gray);">-14</td></tr>
+      <tr><td class="pos" style="font-size:12px;">19</td><td class="nome" style="font-size:13px;">Vitória Farias</td><td class="pts" style="color:var(--gray);">-17</td></tr>
+      <tr><td class="pos" style="font-size:12px;">20</td><td class="nome" style="font-size:13px;">Guilherme Vitorino</td><td class="pts" style="color:var(--gray);">-21</td></tr>
+      <tr><td class="pos" style="font-size:12px;">21</td><td class="nome" style="font-size:13px;">Pablo Henrique</td><td class="pts" style="color:var(--gray);">-27</td></tr>
+      <tr><td class="pos" style="font-size:12px;">22</td><td class="nome" style="font-size:13px;">Josimar Machado</td><td class="pts" style="color:var(--gray);">-28</td></tr>
+      <tr><td class="pos" style="font-size:12px;">23</td><td class="nome" style="font-size:13px;">Kauã Portes</td><td class="pts" style="color:var(--gray);">-51</td></tr>
+      <tr><td class="pos" style="font-size:12px;">24</td><td class="nome" style="font-size:13px;">Kayque Nascimento</td><td class="pts" style="color:var(--gray);">-68</td></tr>
+      <tr><td class="pos" style="font-size:12px;">25</td><td class="nome" style="font-size:13px;">Cristiano Fernandes</td><td class="pts" style="color:var(--gray);">-93</td></tr>
     </tbody>
   </table>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 13 — FUNIL -->
+<!-- SLIDE 15 — FUNIL DO MÊS -->
 <!-- ============================================ -->
-<div class="slide" id="s13">
+<div class="slide" id="s15">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 3 &bull; Gamificação</div>
-    <h1>Funil de <span class="gold">Conversão</span></h1>
+    <h1>Funil do <span class="gold">Mês</span></h1>
   </div>
   <div class="funnel" style="margin-top:24px;">
     <div class="funnel-step">
-      <div class="funnel-num" style="color:var(--blue);">220</div>
+      <div class="funnel-num" style="color:var(--blue);">226</div>
       <div class="funnel-label">Agendamentos</div>
     </div>
     <div class="funnel-arrow">
       <div>&rarr;</div>
-      <div class="funnel-pct">18,6%</div>
+      <div class="funnel-pct">&nbsp;</div>
     </div>
     <div class="funnel-step">
-      <div class="funnel-num" style="color:var(--green);">41</div>
+      <div class="funnel-num" style="color:var(--green);">79</div>
       <div class="funnel-label">Atendimentos</div>
     </div>
     <div class="funnel-arrow">
@@ -634,39 +702,34 @@ body {
       <div class="funnel-pct">&nbsp;</div>
     </div>
     <div class="funnel-step">
-      <div class="funnel-num" style="color:var(--gold);">351</div>
+      <div class="funnel-num" style="color:var(--gold);">352</div>
       <div class="funnel-label">Pastas</div>
     </div>
     <div class="funnel-arrow">
       <div>&rarr;</div>
-      <div class="funnel-pct">4,8%</div>
+      <div class="funnel-pct">&nbsp;</div>
     </div>
     <div class="funnel-step">
-      <div class="funnel-num" style="color:var(--gold);">17</div>
+      <div class="funnel-num" style="color:var(--gold);">18</div>
       <div class="funnel-label">Vendas</div>
     </div>
-  </div>
-  <div style="margin-top:20px;text-align:center;font-size:15px;color:var(--gray);line-height:1.7;">
-    De cada 100 agendamentos, 18,6 viram atendimento presencial.<br>
-    De cada 100 pastas subidas, 4,8 viram venda.<br>
-    <span style="color:var(--gold);font-weight:700;">Volume no topo do funil = resultado lá embaixo.</span>
   </div>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 14 — SEPARADOR BLOCO 4 -->
+<!-- SLIDE 16 — SEPARADOR BLOCO 4 -->
 <!-- ============================================ -->
-<div class="slide separador" id="s14">
+<div class="slide separador" id="s16">
   <div class="icon">&#129504;</div>
   <h1 style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Mentalidade</h1>
-  <div class="sub">A Força do Hábito</div>
+  <div class="sub">Foco e Disciplina</div>
   <div style="margin-top:30px;font-size:12px;color:var(--gray2);letter-spacing:3px;text-transform:uppercase;">Bloco 4 de 4</div>
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 15 — EFEITO COMPOSTO -->
+<!-- SLIDE 17 — EFEITO COMPOSTO -->
 <!-- ============================================ -->
-<div class="slide" id="s15">
+<div class="slide" id="s17">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 4 &bull; Mentalidade</div>
     <h1>Efeito <span class="gold">Composto</span></h1>
@@ -704,42 +767,15 @@ body {
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 16 — PRESENÇA E DISCIPLINA -->
+<!-- SLIDE 18 — FOCO DA SEMANA -->
 <!-- ============================================ -->
-<div class="slide" id="s16">
-  <div class="slide-header">
-    <div class="bloco-tag">Bloco 4 &bull; Mentalidade</div>
-    <h1>Presença e <span class="gold">Disciplina</span></h1>
-  </div>
-  <div class="cards-grid cards-2" style="margin-top:16px;">
-    <div class="card card-green">
-      <div class="card-label">Quem está fazendo</div>
-      <div style="font-size:15px;color:var(--gray);line-height:1.7;margin-top:8px;">
-        82 check-ins, 54 registros 945 nesta semana. 72 agendamentos. O processo funciona.
-      </div>
-    </div>
-    <div class="card card-red">
-      <div class="card-label">Quem está faltando</div>
-      <div style="font-size:15px;color:var(--gray);line-height:1.7;margin-top:8px;">
-        7 de 25 fizeram 945 hoje. O básico é todo dia. Quem não planta, não colhe.
-      </div>
-    </div>
-  </div>
-  <div class="highlight-box" style="text-align:center;margin-top:16px;">
-    <div class="big-text" style="font-size:20px;">Disciplina é fazer o que precisa ser feito, mesmo quando ninguém está olhando.</div>
-  </div>
-</div>
-
-<!-- ============================================ -->
-<!-- SLIDE 17 — FOCO DA SEMANA -->
-<!-- ============================================ -->
-<div class="slide" id="s17">
+<div class="slide" id="s18">
   <div class="slide-header">
     <div class="bloco-tag">Bloco 4 &bull; Mentalidade</div>
     <h1>Foco da <span class="gold">Semana</span></h1>
   </div>
   <ul class="bullet-list" style="margin-top:20px;">
-    <li><strong>Fechar as vendas no pipeline</strong> — Joyce tem 3 prontas, Gabriel tem 2 BACEN aprovados</li>
+    <li><strong>Fechar as vendas no pipeline</strong> — Joyce tem 3 prontas, Gabriel Souza tem 2 BACEN aprovados</li>
     <li><strong>Subir pastas</strong> — quem não sobe pasta não gera venda</li>
     <li><strong>945 todo dia</strong> — quem planeja o dia, controla o resultado</li>
   </ul>
@@ -749,9 +785,9 @@ body {
 </div>
 
 <!-- ============================================ -->
-<!-- SLIDE 18 — ENCERRAMENTO -->
+<!-- SLIDE 19 — ENCERRAMENTO -->
 <!-- ============================================ -->
-<div class="slide slide-capa" id="s18">
+<div class="slide slide-capa" id="s19">
   <div class="logo">A</div>
   <h1 style="font-size:42px;">Alicerce</h1>
   <div class="subtitle" style="margin-top:8px;font-size:22px;color:var(--gold);">Construindo na Rocha</div>
@@ -764,7 +800,7 @@ body {
   <button onclick="prevSlide()">&larr;</button>
   <button onclick="nextSlide()">&rarr;</button>
 </div>
-<div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">18</span></div>
+<div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">19</span></div>
 
 <script>
 let current = 0;
