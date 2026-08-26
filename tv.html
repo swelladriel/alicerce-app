@@ -592,7 +592,7 @@ function calcularRanking() {
   });
 
   // VENDAS +40, CONSÓRCIO +10
-  const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA'};
+  const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA','IZABELLA SILVA':'IZABELLA CHAVES'};
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let cn = (v.CORRETOR || '').trim().toUpperCase();
     if (NOMES_EQUIV[cn]) cn = NOMES_EQUIV[cn];
@@ -818,7 +818,7 @@ function calcularRankingSemanal() {
   });
 
   // VENDAS da semana +40 imóvel, +10 consórcio
-  const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA'};
+  const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA','IZABELLA SILVA':'IZABELLA CHAVES'};
   (DADOS.vendas || []).filter(v => {
     const dv = parseDataISO(v.DATA_VENDA) || '';
     return dv >= inicioSemana && dv <= fimEfetivo;
