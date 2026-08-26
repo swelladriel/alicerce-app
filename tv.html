@@ -591,7 +591,7 @@ function calcularRanking() {
     if (corr && pontuacao[corr.NOME]) pontuacao[corr.NOME].pastas++;
   });
 
-  // VENDAS +20, CONSÓRCIO +10
+  // VENDAS +40, CONSÓRCIO +10
   const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA'};
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let cn = (v.CORRETOR || '').trim().toUpperCase();
