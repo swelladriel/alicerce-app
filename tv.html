@@ -547,7 +547,7 @@ function calcularRanking() {
     if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3;
   });
 
-  // AGENDAMENTOS +3 (dedup corretor+cliente no mês)
+  // AGENDAMENTOS +1 (dedup corretor+cliente no mês)
   const agendaDedup = new Set();
   AGENDA.filter(a => (parseDataISO(a.DATA) || '') >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente').forEach(a => {
     const nome = findCorr(a.CORRETOR);
@@ -558,29 +558,29 @@ function calcularRanking() {
     pontuacao[nome].agendamentos++;
   });
 
-  // ATENDIMENTOS: presencial +5, vídeo +2 (dedup corretor+cliente no mês)
+  // ATENDIMENTOS: presencial +5, vídeo +2 (dedup corretor+cliente no mês, fonte: AGENDA com ATENDIDO=SIM)
   const atendDedup = new Set();
-  REGISTROS.filter(r => {
-    if (r.TIPO !== 'atendimento-confirmado') return false;
-    if ((parseDataISO(r.DATA) || '') < INICIO_MES_COMERCIAL) return false;
-    const cl = String(r.CLIENTE || r.CLIENTES || '').toLowerCase();
-    return !cl.includes('teste');
-  }).forEach(r => {
-    const nome = findCorr(r.CORRETOR);
+  AGENDA.filter(a => {
+    if ((parseDataISO(a.DATA) || '') < INICIO_MES_COMERCIAL) return false;
+    if ((a.TIPO || 'Cliente') !== 'Cliente') return false;
+    const atendido = String(a.ATENDIDO || '').toUpperCase();
+    return atendido === 'SIM' || atendido === 'SIM-VIDEO' || atendido === 'TRUE';
+  }).forEach(a => {
+    const nome = findCorr(a.CORRETOR);
     if (!nome || !pontuacao[nome]) return;
-    const chave = `${nome}|${String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase()}`;
+    const chave = `${nome}|${String(a.CLIENTE || '').trim().toUpperCase()}`;
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
-    const obs = (r.OBSERVACOES || '').toLowerCase();
-    const tipoAt = (r.TIPO_ATENDIMENTO || '').toLowerCase();
-    if (obs.includes('video') || obs.includes('vídeo') || tipoAt.includes('video')) {
+    const obs = (a.OBSERVACOES || '').toLowerCase();
+    const atendido = String(a.ATENDIDO || '').toUpperCase();
+    if (obs.includes('video') || obs.includes('vídeo') || atendido === 'SIM-VIDEO') {
       pontuacao[nome].atendVideos++;
     } else {
       pontuacao[nome].atendimentos++;
     }
   });
 
-  // PASTAS +8 (match fuzzy igual plataforma, excluir status AGENDADO que vem do app)
+  // PASTAS +5 (match fuzzy igual plataforma, excluir status AGENDADO que vem do app)
   CLIENTES.filter(c => {
     const dt = (parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '');
     const status = (c.STATUS || '').toUpperCase();
