@@ -491,12 +491,16 @@ function calcularRanking() {
 
   const hoje = new Date();
   const hojeStr = hoje.toISOString().substring(0, 10);
+  // Penalidades só contam pra dias ANTERIORES a hoje (dia em andamento não penaliza)
+  const ontem = new Date(hoje);
+  ontem.setDate(ontem.getDate() - 1);
+  const ontemStr = ontem.toISOString().substring(0, 10);
 
   const diasUteis = [];
   const d = new Date(INICIO_CHECKIN_945 + 'T12:00:00');
-  while (d <= hoje) {
+  while (d <= ontem) {
     const ds = d.toISOString().substring(0, 10);
-    if (ds <= hojeStr && d.getDay() >= 1 && d.getDay() <= 5) diasUteis.push(ds);
+    if (ds <= ontemStr && d.getDay() >= 1 && d.getDay() <= 5) diasUteis.push(ds);
     d.setDate(d.getDate() + 1);
   }
 
