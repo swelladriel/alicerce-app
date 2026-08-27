@@ -712,8 +712,13 @@ function calcularRankingSemanal() {
   const fimDate = new Date(inicioDate);
   fimDate.setDate(fimDate.getDate() + 6); // quarta + 6 = terça
   const fimSemana = fimDate.toISOString().substring(0, 10);
-  // Usar o menor entre fim da semana e hoje
+  // Usar o menor entre fim da semana e hoje (dados positivos contam até hoje)
   const fimEfetivo = fimSemana < hojeStr ? fimSemana : hojeStr;
+  // Penalidades só até ontem (dia em andamento não penaliza)
+  const ontemSem = new Date(hoje);
+  ontemSem.setDate(ontemSem.getDate() - 1);
+  const ontemSemStr = ontemSem.toISOString().substring(0, 10);
+  const fimPenalidade = fimSemana < ontemSemStr ? fimSemana : ontemSemStr;
 
   const corretores = (DADOS.corretores || []).filter(c => !COORDS_GERENTE.includes(c.NOME) && c.STATUS === 'Ativo');
   const pontuacao = {};
@@ -735,11 +740,11 @@ function calcularRankingSemanal() {
     return dt.getDay() === 0 || dt.getDay() === 6;
   }
 
-  // Dias úteis da semana
+  // Dias úteis pra penalidade: só até ontem (hoje ainda em andamento)
   const diasUteisSem = [];
   const dIter = new Date(inicioSemana + 'T12:00:00');
-  const fimCheck = new Date(fimEfetivo + 'T12:00:00');
-  while (dIter <= fimCheck) {
+  const fimPenCheck = new Date(fimPenalidade + 'T12:00:00');
+  while (dIter <= fimPenCheck) {
     const ds = dIter.toISOString().substring(0, 10);
     if (dIter.getDay() >= 1 && dIter.getDay() <= 5) diasUteisSem.push(ds);
     dIter.setDate(dIter.getDate() + 1);
