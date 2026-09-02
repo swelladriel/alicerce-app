@@ -776,13 +776,7 @@ function calcularRankingSemanal() {
     checkinsPorCorDia[nome].add(dia);
   });
 
-  // Penalidade check-in: -5pts por dia útil sem check-in (respeitando dataEntrada)
-  Object.values(pontuacao).forEach(p => {
-    const meusUteis = diasUteisSem.filter(d => d >= p.dataEntrada);
-    const diasComCk = checkinsPorCorDia[p.nome] ? [...checkinsPorCorDia[p.nome]].filter(d => !isFds(d)).length : 0;
-    const ausencias = Math.max(0, meusUteis.length - diasComCk);
-    p.ptCheckin += ausencias * -5;
-  });
+  // Ranking semanal: SEM penalidade por ausência de check-in (só pontua positivo)
 
   // AGENDAMENTOS da semana +1 (dedup corretor+cliente)
   const agendaDedup = new Set();
@@ -826,7 +820,7 @@ function calcularRankingSemanal() {
     if (corr && pontuacao[corr.NOME]) pontuacao[corr.NOME].pastas++;
   });
 
-  // VENDAS da semana +40 imóvel, +10 consórcio
+  // VENDAS da semana +40 imóvel, +10 consórcio (usa STATUS_VENDA pra detectar consórcio, igual ranking mensal)
   const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA','IZABELLA SILVA':'IZABELLA CHAVES'};
   (DADOS.vendas || []).filter(v => {
     const dv = parseDataISO(v.DATA_VENDA) || '';
@@ -838,9 +832,7 @@ function calcularRankingSemanal() {
     const cnN = semAcento(cn);
     const corr = corretores.find(c => { const nN = semAcento(c.NOME.toUpperCase()); return cnN.includes(nN) || nN.includes(cnN); });
     if (!corr || !pontuacao[corr.NOME]) return;
-    const emp = String(v.EMPREENDIMENTO || '').toLowerCase();
-    const tipo = String(v.TIPO || '').toLowerCase();
-    if (emp.includes('consórcio') || emp.includes('consorcio') || emp.includes('magalu') || tipo.includes('consórcio') || tipo.includes('consorcio')) {
+    if ((v.STATUS_VENDA || '').includes('CONSORCIO')) {
       pontuacao[corr.NOME].consorcios++;
     } else {
       pontuacao[corr.NOME].vendas++;
@@ -855,14 +847,14 @@ function calcularRankingSemanal() {
     if (!dias945[nome]) dias945[nome] = new Set();
     dias945[nome].add(parseDataISO(r.DATA));
   });
+  // Ranking semanal: SEM penalidade por ausência de 945 (só pontua positivo)
   Object.values(pontuacao).forEach(p => {
     const s = dias945[p.nome] || new Set();
-    const meusUteis = diasUteisSem.filter(d => d >= p.dataEntrada);
     p.dias945 = s.size;
-    p.pt945 = (s.size * 2) + (meusUteis.filter(d => !s.has(d)).length * -2);
+    p.pt945 = s.size * 2;
   });
 
-  // TOTAL
+  // TOTAL (sem penalidades no semanal)
   Object.values(pontuacao).forEach(p => {
     p.total = p.ptCheckin + (p.agendamentos * 1) + (p.atendimentos * 5) + (p.atendVideos * 2) + (p.pastas * 5) + (p.vendas * 40) + (p.consorcios * 10) + p.pt945;
   });

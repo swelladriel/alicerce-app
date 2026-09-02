@@ -1964,7 +1964,7 @@ function renderRanking() {
     if (p.atrasos >= 3) p.ptCheckin += (p.atrasos - 2) * -3;
   });
 
-  // === AGENDAMENTOS: +3 (desde INICIO_MES_COMERCIAL, deduplicado por CORRETOR+CLIENTE no mês) ===
+  // === AGENDAMENTOS: +1 (desde INICIO_MES_COMERCIAL, deduplicado por CORRETOR+CLIENTE no mês) ===
   const agendaMes = (typeof AGENDA_PLAT !== 'undefined' ? AGENDA_PLAT : []).filter(a => {
     const dt = parseDataISO(a.DATA) || '';
     return dt >= INICIO_MES_COMERCIAL && (a.TIPO || 'Cliente') === 'Cliente';
@@ -1981,32 +1981,32 @@ function renderRanking() {
     pontuacao[nome].ptAgenda += 1;
   });
 
-  // === ATENDIMENTOS: +5 (desde INICIO_MES_COMERCIAL, deduplicado por CORRETOR+CLIENTE+DATA, sem "teste") ===
-  const atendMes = REGISTROS.filter(r => {
-    if (r.TIPO !== 'atendimento-confirmado') return false;
-    const dt = parseDataISO(r.DATA) || '';
-    if (dt < INICIO_MES_COMERCIAL) return false;
-    // Filtrar entradas de teste
-    const cliente = String(r.CLIENTE || r.CLIENTES || '').toLowerCase();
-    const obs = String(r.OBSERVACOES || r.OBSERVACAO || '').toLowerCase();
-    if (cliente.includes('teste') || obs.includes('teste')) return false;
-    return true;
-  });
+  // === ATENDIMENTOS: presencial +5, vídeo +2 (desde INICIO_MES_COMERCIAL, fonte: AGENDA com ATENDIDO=SIM, deduplicado por CORRETOR+CLIENTE no mês) ===
   const atendDedup = new Set();
-  atendMes.forEach(r => {
-    const nome = findCorr(r.CORRETOR);
+  (typeof AGENDA_PLAT !== 'undefined' ? AGENDA_PLAT : []).filter(a => {
+    if ((parseDataISO(a.DATA) || '') < INICIO_MES_COMERCIAL) return false;
+    if ((a.TIPO || 'Cliente') !== 'Cliente') return false;
+    const atendido = String(a.ATENDIDO || '').toUpperCase();
+    return atendido === 'SIM' || atendido === 'SIM-VIDEO' || atendido === 'TRUE';
+  }).forEach(a => {
+    const nome = findCorr(a.CORRETOR);
     if (!nome || !pontuacao[nome]) return;
-    const cliente = String(r.CLIENTE || r.CLIENTES || '').trim().toUpperCase();
+    const cliente = String(a.CLIENTE || '').trim().toUpperCase();
     const chave = `${nome}|${cliente}`;
     if (atendDedup.has(chave)) return;
     atendDedup.add(chave);
-    pontuacao[nome].atendimentos++;
-    const tipoAtend = (r.TIPO_ATENDIMENTO || r.OBSERVACOES || '').toLowerCase().includes('video') || (r.TIPO_ATENDIMENTO || r.OBSERVACOES || '').toLowerCase().includes('vídeo') ? 'video' : 'presencial';
-    if (tipoAtend === 'video') { pontuacao[nome].atendVideos = (pontuacao[nome].atendVideos || 0) + 1; pontuacao[nome].ptAtend += 2; }
-    else { pontuacao[nome].ptAtend += 5; }
+    const obs = (a.OBSERVACOES || '').toLowerCase();
+    const atendido = String(a.ATENDIDO || '').toUpperCase();
+    if (obs.includes('video') || obs.includes('vídeo') || atendido === 'SIM-VIDEO') {
+      pontuacao[nome].atendVideos = (pontuacao[nome].atendVideos || 0) + 1;
+      pontuacao[nome].ptAtend += 2;
+    } else {
+      pontuacao[nome].atendimentos++;
+      pontuacao[nome].ptAtend += 5;
+    }
   });
 
-  // === PASTAS: +8 (desde INICIO_MES_COMERCIAL, excluir status AGENDADO que vem do app) ===
+  // === PASTAS: +5 (desde INICIO_MES_COMERCIAL, excluir status AGENDADO que vem do app) ===
   CLIENTES.filter(c => {
     const dt = parseDataISO(c['DATA CRIAÇÃO'] || c['DATA CRIACAO']) || '';
     const status = (c.STATUS || '').toUpperCase();
@@ -2019,7 +2019,7 @@ function renderRanking() {
     pontuacao[corr.NOME].ptPasta += 5;
   });
 
-  // === VENDAS: +20 venda, +10 consórcio (desde INICIO_MES_COMERCIAL) ===
+  // === VENDAS: +40 venda, +10 consórcio (desde INICIO_MES_COMERCIAL) ===
   const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA'};
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let corrNome = (v.CORRETOR || '').trim().toUpperCase();
