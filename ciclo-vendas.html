@@ -1579,7 +1579,7 @@ async function removerGerado(idx) {
   let item = filteredData[idx];
   if (!confirm('Remover ' + (item.CLIENTE || '?') + ' do pipeline?\n\nEsse cliente já está na aba de Vendas. O registro será excluído do pipeline Real.')) return;
   try {
-    let payload = { acao: 'deletar_real', CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR, VGV_ESTIMADO: item.VGV_ESTIMADO };
+    let payload = { acao: 'deletar_real', cliente: item.CLIENTE, corretor: item.CORRETOR };
     await postAPI(payload);
     showToast(item.CLIENTE + ' removido do pipeline (já nas vendas)', 'success');
     await loadData();
