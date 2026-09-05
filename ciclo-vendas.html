@@ -1704,6 +1704,7 @@ async function salvarVenda() {
 }
 
 async function postAPI(payload) {
+  // Tentativa 1: POST normal
   try {
     let resp = await fetch(API_URL, {
       method: 'POST',
@@ -1711,12 +1712,26 @@ async function postAPI(payload) {
       body: JSON.stringify(payload),
       redirect: 'follow'
     });
-    return await resp.text();
-  } catch (e) {
+    let text = await resp.text();
+    if (text) return text;
+  } catch (e) {}
+  // Tentativa 2: POST no-cors (Apps Script redirect 302 perde body)
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+      mode: 'no-cors',
+      redirect: 'follow'
+    });
+    return 'ok';
+  } catch (e2) {}
+  // Tentativa 3: GET fallback (só pra ações que aceitam GET)
+  try {
     let params = new URLSearchParams(payload);
     let resp = await fetch(API_URL + '?' + params.toString());
     return await resp.text();
-  }
+  } catch (e3) { throw new Error('Falha nas 3 tentativas'); }
 }
 
 // === EXPORT CSV ===
