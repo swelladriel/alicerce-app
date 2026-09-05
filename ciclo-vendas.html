@@ -25,6 +25,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 ::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
 
 /* INLINE STATUS */
+.td-cliente{max-width:200px;}
+.cliente-nome{font-weight:600;font-size:13px;}
+.td-emp{max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;}
+.obs-btn{background:none;border:none;color:var(--gold);cursor:pointer;font-size:13px;padding:2px 4px;margin-left:4px;vertical-align:middle;transition:color .2s;}
+.obs-btn:hover{color:var(--gold-light);}
+.obs-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--gold);border-radius:14px;padding:24px;max-width:420px;width:90%;z-index:1001;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.obs-popup h4{font-size:14px;color:var(--gold);margin-bottom:4px;}
+.obs-popup .obs-cliente{font-size:16px;font-weight:700;margin-bottom:12px;}
+.obs-popup .obs-text{font-size:13px;color:var(--text2);line-height:1.6;background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;min-height:60px;}
+.obs-popup .obs-close{margin-top:14px;display:block;width:100%;padding:10px;border:none;background:var(--gold);color:#111;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
+.obs-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;}
+.obs-overlay.show{display:block;}
+table td{padding:8px 10px;font-size:12px;}
+table th{padding:8px 10px;}
+.actions-cell{display:flex;gap:3px;}
+.action-btn{padding:4px 6px;font-size:11px;}
 .inline-status{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
 .inline-status:hover{border-color:var(--gold)}
 .inline-status:focus{border-color:var(--gold)}
@@ -431,14 +447,12 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
       <table>
         <thead>
           <tr>
-            <th data-col="mes" onclick="sortTable('mes')">M&ecirc;s <span class="sort-icon">&#9650;&#9660;</span></th>
             <th data-col="corretor" onclick="sortTable('corretor')">Corretor <span class="sort-icon">&#9650;&#9660;</span></th>
             <th data-col="cliente" onclick="sortTable('cliente')">Cliente <span class="sort-icon">&#9650;&#9660;</span></th>
-            <th data-col="vgv" onclick="sortTable('vgv')">VGV (R$) <span class="sort-icon">&#9650;&#9660;</span></th>
-            <th data-col="empreendimento" onclick="sortTable('empreendimento')">Empreendimento <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="vgv" onclick="sortTable('vgv')">VGV <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="empreendimento" onclick="sortTable('empreendimento')">Empreend. <span class="sort-icon">&#9650;&#9660;</span></th>
             <th data-col="status" onclick="sortTable('status')">Status <span class="sort-icon">&#9650;&#9660;</span></th>
-            <th data-col="pendencia" onclick="sortTable('pendencia')">Pend&ecirc;ncia / Aten&ccedil;&atilde;o <span class="sort-icon">&#9650;&#9660;</span></th>
-            <th data-col="dias" onclick="sortTable('dias')">Dias Parados <span class="sort-icon">&#9650;&#9660;</span></th>
+            <th data-col="dias" onclick="sortTable('dias')">Dias <span class="sort-icon">&#9650;&#9660;</span></th>
             <th>A&ccedil;&otilde;es</th>
           </tr>
         </thead>
@@ -1456,36 +1470,34 @@ function renderTable() {
     let vgv = parseVGV(item.VGV_ESTIMADO);
     let dias = calcDias(item);
     let st = (item.STATUS || '').toUpperCase().trim();
-    let mes = getMesFromData(item);
     let globalIdx = start + idx;
     let rankClass = globalIdx === 0 ? 'rank-1' : globalIdx === 1 ? 'rank-2' : globalIdx === 2 ? 'rank-3' : '';
     let pendencia = item.PENDENCIA || '';
-    // isFuturo check moved to inline render
+    let hasPend = pendencia.trim().length > 0;
 
     html += '<tr class="' + rankClass + '">';
-    html += '<td>' + mes + '</td>';
     html += '<td><span class="corretor-badge">' + (item.CORRETOR || '-') + '</span></td>';
-    html += '<td>' + (item.CLIENTE || '-') + '</td>';
-    html += '<td><span class="vgv-val">' + fmtMoeda(vgv) + '</span></td>';
-    html += '<td>' + (item.EMPREENDIMENTO || '-') + '</td>';
+    html += '<td class="td-cliente">';
+    html += '<span class="cliente-nome">' + (item.CLIENTE || '-') + '</span>';
+    if (hasPend) html += ' <button class="obs-btn" title="Ver observações" onclick="mostrarObs(' + globalIdx + ')"><i class="fa-solid fa-comment-dots"></i></button>';
+    html += '</td>';
+    html += '<td><span class="vgv-val">' + fmtMoedaShort(vgv) + '</span></td>';
+    html += '<td class="td-emp">' + (item.EMPREENDIMENTO || '-') + '</td>';
     html += '<td><select class="inline-status ' + statusClass(st) + '" onchange="changeStatusInline(' + globalIdx + ', this.value)">';
     ['GERANDO','GERADO','N GERADO','DESISTIU','FUTURO'].forEach(function(s) {
       html += '<option value="' + s + '"' + (s === st ? ' selected' : '') + '>' + s + '</option>';
     });
     html += '</select></td>';
-    html += '<td><span class="pendencia-text" title="' + pendencia.replace(/"/g, '&quot;') + '">' + (pendencia || '-') + '</span>';
-    if (st === 'FUTURO') html += ' <span class="vgv-futuro-tag">VGV Futuro</span>';
-    html += '</td>';
-    html += '<td><span class="dias-badge ' + diasClass(dias) + '">' + dias + 'd</span></td>';
+    html += '<td><span class="dias-badge ' + diasClass(dias) + '">' + dias + '</span></td>';
     html += '<td><div class="actions-cell">';
     html += '<button class="action-btn" title="Editar" onclick="editVenda(' + globalIdx + ')"><i class="fa-solid fa-pen-to-square"></i></button>';
     if (st === 'GERADO') {
-      html += '<button class="action-btn delete" title="Tirar do pipeline (já está nas vendas)" onclick="removerGerado(' + globalIdx + ')"><i class="fa-solid fa-circle-check"></i></button>';
+      html += '<button class="action-btn delete" title="Remover (já nas vendas)" onclick="removerGerado(' + globalIdx + ')"><i class="fa-solid fa-circle-check"></i></button>';
     } else if (st === 'DESISTIU' || st === 'FUTURO') {
       html += '<button class="action-btn" title="Reativar" onclick="reativarVenda(' + globalIdx + ')" style="color:var(--green);"><i class="fa-solid fa-rotate-left"></i></button>';
     } else {
-      html += '<button class="action-btn delete" title="Arquivar (desistiu)" onclick="arquivarVenda(' + globalIdx + ')"><i class="fa-solid fa-box-archive"></i></button>';
-      html += '<button class="action-btn" title="Mover p/ Futuro" onclick="moverFuturo(' + globalIdx + ')" style="color:var(--blue);"><i class="fa-solid fa-clock"></i></button>';
+      html += '<button class="action-btn delete" title="Desistiu" onclick="arquivarVenda(' + globalIdx + ')"><i class="fa-solid fa-box-archive"></i></button>';
+      html += '<button class="action-btn" title="Futuro" onclick="moverFuturo(' + globalIdx + ')" style="color:var(--blue);"><i class="fa-solid fa-clock"></i></button>';
     }
     html += '</div></td>';
     html += '</tr>';
@@ -1737,7 +1749,7 @@ async function postAPI(payload) {
 // === EXPORT CSV ===
 function exportCSV() {
   let BOM = '\uFEFF';
-  let header = 'Mês;Corretor;Cliente;VGV;Empreendimento;Status;Pendência;Dias Parados\n';
+  let header = 'Corretor;Cliente;VGV;Empreendimento;Status;Pendência;Dias Parados\n';
   let rows = filteredData.map(item => {
     let vgv = parseVGV(item.VGV_ESTIMADO);
     let dias = calcDias(item);
@@ -1764,6 +1776,16 @@ function exportCSV() {
 }
 
 // === LOAD DATA ===
+function mostrarObs(idx) {
+  let item = filteredData[idx];
+  document.getElementById('obsCliente').textContent = (item.CLIENTE || '-') + ' — ' + (item.CORRETOR || '-');
+  document.getElementById('obsText').textContent = item.PENDENCIA || 'Sem observações.';
+  document.getElementById('obsOverlay').classList.add('show');
+}
+function fecharObs() {
+  document.getElementById('obsOverlay').classList.remove('show');
+}
+
 async function loadData() {
   try {
     let resp = await fetch(API_URL + '?acao=real');
@@ -1818,5 +1840,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
+<div class="obs-overlay" id="obsOverlay" onclick="fecharObs()">
+  <div class="obs-popup" onclick="event.stopPropagation()">
+    <h4>Observações</h4>
+    <div class="obs-cliente" id="obsCliente"></div>
+    <div class="obs-text" id="obsText"></div>
+    <button class="obs-close" onclick="fecharObs()">Fechar</button>
+  </div>
+</div>
 </body>
 </html>
