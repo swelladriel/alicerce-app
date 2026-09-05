@@ -1479,9 +1479,14 @@ function renderTable() {
     html += '<td><span class="dias-badge ' + diasClass(dias) + '">' + dias + 'd</span></td>';
     html += '<td><div class="actions-cell">';
     html += '<button class="action-btn" title="Editar" onclick="editVenda(' + globalIdx + ')"><i class="fa-solid fa-pen-to-square"></i></button>';
-    if (st !== 'DESISTIU' && st !== 'FUTURO') html += '<button class="action-btn delete" title="Arquivar (DESISTIU)" onclick="arquivarVenda(' + globalIdx + ')"><i class="fa-solid fa-box-archive"></i></button>';
-    if (st !== 'FUTURO' && st !== 'DESISTIU') html += '<button class="action-btn" title="Mover p/ Futuro" onclick="moverFuturo(' + globalIdx + ')" style="color:var(--blue);"><i class="fa-solid fa-clock"></i></button>';
-    else html += '<button class="action-btn" title="Reativar" onclick="reativarVenda(' + globalIdx + ')" style="color:var(--green);"><i class="fa-solid fa-rotate-left"></i></button>';
+    if (st === 'GERADO') {
+      html += '<button class="action-btn delete" title="Tirar do pipeline (já está nas vendas)" onclick="removerGerado(' + globalIdx + ')"><i class="fa-solid fa-circle-check"></i></button>';
+    } else if (st === 'DESISTIU' || st === 'FUTURO') {
+      html += '<button class="action-btn" title="Reativar" onclick="reativarVenda(' + globalIdx + ')" style="color:var(--green);"><i class="fa-solid fa-rotate-left"></i></button>';
+    } else {
+      html += '<button class="action-btn delete" title="Arquivar (desistiu)" onclick="arquivarVenda(' + globalIdx + ')"><i class="fa-solid fa-box-archive"></i></button>';
+      html += '<button class="action-btn" title="Mover p/ Futuro" onclick="moverFuturo(' + globalIdx + ')" style="color:var(--blue);"><i class="fa-solid fa-clock"></i></button>';
+    }
     html += '</div></td>';
     html += '</tr>';
   });
