@@ -1604,11 +1604,8 @@ async function arquivarVenda(idx) {
   try {
     let payload = {
       acao: 'atualizar_real',
-      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
-      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
-      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
-      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: 'DESISTIU',
-      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+      busca: { CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR },
+      campos: { STATUS: 'DESISTIU' }
     };
     await postAPI(payload);
     showToast('Cliente arquivado como DESISTIU', 'success');
@@ -1622,11 +1619,8 @@ async function moverFuturo(idx) {
   try {
     let payload = {
       acao: 'atualizar_real',
-      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
-      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
-      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
-      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: 'FUTURO',
-      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+      busca: { CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR },
+      campos: { STATUS: 'FUTURO' }
     };
     await postAPI(payload);
     showToast(item.CLIENTE + ' movido para FUTURO', 'success');
@@ -1640,11 +1634,8 @@ async function reativarVenda(idx) {
   try {
     let payload = {
       acao: 'atualizar_real',
-      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
-      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
-      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
-      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: 'GERANDO',
-      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+      busca: { CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR },
+      campos: { STATUS: 'GERANDO' }
     };
     await postAPI(payload);
     showToast('Cliente reativado como GERANDO', 'success');
@@ -1657,11 +1648,8 @@ async function changeStatusInline(idx, newStatus) {
   try {
     let payload = {
       acao: 'atualizar_real',
-      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
-      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
-      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
-      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: newStatus,
-      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+      busca: { CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR },
+      campos: { STATUS: newStatus }
     };
     await postAPI(payload);
     showToast(item.CLIENTE + ' → ' + newStatus, 'success');
@@ -1681,28 +1669,33 @@ async function deleteVenda(idx) {
 }
 
 async function salvarVenda() {
-  let payload = {
-    acao: document.getElementById('editIndex').value == -1 ? 'adicionar_real' : 'atualizar_real',
-    DATA: new Date().toISOString(),
-    CORRETOR: document.getElementById('fCorretor').value,
-    CLIENTE: document.getElementById('fCliente').value,
-    VGV_ESTIMADO: document.getElementById('fVGV').value,
-    EMPREENDIMENTO: document.getElementById('fEmpreendimento').value,
-    CONSTRUTORA: document.getElementById('fConstrutora').value,
-    STATUS: document.getElementById('fStatus').value,
-    PENDENCIA: document.getElementById('fPendencia').value,
-    DATA_ENTRADA: new Date().toISOString()
-  };
+  let corretor = document.getElementById('fCorretor').value;
+  let cliente = document.getElementById('fCliente').value;
+  let vgv = document.getElementById('fVGV').value;
+  let empreendimento = document.getElementById('fEmpreendimento').value;
+  let construtora = document.getElementById('fConstrutora').value;
+  let status = document.getElementById('fStatus').value;
+  let pendencia = document.getElementById('fPendencia').value;
+  let isEdit = document.getElementById('editIndex').value != -1;
 
-  if (!payload.CORRETOR || !payload.CLIENTE) {
+  if (!corretor || !cliente) {
     showToast('Corretor e Cliente são obrigatórios', 'warning');
     return;
   }
 
-  if (document.getElementById('editIndex').value != -1) {
+  let payload;
+  if (isEdit) {
     let orig = filteredData[parseInt(document.getElementById('editIndex').value)];
-    payload.CLIENTE_ORIGINAL = orig.CLIENTE;
-    payload.CORRETOR_ORIGINAL = orig.CORRETOR;
+    payload = {
+      acao: 'atualizar_real',
+      busca: { CLIENTE: orig.CLIENTE, CORRETOR: orig.CORRETOR },
+      campos: { CLIENTE: cliente, CORRETOR: corretor, VGV_ESTIMADO: vgv, EMPREENDIMENTO: empreendimento, CONSTRUTORA: construtora, STATUS: status, PENDENCIA: pendencia }
+    };
+  } else {
+    payload = {
+      acao: 'adicionar_real',
+      clientes: [{ DATA: new Date().toISOString(), CORRETOR: corretor, CLIENTE: cliente, VGV_ESTIMADO: vgv, EMPREENDIMENTO: empreendimento, CONSTRUTORA: construtora, STATUS: status, PENDENCIA: pendencia, DATA_ENTRADA: new Date().toISOString() }]
+    };
   }
 
   try {
