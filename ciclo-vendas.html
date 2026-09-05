@@ -1661,7 +1661,7 @@ async function deleteVenda(idx) {
   let item = filteredData[idx];
   if (!confirm('EXCLUIR PERMANENTEMENTE ' + (item.CLIENTE || '?') + ' da planilha?\nEssa ação não pode ser desfeita.\n\nUse ARQUIVAR se quiser manter o registro.')) return;
   try {
-    let payload = { acao: 'deletar_real', CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR, VGV_ESTIMADO: item.VGV_ESTIMADO };
+    let payload = { acao: 'deletar_real', cliente: item.CLIENTE, corretor: item.CORRETOR };
     await postAPI(payload);
     showToast('Registro excluído permanentemente', 'success');
     await loadData();
