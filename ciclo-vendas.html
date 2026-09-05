@@ -916,17 +916,17 @@ function renderKPIs() {
   let totalVGV = 0, gerandoVGV = 0, nGeradoVGV = 0;
   let gerandoN = 0, nGeradoN = 0;
 
-  // Pipeline Real: só conta GERANDO e N GERADO (GERADO no pipeline é ignorado)
+  // Pipeline Real: GERANDO e N GERADO contam. GERADO, DESISTIU e FUTURO NÃO contam no VGV negociado
   filteredData.forEach(item => {
     let vgv = parseVGV(item.VGV_ESTIMADO);
     let st = (item.STATUS || '').toUpperCase().trim();
+    if (st === 'DESISTIU' || st === 'FUTURO' || st === 'GERADO') return; // ignora
     if (st === 'GERANDO') { gerandoVGV += vgv; gerandoN++; totalVGV += vgv; }
-    else if (st !== 'GERADO') { nGeradoVGV += vgv; nGeradoN++; totalVGV += vgv; }
-    // GERADO no Real não conta — VGV Gerado vem da aba Vendas
+    else { nGeradoVGV += vgv; nGeradoN++; totalVGV += vgv; } // N GERADO e outros
   });
 
   // VGV GERADO = vendas efetivadas do mês comercial (aba Vendas)
-  let INICIO_MES = '2026-08';
+  let INICIO_MES = '2026-09';
   let vendasVisiveis = vendasData.filter(v => {
     if (!v.CORRETOR) return false;
     let corr = v.CORRETOR.toUpperCase().trim();
@@ -1479,7 +1479,8 @@ function renderTable() {
     html += '<td><span class="dias-badge ' + diasClass(dias) + '">' + dias + 'd</span></td>';
     html += '<td><div class="actions-cell">';
     html += '<button class="action-btn" title="Editar" onclick="editVenda(' + globalIdx + ')"><i class="fa-solid fa-pen-to-square"></i></button>';
-    if (st !== 'DESISTIU') html += '<button class="action-btn delete" title="Arquivar" onclick="arquivarVenda(' + globalIdx + ')"><i class="fa-solid fa-box-archive"></i></button>';
+    if (st !== 'DESISTIU' && st !== 'FUTURO') html += '<button class="action-btn delete" title="Arquivar (DESISTIU)" onclick="arquivarVenda(' + globalIdx + ')"><i class="fa-solid fa-box-archive"></i></button>';
+    if (st !== 'FUTURO' && st !== 'DESISTIU') html += '<button class="action-btn" title="Mover p/ Futuro" onclick="moverFuturo(' + globalIdx + ')" style="color:var(--blue);"><i class="fa-solid fa-clock"></i></button>';
     else html += '<button class="action-btn" title="Reativar" onclick="reativarVenda(' + globalIdx + ')" style="color:var(--green);"><i class="fa-solid fa-rotate-left"></i></button>';
     html += '</div></td>';
     html += '</tr>';
@@ -1585,6 +1586,24 @@ async function arquivarVenda(idx) {
     showToast('Cliente arquivado como DESISTIU', 'success');
     await loadData();
   } catch (err) { showToast('Erro ao arquivar: ' + err.message, 'error'); }
+}
+
+async function moverFuturo(idx) {
+  let item = filteredData[idx];
+  if (!confirm('Mover ' + (item.CLIENTE || '?') + ' para FUTURO?\nSai do pipeline ativo mas fica salvo para retomar depois.')) return;
+  try {
+    let payload = {
+      acao: 'atualizar_real',
+      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
+      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
+      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
+      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: 'FUTURO',
+      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+    };
+    await postAPI(payload);
+    showToast(item.CLIENTE + ' movido para FUTURO', 'success');
+    await loadData();
+  } catch (err) { showToast('Erro: ' + err.message, 'error'); }
 }
 
 async function reativarVenda(idx) {
