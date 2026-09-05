@@ -24,6 +24,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
 
+/* INLINE STATUS */
+.inline-status{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+.inline-status:hover{border-color:var(--gold)}
+.inline-status:focus{border-color:var(--gold)}
+.inline-status option{background:#1a2030;color:var(--text)}
+.inline-status.st-gerado{color:var(--green);border-color:rgba(52,211,153,0.3)}
+.inline-status.st-gerando{color:var(--yellow);border-color:rgba(251,191,36,0.3)}
+.inline-status.st-ngerado{color:var(--red);border-color:rgba(248,113,113,0.3)}
+.inline-status.st-desistiu{color:var(--text3);border-color:rgba(107,114,128,0.3);text-decoration:line-through}
+.inline-status.st-futuro{color:var(--blue);border-color:rgba(96,165,250,0.3)}
+
 /* LOGIN */
 .login-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-overlay.hide{display:none}
@@ -285,10 +296,13 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
       <div class="filter-group">
         <label>Status da Venda</label>
         <select id="filtroStatus" onchange="applyFilters()">
-          <option value="">Todos</option>
+          <option value="">Ativos</option>
           <option value="GERADO">GERADO</option>
           <option value="GERANDO">GERANDO</option>
           <option value="N GERADO">N GERADO</option>
+          <option value="DESISTIU">DESISTIU</option>
+          <option value="FUTURO">FUTURO</option>
+          <option value="_TODOS">Todos (inclui arquivados)</option>
         </select>
       </div>
       <div class="filter-group">
@@ -487,6 +501,8 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
           <option value="GERANDO">GERANDO</option>
           <option value="GERADO">GERADO</option>
           <option value="N GERADO">N GERADO</option>
+          <option value="DESISTIU">DESISTIU</option>
+          <option value="FUTURO">FUTURO</option>
         </select>
       </div>
       <div class="form-group full">
@@ -792,9 +808,17 @@ function applyFilters() {
   let busca = document.getElementById('filtroBusca').value.toLowerCase().trim();
 
   filteredData = visibleData.filter(item => {
+    let itemSt = (item.STATUS || '').toUpperCase().trim();
+    // Por padrão (filtro vazio = "Ativos"), esconder DESISTIU e FUTURO
+    if (!st) {
+      if (itemSt === 'DESISTIU' || itemSt === 'FUTURO') return false;
+    } else if (st === '_TODOS') {
+      // Mostrar todos, sem filtro de status
+    } else {
+      if (itemSt !== st) return false;
+    }
     if (mes && getMesFromData(item) !== mes) return false;
     if (cor && (item.CORRETOR || '').trim() !== cor) return false;
-    if (st && (item.STATUS || '').toUpperCase().trim() !== st) return false;
     if (emp && (item.EMPREENDIMENTO || '').trim() !== emp) return false;
     if (busca) {
       let haystack = [item.CLIENTE, item.PENDENCIA, item.EMPREENDIMENTO, item.CORRETOR, item.CONSTRUTORA].join(' ').toLowerCase();
@@ -1436,7 +1460,7 @@ function renderTable() {
     let globalIdx = start + idx;
     let rankClass = globalIdx === 0 ? 'rank-1' : globalIdx === 1 ? 'rank-2' : globalIdx === 2 ? 'rank-3' : '';
     let pendencia = item.PENDENCIA || '';
-    let isFuturo = st === 'GERANDO';
+    // isFuturo check moved to inline render
 
     html += '<tr class="' + rankClass + '">';
     html += '<td>' + mes + '</td>';
@@ -1444,14 +1468,19 @@ function renderTable() {
     html += '<td>' + (item.CLIENTE || '-') + '</td>';
     html += '<td><span class="vgv-val">' + fmtMoeda(vgv) + '</span></td>';
     html += '<td>' + (item.EMPREENDIMENTO || '-') + '</td>';
-    html += '<td><span class="status-tag ' + statusClass(st) + '">' + (st || '-') + '</span></td>';
+    html += '<td><select class="inline-status ' + statusClass(st) + '" onchange="changeStatusInline(' + globalIdx + ', this.value)">';
+    ['GERANDO','GERADO','N GERADO','DESISTIU','FUTURO'].forEach(function(s) {
+      html += '<option value="' + s + '"' + (s === st ? ' selected' : '') + '>' + s + '</option>';
+    });
+    html += '</select></td>';
     html += '<td><span class="pendencia-text" title="' + pendencia.replace(/"/g, '&quot;') + '">' + (pendencia || '-') + '</span>';
-    if (isFuturo) html += ' <span class="vgv-futuro-tag">VGV Futuro</span>';
+    if (st === 'FUTURO') html += ' <span class="vgv-futuro-tag">VGV Futuro</span>';
     html += '</td>';
     html += '<td><span class="dias-badge ' + diasClass(dias) + '">' + dias + 'd</span></td>';
     html += '<td><div class="actions-cell">';
     html += '<button class="action-btn" title="Editar" onclick="editVenda(' + globalIdx + ')"><i class="fa-solid fa-pen-to-square"></i></button>';
-    html += '<button class="action-btn delete" title="Excluir" onclick="deleteVenda(' + globalIdx + ')"><i class="fa-solid fa-trash"></i></button>';
+    if (st !== 'DESISTIU') html += '<button class="action-btn delete" title="Arquivar" onclick="arquivarVenda(' + globalIdx + ')"><i class="fa-solid fa-box-archive"></i></button>';
+    else html += '<button class="action-btn" title="Reativar" onclick="reativarVenda(' + globalIdx + ')" style="color:var(--green);"><i class="fa-solid fa-rotate-left"></i></button>';
     html += '</div></td>';
     html += '</tr>';
   });
@@ -1540,18 +1569,68 @@ function editVenda(idx) {
   openModal(idx);
 }
 
+async function arquivarVenda(idx) {
+  let item = filteredData[idx];
+  if (!confirm('Arquivar ' + (item.CLIENTE || '?') + ' como DESISTIU?\nO registro fica salvo mas sai do pipeline ativo.')) return;
+  try {
+    let payload = {
+      acao: 'atualizar_real',
+      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
+      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
+      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
+      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: 'DESISTIU',
+      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+    };
+    await postAPI(payload);
+    showToast('Cliente arquivado como DESISTIU', 'success');
+    await loadData();
+  } catch (err) { showToast('Erro ao arquivar: ' + err.message, 'error'); }
+}
+
+async function reativarVenda(idx) {
+  let item = filteredData[idx];
+  if (!confirm('Reativar ' + (item.CLIENTE || '?') + ' como GERANDO?')) return;
+  try {
+    let payload = {
+      acao: 'atualizar_real',
+      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
+      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
+      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
+      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: 'GERANDO',
+      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+    };
+    await postAPI(payload);
+    showToast('Cliente reativado como GERANDO', 'success');
+    await loadData();
+  } catch (err) { showToast('Erro ao reativar: ' + err.message, 'error'); }
+}
+
+async function changeStatusInline(idx, newStatus) {
+  let item = filteredData[idx];
+  try {
+    let payload = {
+      acao: 'atualizar_real',
+      CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR,
+      CLIENTE_ORIGINAL: item.CLIENTE, CORRETOR_ORIGINAL: item.CORRETOR,
+      VGV_ESTIMADO: item.VGV_ESTIMADO, EMPREENDIMENTO: item.EMPREENDIMENTO || '',
+      CONSTRUTORA: item.CONSTRUTORA || '', STATUS: newStatus,
+      PENDENCIA: item.PENDENCIA || '', DATA_ENTRADA: item.DATA_ENTRADA || ''
+    };
+    await postAPI(payload);
+    showToast(item.CLIENTE + ' → ' + newStatus, 'success');
+    await loadData();
+  } catch (err) { showToast('Erro: ' + err.message, 'error'); }
+}
+
 async function deleteVenda(idx) {
   let item = filteredData[idx];
-  if (!confirm('Excluir venda de ' + (item.CLIENTE || '?') + '?')) return;
-
+  if (!confirm('EXCLUIR PERMANENTEMENTE ' + (item.CLIENTE || '?') + ' da planilha?\nEssa ação não pode ser desfeita.\n\nUse ARQUIVAR se quiser manter o registro.')) return;
   try {
     let payload = { acao: 'deletar_real', CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR, VGV_ESTIMADO: item.VGV_ESTIMADO };
     await postAPI(payload);
-    showToast('Venda excluída com sucesso', 'success');
+    showToast('Registro excluído permanentemente', 'success');
     await loadData();
-  } catch (err) {
-    showToast('Erro ao excluir: ' + err.message, 'error');
-  }
+  } catch (err) { showToast('Erro ao excluir: ' + err.message, 'error'); }
 }
 
 async function salvarVenda() {
