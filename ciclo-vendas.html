@@ -1575,6 +1575,17 @@ function editVenda(idx) {
   openModal(idx);
 }
 
+async function removerGerado(idx) {
+  let item = filteredData[idx];
+  if (!confirm('Remover ' + (item.CLIENTE || '?') + ' do pipeline?\n\nEsse cliente já está na aba de Vendas. O registro será excluído do pipeline Real.')) return;
+  try {
+    let payload = { acao: 'deletar_real', CLIENTE: item.CLIENTE, CORRETOR: item.CORRETOR, VGV_ESTIMADO: item.VGV_ESTIMADO };
+    await postAPI(payload);
+    showToast(item.CLIENTE + ' removido do pipeline (já nas vendas)', 'success');
+    await loadData();
+  } catch (err) { showToast('Erro: ' + err.message, 'error'); }
+}
+
 async function arquivarVenda(idx) {
   let item = filteredData[idx];
   if (!confirm('Arquivar ' + (item.CLIENTE || '?') + ' como DESISTIU?\nO registro fica salvo mas sai do pipeline ativo.')) return;
