@@ -1906,9 +1906,12 @@ function renderRanking() {
   function findCorr(nome) { return nomeMap[nome] || nomeMap[(nome || '').toUpperCase()] || null; }
 
   // Dias úteis (seg-sex) a partir de INICIO_CHECKIN_945 (pra check-in e 945)
+  // Penalidades só contam até ONTEM (dia em andamento não penaliza)
   const diasUteisCheckin = [];
   const dtInicioCheckin = new Date(INICIO_CHECKIN_945 + 'T12:00:00');
-  for (let dt = new Date(dtInicioCheckin); dt <= agora; dt.setDate(dt.getDate() + 1)) {
+  const ontem = new Date(agora);
+  ontem.setDate(ontem.getDate() - 1);
+  for (let dt = new Date(dtInicioCheckin); dt <= ontem; dt.setDate(dt.getDate() + 1)) {
     if (dt.getDay() > 0 && dt.getDay() < 6) diasUteisCheckin.push(dt.toISOString().split('T')[0]);
   }
 
@@ -2020,7 +2023,7 @@ function renderRanking() {
   });
 
   // === VENDAS: +40 venda, +10 consórcio (desde INICIO_MES_COMERCIAL) ===
-  const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA'};
+  const NOMES_EQUIV = {'DANDARA CAMPUS':'DANDARA CAMPOS','WILIAN BUENO':'WILLIAM BUENO','EDVAM SILVA':'EDVAN SILVA','IZABELLA SILVA':'IZABELLA CHAVES'};
   VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
     let corrNome = (v.CORRETOR || '').trim().toUpperCase();
     if (NOMES_EQUIV[corrNome]) corrNome = NOMES_EQUIV[corrNome];
