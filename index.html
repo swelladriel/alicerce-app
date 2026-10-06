@@ -2104,19 +2104,32 @@ function mostrarModalFoto() {
   const modal = document.createElement('div');
   modal.id = 'modal-foto-atendimento';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
-  modal.innerHTML = `
-    <div style="background:var(--card);border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center;">
-      <div style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:8px;">📍 Localização confirmada!</div>
-      <div style="font-size:.75rem;color:rgba(255,255,255,.6);margin-bottom:20px;">${_fotoAtendimentoData.nomeLocal} (${_fotoAtendimentoData.dist}m)</div>
-      <div style="font-size:.85rem;color:#fff;margin-bottom:20px;">Agora tire uma foto como prova do atendimento:</div>
-      <label style="display:block;background:var(--success);color:#000;border:none;border-radius:10px;padding:14px;font-size:.85rem;font-weight:700;cursor:pointer;touch-action:manipulation;">
-        📸 TIRAR FOTO
-        <input type="file" accept="image/*" capture="environment" id="input-foto-modal" style="display:none;" onchange="onFotoCapturada(this)">
-      </label>
-      <button onclick="fecharModalFoto()" style="margin-top:12px;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:8px;padding:10px;width:100%;font-size:.75rem;cursor:pointer;">CANCELAR</button>
-    </div>
+
+  const inner = document.createElement('div');
+  inner.style.cssText = 'background:var(--card);border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center;';
+
+  inner.innerHTML = `
+    <div style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:8px;">📍 Localização confirmada!</div>
+    <div style="font-size:.75rem;color:rgba(255,255,255,.6);margin-bottom:20px;">${_fotoAtendimentoData.nomeLocal} (${_fotoAtendimentoData.dist}m)</div>
+    <div style="font-size:.85rem;color:#fff;margin-bottom:20px;">Agora tire uma foto como prova do atendimento:</div>
+    <div id="foto-btn-container"></div>
+    <button onclick="fecharModalFoto()" style="margin-top:12px;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:8px;padding:10px;width:100%;font-size:.75rem;cursor:pointer;">CANCELAR</button>
   `;
+
+  modal.appendChild(inner);
   document.body.appendChild(modal);
+
+  // Criar input de arquivo separado (não via innerHTML)
+  const container = document.getElementById('foto-btn-container');
+  const inputFoto = document.createElement('input');
+  inputFoto.type = 'file';
+  inputFoto.accept = 'image/*';
+  inputFoto.capture = 'environment';
+  inputFoto.style.cssText = 'width:100%;padding:14px;background:var(--success);color:#000;border:none;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;touch-action:manipulation;';
+  inputFoto.addEventListener('change', function() {
+    onFotoCapturada(this);
+  });
+  container.appendChild(inputFoto);
 }
 
 function fecharModalFoto() {
