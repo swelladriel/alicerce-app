@@ -1937,6 +1937,7 @@ function renderDiaDetalhe(dataStr) {
         ${tipo === 'Cliente' && podVerContato && a.CONTATO ? `<div class="cal-card-contato">${a.CONTATO}</div>` : ''}
         <div class="cal-card-corretor">${a.CORRETOR || '-'}</div>
         ${!atendido && !bolo ? `${podVerContato ? `<div style="display:flex;gap:6px;margin-top:8px;"><button onclick="marcarAtendido(${idxAgenda})" style="flex:1;background:var(--success);color:#000;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">✅ PRESENCIAL</button><button onclick="marcarAtendidoVideo(${idxAgenda})" style="flex:1;background:#3498db;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">📹 VÍDEO</button></div>` : ''}
+        ${(!podVerContato && a.CORRETOR === USUARIO.NOME) ? `<div style="display:flex;gap:6px;margin-top:8px;"><button onclick="confirmarAtendimentoComFoto(${idxAgenda})" style="flex:1;background:var(--success);color:#000;border:none;border-radius:6px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;">📸 CONFIRMAR ATENDIMENTO</button></div>` : ''}
         ${(a.CORRETOR === USUARIO.NOME || podVerContato) ? `<div style="display:flex;gap:6px;margin-top:6px;">
           <button onclick="marcarBolo(${idxAgenda})" style="flex:1;background:#f44336;color:#fff;border:none;border-radius:6px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;">🍰 BOLO</button>
           <button onclick="abrirRemarcar(${idxAgenda})" style="flex:1;background:rgba(255,255,255,.08);color:var(--gold);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;font-size:.68rem;font-weight:600;cursor:pointer;">📅 REMARCAR</button>
@@ -2041,6 +2042,178 @@ async function marcarAtendidoVideo(idx) {
 
   renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
   mostrarConfirmacao('ATENDIMENTO VÍDEO CONFIRMADO');
+}
+
+// ============================================
+// CONFIRMAR ATENDIMENTO COM FOTO (CORRETOR)
+// Geofence 100m + câmera obrigatória
+// ============================================
+function confirmarAtendimentoComFoto(idx) {
+  const a = AGENDA[idx];
+  if (!a) return;
+  if (a.ATENDIDO === 'SIM') return;
+
+  const btn = event && event.target ? event.target : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'VERIFICANDO GPS...'; }
+
+  if (!navigator.geolocation) {
+    alert('Seu navegador não suporta GPS. Não é possível confirmar.');
+    if (btn) { btn.disabled = false; btn.textContent = '📸 CONFIRMAR ATENDIMENTO'; }
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      let dentroDoLocal = false;
+      let nomeLocal = '';
+      let dist = Infinity;
+
+      LOCAIS.forEach(local => {
+        const d = calcularDistancia(lat, lng, local.lat, local.lng);
+        if (d < dist) { dist = d; nomeLocal = local.nome; }
+        if (d <= RAIO_METROS) { dentroDoLocal = true; nomeLocal = local.nome; }
+      });
+
+      if (!dentroDoLocal) {
+        alert('Você precisa estar no escritório para confirmar o atendimento.\n\nDistância: ' + Math.round(dist) + 'm do local mais próximo (' + nomeLocal + ').');
+        if (btn) { btn.disabled = false; btn.textContent = '📸 CONFIRMAR ATENDIMENTO'; }
+        return;
+      }
+
+      // GPS OK — abrir câmera
+      if (btn) btn.textContent = 'TIRE A FOTO...';
+      abrirCameraAtendimento(idx, lat, lng, nomeLocal, Math.round(dist));
+    },
+    (err) => {
+      alert('Não foi possível obter sua localização. Ative o GPS e tente novamente.');
+      if (btn) { btn.disabled = false; btn.textContent = '📸 CONFIRMAR ATENDIMENTO'; }
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function abrirCameraAtendimento(idx, lat, lng, nomeLocal, dist) {
+  // Criar input de câmera invisível
+  let inputFoto = document.getElementById('input-foto-atendimento');
+  if (!inputFoto) {
+    inputFoto = document.createElement('input');
+    inputFoto.type = 'file';
+    inputFoto.id = 'input-foto-atendimento';
+    inputFoto.accept = 'image/*';
+    inputFoto.capture = 'environment';
+    inputFoto.style.display = 'none';
+    document.body.appendChild(inputFoto);
+  }
+
+  inputFoto.onchange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) {
+      // Cancelou a foto
+      const btn = document.querySelector('[disabled]');
+      if (btn && btn.textContent === 'TIRE A FOTO...') {
+        btn.disabled = false;
+        btn.textContent = '📸 CONFIRMAR ATENDIMENTO';
+      }
+      return;
+    }
+
+    // Comprimir foto
+    const base64 = await comprimirFoto(file, 800, 0.6);
+
+    // Enviar
+    await enviarAtendimentoComFoto(idx, lat, lng, nomeLocal, dist, base64);
+
+    // Limpar input
+    inputFoto.value = '';
+  };
+
+  inputFoto.click();
+}
+
+function comprimirFoto(file, maxLado, qualidade) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let w = img.width;
+        let h = img.height;
+        if (w > h && w > maxLado) { h = h * maxLado / w; w = maxLado; }
+        else if (h > maxLado) { w = w * maxLado / h; h = maxLado; }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', qualidade);
+        resolve(dataUrl.split(',')[1]); // só base64, sem prefixo
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function enviarAtendimentoComFoto(idx, lat, lng, nomeLocal, dist, base64Foto) {
+  const a = AGENDA[idx];
+  if (!a) return;
+
+  a.ATENDIDO = 'SIM';
+
+  const now = new Date();
+  const horaConfirmacao = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  // 1. Registrar atendimento (GET)
+  const obsText = `Atendimento confirmado por ${USUARIO.NOME} | Cliente: ${a.CLIENTE} | Local: ${nomeLocal} (${dist}m) | GPS: ${lat.toFixed(6)},${lng.toFixed(6)} | Hora: ${horaConfirmacao} | COM FOTO`;
+  const params = new URLSearchParams({
+    acao: 'checkin',
+    registro: JSON.stringify({
+      DATA: String(a.DATA || '').substring(0, 10),
+      HORA: a.HORA || '',
+      TIPO: 'atendimento-confirmado',
+      CLIENTE: a.CLIENTE || '',
+      CONTATO: a.CONTATO || '',
+      CORRETOR: a.CORRETOR || '',
+      EQUIPE: a.EQUIPE || '',
+      PRESENCA: 'atendido',
+      'OBSERVACOES': obsText
+    })
+  });
+  fetch(API_URL + '?' + params.toString()).catch(() => {});
+
+  // 2. Atualizar aba Agenda (POST)
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_agenda', busca: { DATA: String(a.DATA || '').substring(0, 10), HORA: a.HORA || '', CLIENTE: a.CLIENTE || '', CORRETOR: a.CORRETOR || '' }, campos: { ATENDIDO: 'SIM' } })
+    });
+  } catch(e) {}
+
+  // 3. Enviar foto pro Drive (POST)
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        acao: 'salvar_foto_atendimento',
+        corretor: USUARIO.NOME,
+        cliente: a.CLIENTE || '',
+        data: String(a.DATA || '').substring(0, 10),
+        hora: horaConfirmacao,
+        local: nomeLocal,
+        gps: lat.toFixed(6) + ',' + lng.toFixed(6),
+        foto: base64Foto
+      })
+    });
+  } catch(e) {}
+
+  // 4. Atualizar visual
+  renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
+  mostrarConfirmacao('ATENDIMENTO CONFIRMADO COM FOTO');
 }
 
 async function marcarBolo(idx) {
