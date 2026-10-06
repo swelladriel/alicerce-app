@@ -2048,6 +2048,8 @@ async function marcarAtendidoVideo(idx) {
 // CONFIRMAR ATENDIMENTO COM FOTO (CORRETOR)
 // Geofence 100m + câmera obrigatória
 // ============================================
+let _fotoAtendimentoData = null; // dados GPS temporários
+
 function confirmarAtendimentoComFoto(idx) {
   const a = AGENDA[idx];
   if (!a) return;
@@ -2082,9 +2084,9 @@ function confirmarAtendimentoComFoto(idx) {
         return;
       }
 
-      // GPS OK — abrir câmera
-      if (btn) btn.textContent = 'TIRE A FOTO...';
-      abrirCameraAtendimento(idx, lat, lng, nomeLocal, Math.round(dist));
+      // GPS OK — mostrar modal pra tirar foto
+      _fotoAtendimentoData = { idx, lat, lng, nomeLocal, dist: Math.round(dist) };
+      mostrarModalFoto();
     },
     (err) => {
       alert('Não foi possível obter sua localização. Ative o GPS e tente novamente.');
@@ -2094,42 +2096,57 @@ function confirmarAtendimentoComFoto(idx) {
   );
 }
 
-function abrirCameraAtendimento(idx, lat, lng, nomeLocal, dist) {
-  // Criar input de câmera invisível
-  let inputFoto = document.getElementById('input-foto-atendimento');
-  if (!inputFoto) {
-    inputFoto = document.createElement('input');
-    inputFoto.type = 'file';
-    inputFoto.id = 'input-foto-atendimento';
-    inputFoto.accept = 'image/*';
-    inputFoto.capture = 'environment';
-    inputFoto.style.display = 'none';
-    document.body.appendChild(inputFoto);
+function mostrarModalFoto() {
+  // Remove modal anterior se existir
+  const existente = document.getElementById('modal-foto-atendimento');
+  if (existente) existente.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-foto-atendimento';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="background:var(--card);border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center;">
+      <div style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:8px;">📍 Localização confirmada!</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.6);margin-bottom:20px;">${_fotoAtendimentoData.nomeLocal} (${_fotoAtendimentoData.dist}m)</div>
+      <div style="font-size:.85rem;color:#fff;margin-bottom:20px;">Agora tire uma foto como prova do atendimento:</div>
+      <label style="display:block;background:var(--success);color:#000;border:none;border-radius:10px;padding:14px;font-size:.85rem;font-weight:700;cursor:pointer;touch-action:manipulation;">
+        📸 TIRAR FOTO
+        <input type="file" accept="image/*" capture="environment" id="input-foto-modal" style="display:none;" onchange="onFotoCapturada(this)">
+      </label>
+      <button onclick="fecharModalFoto()" style="margin-top:12px;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);border-radius:8px;padding:10px;width:100%;font-size:.75rem;cursor:pointer;">CANCELAR</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function fecharModalFoto() {
+  const modal = document.getElementById('modal-foto-atendimento');
+  if (modal) modal.remove();
+  _fotoAtendimentoData = null;
+  // Reabilitar botão
+  renderDiaDetalhe(AGENDA_DIA_SELECIONADO);
+}
+
+async function onFotoCapturada(input) {
+  const file = input.files[0];
+  if (!file || !_fotoAtendimentoData) {
+    fecharModalFoto();
+    return;
   }
 
-  inputFoto.onchange = async function(e) {
-    const file = e.target.files[0];
-    if (!file) {
-      // Cancelou a foto
-      const btn = document.querySelector('[disabled]');
-      if (btn && btn.textContent === 'TIRE A FOTO...') {
-        btn.disabled = false;
-        btn.textContent = '📸 CONFIRMAR ATENDIMENTO';
-      }
-      return;
-    }
+  // Trocar texto do modal
+  const label = input.parentElement;
+  if (label) { label.textContent = 'ENVIANDO...'; label.style.opacity = '0.5'; }
 
-    // Comprimir foto
-    const base64 = await comprimirFoto(file, 800, 0.6);
+  // Comprimir foto
+  const base64 = await comprimirFoto(file, 800, 0.6);
 
-    // Enviar
-    await enviarAtendimentoComFoto(idx, lat, lng, nomeLocal, dist, base64);
+  // Enviar
+  const d = _fotoAtendimentoData;
+  await enviarAtendimentoComFoto(d.idx, d.lat, d.lng, d.nomeLocal, d.dist, base64);
 
-    // Limpar input
-    inputFoto.value = '';
-  };
-
-  inputFoto.click();
+  // Fechar modal
+  fecharModalFoto();
 }
 
 function comprimirFoto(file, maxLado, qualidade) {
