@@ -1867,7 +1867,7 @@ function selecionarDia(dataStr) {
 
 // Corujão: agendamento criado numa quinta entre 17:30-23:59 (Brasília)
 function isCorujao(a) {
-  const criado = a.CRIADO_EM || a['CRIADO_EM'] || '';
+  const criado = a['CRIADO EM'] || a['CRIADO_EM'] || a.CRIADO_EM || '';
   if (!criado) return false;
   const d = new Date(criado);
   if (isNaN(d.getTime())) return false;
