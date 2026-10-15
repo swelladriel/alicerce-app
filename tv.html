@@ -190,6 +190,7 @@ body {
 .agenda-badge.alinhamento { background: rgba(168,85,247,0.15); color: var(--purple); }
 .agenda-badge.meeting { background: rgba(34,197,94,0.15); color: var(--green); }
 .agenda-badge.atendido { background: rgba(34,197,94,0.2); color: var(--green); }
+.agenda-badge.corujao { background: rgba(124,58,237,0.2); color: #a78bfa; }
 
 /* ============ EMPTY ============ */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60%; color: var(--text-dim); font-size: 20px; font-weight: 600; }
@@ -918,6 +919,20 @@ function renderRankingSemanal() {
 }
 
 // ============================================
+// CORUJÃO: agendamento criado numa quinta entre 17:30-23:59 (Brasília)
+// ============================================
+function isCorujao(a) {
+  const criado = a.CRIADO_EM || a['CRIADO_EM'] || '';
+  if (!criado) return false;
+  const d = new Date(criado);
+  if (isNaN(d.getTime())) return false;
+  const brt = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  if (brt.getUTCDay() !== 4) return false;
+  const hhmm = brt.getUTCHours() * 60 + brt.getUTCMinutes();
+  return hhmm >= 1050;
+}
+
+// ============================================
 // RENDER AGENDA DO DIA
 // ============================================
 function renderAgenda() {
@@ -937,21 +952,32 @@ function renderAgenda() {
     return 0;
   }
 
-  document.getElementById('agenda-grid').innerHTML = agenda.map((a, i) => {
+  // Corujão banner
+  const corujaoCount = agenda.filter(isCorujao).length;
+  const corujaoBanner = corujaoCount > 0 ? `
+    <div style="grid-column:1/-1;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #7c3aed;border-radius:10px;padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <span style="font-size:1.8rem;">🦉</span>
+      <div><div style="font-size:.95rem;font-weight:800;color:#a78bfa;">CORUJÃO</div><div style="font-size:.72rem;color:#c4b5fd;">${corujaoCount} agendamento${corujaoCount > 1 ? 's' : ''} no horário do Corujão</div></div>
+      <div style="margin-left:auto;font-size:1.6rem;font-weight:900;color:#a78bfa;">${corujaoCount}</div>
+    </div>` : '';
+
+  document.getElementById('agenda-grid').innerHTML = corujaoBanner + agenda.map((a, i) => {
     const tipo = (a.TIPO || 'Cliente').toLowerCase();
     const atendido = a.ATENDIDO === 'sim' || a.ATENDIDO === true;
+    const coruja = isCorujao(a);
     let bc = 'cliente', bt = 'Cliente';
     if (tipo.includes('reuni')) { bc = 'reuniao'; bt = 'Reunião'; }
     else if (tipo.includes('alinh')) { bc = 'alinhamento'; bt = 'Alinhamento'; }
     else if (tipo.includes('meet')) { bc = 'meeting'; bt = 'Meeting'; }
+    if (coruja) { bc = 'corujao'; bt = '🦉 Corujão'; }
     if (atendido) { bc = 'atendido'; bt = '✓ Atendido'; }
 
     return `
-      <div class="agenda-card ${atendido ? 'atendido' : ''}" style="">
+      <div class="agenda-card ${atendido ? 'atendido' : ''}" style="${coruja && !atendido ? 'border-left:3px solid #7c3aed;' : ''}">
         <div class="agenda-hora">${parseHora(a.HORA || a.DATA)}</div>
         <div class="agenda-divider"></div>
         <div class="agenda-info">
-          <div class="agenda-cliente">${a.CLIENTE || a.TIPO || '—'}</div>
+          <div class="agenda-cliente">${a.CLIENTE || a.TIPO || '—'}${coruja ? '<span style="margin-left:6px;font-size:.6rem;color:#a78bfa;font-weight:700;">🦉</span>' : ''}</div>
           <div class="agenda-corretor">${a.CORRETOR || '—'}</div>
         </div>
         <div class="agenda-badge ${bc}">${bt}</div>

@@ -1505,6 +1505,18 @@ function selecionarDia(dataStr) {
   renderDiaDetalhe(dataStr);
 }
 
+// Corujão: agendamento criado numa quinta entre 17:30-23:59 (Brasília)
+function isCorujao(a) {
+  const criado = a.CRIADO_EM || a['CRIADO_EM'] || '';
+  if (!criado) return false;
+  const d = new Date(criado);
+  if (isNaN(d.getTime())) return false;
+  const brt = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  if (brt.getUTCDay() !== 4) return false;
+  const hhmm = brt.getUTCHours() * 60 + brt.getUTCMinutes();
+  return hhmm >= 1050;
+}
+
 function renderDiaDetalhe(dataStr) {
   const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const dt = new Date(dataStr + 'T12:00:00');
@@ -1538,7 +1550,15 @@ function renderDiaDetalhe(dataStr) {
   const horasOrdenadas = Object.keys(porHora).sort();
   const podVerContato = USUARIO.CARGO === 'Gerente' || USUARIO.CARGO === 'Coordenador';
 
-  let html = `<div class="cal-day-view"><div class="cal-day-title">${titulo}</div>`;
+  // Corujão banner
+  const corujaoCount = agendamentos.filter(isCorujao).length;
+  const corujaoBanner = corujaoCount > 0 ? `<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #7c3aed;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:1.5rem;">🦉</span>
+    <div><div style="font-size:.82rem;font-weight:800;color:#a78bfa;">CORUJÃO</div><div style="font-size:.68rem;color:#c4b5fd;">${corujaoCount} agendamento${corujaoCount > 1 ? 's' : ''} no horário do Corujão</div></div>
+    <div style="margin-left:auto;font-size:1.4rem;font-weight:900;color:#a78bfa;">${corujaoCount}</div>
+  </div>` : '';
+
+  let html = `<div class="cal-day-view"><div class="cal-day-title">${titulo}</div>${corujaoBanner}`;
   if (horasOrdenadas.length === 0) html += '<div class="cal-vazio">Nenhum agendamento neste dia.</div>';
 
   horasOrdenadas.forEach(hora => {
@@ -1554,11 +1574,12 @@ function renderDiaDetalhe(dataStr) {
       const cardLeftColor = atendido ? 'var(--success)' : bolo ? '#f44336' : corBorda;
       const tipoTag = tipo !== 'Cliente' ? `<div style="font-size:.6rem;color:${corBorda};font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">${tipo}</div>` : '';
       const statusLabel = atendido ? '<span style="font-size:.62rem;color:var(--success);font-weight:700;margin-left:8px;">✓ ATENDIDO</span>' : bolo ? '<span style="font-size:.62rem;color:#f44336;font-weight:700;margin-left:8px;">BOLO</span>' : '';
+      const corujaoLabel = isCorujao(a) ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;font-size:.58rem;color:#a78bfa;font-weight:700;background:rgba(124,58,237,.15);padding:2px 6px;border-radius:4px;">🦉 CORUJÃO</span>' : '';
       const idxAgenda = AGENDA.indexOf(a);
 
-      html += `<div class="cal-card" style="border-left-color:${cardLeftColor};background:${cardBg};border-color:${cardBorder};">
+      html += `<div class="cal-card" style="border-left-color:${isCorujao(a) ? '#7c3aed' : cardLeftColor};background:${cardBg};border-color:${cardBorder};">
         ${tipoTag}
-        <div class="cal-card-cliente">${a.CLIENTE || '-'} ${statusLabel}</div>
+        <div class="cal-card-cliente">${a.CLIENTE || '-'} ${statusLabel}${corujaoLabel}</div>
         ${tipo === 'Cliente' && podVerContato && a.CONTATO ? `<div class="cal-card-contato">${a.CONTATO}</div>` : ''}
         <div class="cal-card-corretor">${a.CORRETOR || '-'}</div>
         ${!atendido && !bolo && podVerContato ? `<div style="display:flex;gap:8px;margin-top:10px;">

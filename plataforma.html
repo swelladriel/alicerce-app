@@ -2383,6 +2383,18 @@ function selecionarDiaPlat(dataStr) {
   renderAgendaPlat();
 }
 
+// Corujão: agendamento criado numa quinta entre 17:30-23:59 (Brasília)
+function isCorujao(a) {
+  const criado = a.CRIADO_EM || a['CRIADO_EM'] || '';
+  if (!criado) return false;
+  const d = new Date(criado);
+  if (isNaN(d.getTime())) return false;
+  const brt = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  if (brt.getUTCDay() !== 4) return false;
+  const hhmm = brt.getUTCHours() * 60 + brt.getUTCMinutes();
+  return hhmm >= 1050;
+}
+
 function renderDiaDetalhePlat(dataStr, listaFiltrada) {
   const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const dt = new Date(dataStr + 'T12:00:00');
@@ -2400,7 +2412,15 @@ function renderDiaDetalhePlat(dataStr, listaFiltrada) {
 
   const horasOrdenadas = Object.keys(porHora).sort();
 
-  let html = `<div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:14px;">${titulo}</div>`;
+  // Corujão banner
+  const corujaoCount = agendamentos.filter(isCorujao).length;
+  const corujaoBanner = corujaoCount > 0 ? `<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #7c3aed;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:1.5rem;">🦉</span>
+    <div><div style="font-size:.82rem;font-weight:800;color:#a78bfa;">CORUJÃO</div><div style="font-size:.68rem;color:#c4b5fd;">${corujaoCount} agendamento${corujaoCount > 1 ? 's' : ''} no horário do Corujão</div></div>
+    <div style="margin-left:auto;font-size:1.4rem;font-weight:900;color:#a78bfa;">${corujaoCount}</div>
+  </div>` : '';
+
+  let html = `<div style="font-size:1rem;font-weight:800;color:#fff;margin-bottom:14px;">${titulo}</div>${corujaoBanner}`;
 
   if (horasOrdenadas.length === 0) {
     html += '<div style="text-align:center;padding:30px;color:var(--textL);font-size:.82rem;">Nenhum agendamento neste dia.</div>';
@@ -2420,11 +2440,12 @@ function renderDiaDetalhePlat(dataStr, listaFiltrada) {
       const icone = tipo === 'Cliente' ? '' : tipo === 'Reunião Semanal' ? '📋 ' : tipo === 'Alinhamento Mensal' ? '📊 ' : '🤝 ';
       const tipoTag = tipo !== 'Cliente' ? `<div style="font-size:.6rem;color:${corBorda};font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">${tipo}</div>` : '';
       const statusLabel = atendido ? '<span style="font-size:.65rem;color:var(--success);font-weight:700;">✓ ATENDIDO</span>' : bolo ? '<span style="font-size:.65rem;color:#f44336;font-weight:700;">🍰 BOLO</span>' : '';
+      const corujaoLabel = isCorujao(a) ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;font-size:.58rem;color:#a78bfa;font-weight:700;background:rgba(124,58,237,.15);padding:2px 6px;border-radius:4px;">🦉 CORUJÃO</span>' : '';
       const eq = equipeDoCorretor(a.CORRETOR);
       const idxPlat = AGENDA_PLAT.indexOf(a);
-      html += `<div style="background:${cardBg};border:1px solid ${cardBorder};border-radius:8px;padding:12px;margin-bottom:6px;border-left:3px solid ${corBorda};">
+      html += `<div style="background:${cardBg};border:1px solid ${cardBorder};border-radius:8px;padding:12px;margin-bottom:6px;border-left:3px solid ${isCorujao(a) ? '#7c3aed' : corBorda};">
         ${tipoTag}
-        <div style="font-size:.85rem;font-weight:700;color:#fff;">${icone}${a.CLIENTE || '-'} ${statusLabel}</div>
+        <div style="font-size:.85rem;font-weight:700;color:#fff;">${icone}${a.CLIENTE || '-'} ${statusLabel}${corujaoLabel}</div>
         ${tipo === 'Cliente' && a.CONTATO ? `<div style="font-size:.72rem;color:var(--textL);margin-top:2px;">${a.CONTATO}</div>` : ''}
         <div style="font-size:.72rem;color:var(--accent);margin-top:4px;font-weight:600;">${a.CORRETOR || '-'} ${eqTagHTML(eq)}</div>
         ${!atendido && !bolo ? `<div style="display:flex;gap:6px;margin-top:8px;">

@@ -1061,6 +1061,18 @@ function changeMonth(dir) {
   renderCalendario();
 }
 
+// Corujão: agendamento criado numa quinta entre 17:30-23:59 (Brasília)
+function isCorujao(a) {
+  const criado = a.CRIADO_EM || a['CRIADO_EM'] || '';
+  if (!criado) return false;
+  const d = new Date(criado);
+  if (isNaN(d.getTime())) return false;
+  const brt = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  if (brt.getUTCDay() !== 4) return false;
+  const hhmm = brt.getUTCHours() * 60 + brt.getUTCMinutes();
+  return hhmm >= 1050;
+}
+
 function renderDayAgenda() {
   const counter = document.getElementById('dayCounter');
   if (!DIA_SELECIONADO) {
@@ -1096,7 +1108,18 @@ function renderDayAgenda() {
   }
 
   window._agendaDia = agenda;
+
+  // Corujão banner
+  const corujaoCount = agenda.filter(isCorujao).length;
   let html = '';
+  if (corujaoCount > 0) {
+    html += '<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #7c3aed;border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">';
+    html += '<span style="font-size:1.5rem;">🦉</span>';
+    html += '<div><div style="font-size:.82rem;font-weight:800;color:#a78bfa;">CORUJÃO</div><div style="font-size:.68rem;color:#c4b5fd;">' + corujaoCount + ' agendamento' + (corujaoCount > 1 ? 's' : '') + ' no horário do Corujão</div></div>';
+    html += '<div style="margin-left:auto;font-size:1.4rem;font-weight:900;color:#a78bfa;">' + corujaoCount + '</div>';
+    html += '</div>';
+  }
+
   agenda.forEach((a, i) => {
     const tipo = (a.TIPO || '').toLowerCase();
     let tipoClass = 'tipo-cliente';
@@ -1106,12 +1129,14 @@ function renderDayAgenda() {
     else if (tipo.includes('meeting')) { tipoClass = 'tipo-meeting'; }
 
     const atendido = a.ATENDIDO && String(a.ATENDIDO).toLowerCase() !== 'false' && a.ATENDIDO !== '';
+    const coruja = isCorujao(a);
+    const corujaoLabel = coruja ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;font-size:.58rem;color:#a78bfa;font-weight:700;background:rgba(124,58,237,.15);padding:2px 6px;border-radius:4px;">🦉 CORUJÃO</span>' : '';
 
-    html += '<div class="agenda-card">';
+    html += '<div class="agenda-card"' + (coruja ? ' style="border-left:3px solid #7c3aed;"' : '') + '>';
     html += '<div class="agenda-hora">' + fmtHora(a.HORA) + '</div>';
     html += '<div class="agenda-info">';
     html += '<div class="agenda-tipo ' + tipoClass + '">' + tipoLabel + '</div>';
-    if (a.CLIENTE) html += '<div class="agenda-cliente">' + a.CLIENTE + '</div>';
+    if (a.CLIENTE) html += '<div class="agenda-cliente">' + a.CLIENTE + corujaoLabel + '</div>';
     html += '<div class="agenda-corretor">' + (a.CORRETOR || '-') + '</div>';
     html += '</div>';
     if (atendido) {
