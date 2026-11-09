@@ -243,9 +243,6 @@ select.form-input{cursor:pointer;}
     <div class="nav-item" onclick="showPageComFiltro('atividades','checkins')">
       <span class="icon">📋</span>Atividades
     </div>
-    <div class="nav-item" onclick="showPageComFiltro('sentinela','diario')">
-      <span class="icon">🤖</span>Sentinela
-    </div>
   </div>
 </div>
 
@@ -652,35 +649,6 @@ select.form-input{cursor:pointer;}
     <div id="ranking-list"></div>
   </div>
 
-  <!-- PAGE: RELATÓRIO DIÁRIO IA -->
-  <div class="page" id="pg-relatorio-ia">
-    <div class="topbar">
-      <div>
-        <h2>Relatório Diário IA</h2>
-        <span class="topbar-info">Análise inteligente gerada automaticamente às 11h por IA</span>
-      </div>
-      <button onclick="carregarRelatorioIA()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:.78rem;font-weight:700;cursor:pointer;">Atualizar</button>
-    </div>
-    <div id="relatorio-ia-status" style="margin-bottom:16px;"></div>
-    <div id="relatorio-ia-content" style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;">
-      <div class="loading">Carregando relatório...</div>
-    </div>
-  </div>
-
-  <!-- PAGE: RELATÓRIO SEMANAL -->
-  <div class="page" id="pg-relatorio-semanal">
-    <div class="topbar">
-      <div>
-        <h2>Relatório Semanal</h2>
-        <span class="topbar-info">Produtividade da equipe — gerado toda quarta-feira pelo Sentinela</span>
-      </div>
-      <button onclick="carregarRelatorioSemanal()" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:8px 16px;font-size:.78rem;font-weight:700;cursor:pointer;">Atualizar</button>
-    </div>
-    <div id="relatorio-sem-status" style="margin-bottom:16px;"></div>
-    <div id="relatorio-sem-content" style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;">
-      <div class="loading">Carregando relatório...</div>
-    </div>
-  </div>
 
 </div>
 
@@ -743,13 +711,6 @@ const PAGINAS_COMBINADAS = {
       demandas: { pagina: 'pg-hist-demandas', label: 'Demandas' }
     }
   },
-  sentinela: {
-    titulo: 'Sentinela',
-    sub: {
-      diario: { pagina: 'pg-relatorio-ia', label: 'Diário' },
-      semanal: { pagina: 'pg-relatorio-semanal', label: 'Semanal' }
-    }
-  }
 };
 
 function showPageComFiltro(grupo, subKey) {
@@ -2125,154 +2086,6 @@ function renderRanking() {
 // ============================================
 // RELATÓRIO DIÁRIO IA
 // ============================================
-const RELATORIO_URL = 'https://raw.githubusercontent.com/swelladriel/alicerce-app/main/relatorio-diario.md';
-
-async function carregarRelatorioIA() {
-  const container = document.getElementById('relatorio-ia-content');
-  const status = document.getElementById('relatorio-ia-status');
-  container.innerHTML = '<div class="loading">Carregando relatório...</div>';
-
-  try {
-    // Adicionar timestamp pra evitar cache do navegador
-    const resp = await fetch(RELATORIO_URL + '?t=' + Date.now());
-
-    if (resp.status === 404) {
-      container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--textL);">
-        <div style="font-size:2rem;margin-bottom:12px;">📋</div>
-        <div style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:6px;">Nenhum relatório disponível ainda</div>
-        <div style="font-size:.78rem;">O primeiro relatório será gerado amanhã às 11h automaticamente.</div>
-      </div>`;
-      status.innerHTML = '';
-      return;
-    }
-
-    const md = await resp.text();
-
-    // Converter Markdown pra HTML simples
-    let html = md
-      // Tabelas
-      .replace(/\|(.+)\|\n\|[-| :]+\|\n/g, (match, header) => {
-        const cols = header.split('|').map(c => c.trim()).filter(c => c);
-        return '<table><thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>\n';
-      })
-      .replace(/\|(.+)\|/g, (match, row) => {
-        const cols = row.split('|').map(c => c.trim()).filter(c => c);
-        return '<tr>' + cols.map(c => '<td>' + c + '</td>').join('') + '</tr>';
-      })
-      // Fechar tabelas (antes de headers ou linhas vazias após rows)
-      .replace(/(<\/tr>\n?)(\n(?:<div|<h|<p|\n))/g, '$1</tbody></table>$2')
-      // Headers
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-      // Bold e italic
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      // Listas
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
-      // Blockquotes
-      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-      // Linhas horizontais
-      .replace(/^---$/gm, '<hr>')
-      // Code
-      .replace(/`(.+?)`/g, '<code>$1</code>')
-      // Parágrafos (linhas que não são tags)
-      .replace(/^(?!<[hultbod]|<li|<hr|<block)(.+)$/gm, '<p>$1</p>')
-      // Agrupar <li> em <ul>
-      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-      // Limpar tabelas abertas
-      .replace(/<\/tr>\n?$/gm, '</tr>');
-
-    // Fechar tabelas que ficaram abertas
-    if (html.includes('<tbody>') && !html.includes('</tbody>')) {
-      html += '</tbody></table>';
-    }
-
-    container.innerHTML = '<div class="md-content">' + html + '</div>';
-
-    // Extrair data do relatório do conteúdo
-    const dataMatch = md.match(/(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/);
-    status.innerHTML = `<div class="relatorio-info">
-      <span>📅 ${dataMatch ? dataMatch[1] : 'Data não identificada'}</span>
-      <span>🤖 Gerado por IA às 11h</span>
-      <span>🔄 Atualizado: ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
-    </div>`;
-
-  } catch(e) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);">
-      <div style="font-size:.9rem;font-weight:600;">Erro ao carregar relatório</div>
-      <div style="font-size:.78rem;color:var(--textL);margin-top:6px;">Verifique sua conexão e tente novamente.</div>
-    </div>`;
-  }
-}
-
-// ============================================
-// RELATÓRIO SEMANAL
-// ============================================
-const RELATORIO_SEM_URL = 'https://raw.githubusercontent.com/swelladriel/alicerce-app/main/relatorio-semanal.md';
-
-async function carregarRelatorioSemanal() {
-  const container = document.getElementById('relatorio-sem-content');
-  const status = document.getElementById('relatorio-sem-status');
-  container.innerHTML = '<div class="loading">Carregando relatório semanal...</div>';
-
-  try {
-    const resp = await fetch(RELATORIO_SEM_URL + '?t=' + Date.now());
-
-    if (resp.status === 404) {
-      container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--textL);">
-        <div style="font-size:2rem;margin-bottom:12px;">📊</div>
-        <div style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:6px;">Nenhum relatório semanal disponível</div>
-        <div style="font-size:.78rem;">O Sentinela gera o relatório toda quarta-feira às 9h.</div>
-      </div>`;
-      status.innerHTML = '';
-      return;
-    }
-
-    const md = await resp.text();
-
-    let html = md
-      .replace(/\|(.+)\|\n\|[-| :]+\|\n/g, (match, header) => {
-        const cols = header.split('|').map(c => c.trim()).filter(c => c);
-        return '<table><thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>\n';
-      })
-      .replace(/\|(.+)\|/g, (match, row) => {
-        const cols = row.split('|').map(c => c.trim()).filter(c => c);
-        return '<tr>' + cols.map(c => '<td>' + c + '</td>').join('') + '</tr>';
-      })
-      .replace(/(<\/tr>\n?)(\n(?:<div|<h|<p|\n))/g, '$1</tbody></table>$2')
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-      .replace(/^---$/gm, '<hr>')
-      .replace(/`(.+?)`/g, '<code>$1</code>')
-      .replace(/^(?!<[hultbod]|<li|<hr|<block)(.+)$/gm, '<p>$1</p>')
-      .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-
-    if (html.includes('<tbody>') && !html.includes('</tbody>')) html += '</tbody></table>';
-
-    container.innerHTML = '<div class="md-content">' + html + '</div>';
-
-    const dataMatch = md.match(/(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/);
-    status.innerHTML = `<div class="relatorio-info">
-      <span>📊 ${dataMatch ? dataMatch[1] : 'Relatório semanal'}</span>
-      <span>🤖 Gerado pelo Sentinela</span>
-      <span>🔄 Atualizado: ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
-    </div>`;
-
-  } catch(e) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);">
-      <div style="font-size:.9rem;font-weight:600;">Erro ao carregar relatório</div>
-      <div style="font-size:.78rem;color:var(--textL);margin-top:6px;">Verifique sua conexão e tente novamente.</div>
-    </div>`;
-  }
-}
-
 // ============================================
 // AGENDA DO TIME (PLATAFORMA)
 // ============================================
@@ -2845,8 +2658,6 @@ async function desativarCorretor(nome) {
 // INIT
 // ============================================
 carregarDados();
-carregarRelatorioIA();
-carregarRelatorioSemanal();
 iniciarMonitorAgenda();
 </script>
 
