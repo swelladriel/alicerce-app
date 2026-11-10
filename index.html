@@ -13,6 +13,7 @@
 <!-- <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"> -->
 <!-- <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"> -->
 <title>Alicerce — App Corretor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 :root{--bg:#0b0f14;--card:#111820;--card2:#161d27;--border:#1e2a3a;--accent:#64ffda;--gold:#ffd700;--text:#e6f1ff;--textL:#7a8ba3;--success:#00e676;--warning:#ffa726;--danger:#ef5350;--info:#42a5f5;--purple:#ab47bc;--rad:12px;--sidebar-w:220px;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -442,6 +443,116 @@ textarea.modal-input{resize:vertical;min-height:60px;}
   .main-hdr-desktop{display:none !important;}
   .toast-container{display:none;}
 }
+
+/* ============================================ */
+/* ADMIN VIEWS                                  */
+/* ============================================ */
+.admin-kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
+@media(min-width:769px){.admin-kpi-row{grid-template-columns:repeat(4,1fr);}}
+.admin-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;text-align:center;}
+.admin-kpi .ak-val{font-size:1.5rem;font-weight:900;color:#fff;}
+.admin-kpi .ak-label{font-size:.62rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+.admin-kpi.gold{border-bottom:3px solid var(--gold);}
+.admin-kpi.green{border-bottom:3px solid var(--success);}
+.admin-kpi.blue{border-bottom:3px solid var(--info);}
+.admin-kpi.red{border-bottom:3px solid var(--danger);}
+.admin-kpi.purple{border-bottom:3px solid var(--purple);}
+
+/* Ranking podium */
+.admin-podium{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin-bottom:20px;}
+.podium-item{text-align:center;flex:1;max-width:120px;}
+.podium-bar{border-radius:8px 8px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:10px 6px;}
+.podium-bar.p1{background:linear-gradient(to top,rgba(255,215,0,.2),rgba(255,215,0,.05));border:1px solid rgba(255,215,0,.3);min-height:100px;}
+.podium-bar.p2{background:linear-gradient(to top,rgba(100,255,218,.12),rgba(100,255,218,.03));border:1px solid rgba(100,255,218,.2);min-height:76px;}
+.podium-bar.p3{background:linear-gradient(to top,rgba(100,255,218,.08),rgba(100,255,218,.02));border:1px solid rgba(100,255,218,.15);min-height:60px;}
+.podium-pos{font-size:1.4rem;margin-bottom:4px;}
+.podium-pts{font-size:1rem;font-weight:900;color:#fff;}
+.podium-label{font-size:.6rem;color:var(--textL);text-transform:uppercase;}
+.podium-name{font-size:.72rem;font-weight:700;color:var(--text);margin-top:6px;text-align:center;}
+
+/* Chart containers */
+.chart-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:20px;}
+@media(min-width:769px){.chart-grid{grid-template-columns:1fr 1fr;}}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;}
+.chart-box-title{font-size:.78rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+.chart-box canvas{height:260px !important;width:100% !important;}
+
+/* Admin sections */
+.admin-section{margin-bottom:24px;}
+.admin-section-hdr{font-size:.82rem;font-weight:800;color:#fff;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.admin-add-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:6px 14px;font-size:.72rem;font-weight:800;cursor:pointer;touch-action:manipulation;}
+.admin-add-btn:active{opacity:.8;}
+
+/* Admin ranking list */
+.admin-rank-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);margin-bottom:6px;}
+.admin-rank-pos{font-size:.82rem;font-weight:900;color:var(--textL);width:24px;text-align:center;flex-shrink:0;}
+.admin-rank-name{flex:1;font-size:.85rem;font-weight:700;color:#fff;}
+.admin-rank-pts{font-size:.88rem;font-weight:900;color:var(--gold);}
+.admin-rank-eq{font-size:.6rem;color:var(--textL);}
+
+/* Commission cards */
+.comm-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+@media(min-width:769px){.comm-cards{grid-template-columns:repeat(3,1fr);}}
+.comm-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;}
+.comm-card-label{font-size:.62rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.comm-card-val{font-size:1.3rem;font-weight:900;color:var(--gold);}
+.comm-card-sub{font-size:.68rem;color:var(--textL);margin-top:3px;}
+
+/* Corretores cards grid */
+.corr-equipe-hdr{font-size:.75rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.corr-cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:4px;}
+@media(min-width:769px){.corr-cards-grid{grid-template-columns:repeat(3,1fr);}}
+.corr-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:14px;position:relative;}
+.corr-card-name{font-size:.82rem;font-weight:800;color:#fff;margin-bottom:4px;}
+.corr-card-cargo{font-size:.62rem;color:var(--textL);margin-bottom:8px;}
+.corr-card-stats{display:flex;gap:8px;flex-wrap:wrap;}
+.corr-stat{font-size:.68rem;color:var(--textL);background:var(--card2);border-radius:4px;padding:3px 7px;}
+.corr-stat strong{color:#fff;}
+.corr-desat-btn{font-size:.6rem;color:var(--danger);border:1px solid rgba(239,83,80,.3);border-radius:4px;padding:3px 7px;cursor:pointer;background:rgba(239,83,80,.06);margin-top:8px;display:inline-block;touch-action:manipulation;}
+
+/* Presença grid */
+.presenca-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+.presenca-row{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:10px 14px;}
+@media(min-width:600px){.presenca-row{grid-template-columns:1fr 100px 100px 100px;}}
+.presenca-name{font-size:.82rem;font-weight:700;color:#fff;}
+.presenca-eq{font-size:.6rem;color:var(--textL);}
+.presenca-stat{text-align:center;}
+.presenca-stat .ps-val{font-size:.85rem;font-weight:900;}
+.presenca-stat .ps-lbl{font-size:.58rem;color:var(--textL);text-transform:uppercase;}
+.presenca-row.zero-activity{border-left:3px solid var(--danger);background:rgba(239,83,80,.04);}
+.presenca-tabs{display:flex;gap:8px;margin-bottom:14px;}
+
+/* Admin sortable table */
+.admin-table-wrap{overflow-x:auto;border-radius:var(--rad);border:1px solid var(--border);}
+.admin-table{width:100%;border-collapse:collapse;font-size:.75rem;}
+.admin-table th{background:var(--card2);color:var(--textL);text-transform:uppercase;letter-spacing:.4px;font-size:.62rem;padding:10px 12px;text-align:left;white-space:nowrap;cursor:pointer;user-select:none;}
+.admin-table th:hover{color:var(--text);}
+.admin-table td{padding:10px 12px;border-top:1px solid var(--border);color:var(--text);white-space:nowrap;}
+.admin-table tr:hover td{background:rgba(255,255,255,.02);}
+.td-dias-verde{color:var(--success);font-weight:700;}
+.td-dias-amarelo{color:var(--warning);font-weight:700;}
+.td-dias-vermelho{color:var(--danger);font-weight:700;}
+.admin-table-pag{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border);font-size:.72rem;color:var(--textL);}
+.admin-table-pag button{background:var(--card2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 12px;font-size:.7rem;cursor:pointer;}
+.admin-table-pag button:disabled{opacity:.3;cursor:default;}
+
+/* Diagnóstico estratégico */
+.diagnostico-box{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:var(--rad);padding:18px;margin-bottom:16px;}
+.diagnostico-title{font-size:.72rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.diagnostico-item{font-size:.8rem;color:var(--text);line-height:1.6;margin-bottom:6px;}
+.diagnostico-item strong{color:#fff;}
+
+/* Admin modal (centered on both mobile+desktop) */
+.admin-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:400;justify-content:center;align-items:center;padding:16px;}
+.admin-modal.open{display:flex;}
+.admin-modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:24px;}
+.admin-modal-title{font-size:1rem;font-weight:800;color:#fff;margin-bottom:18px;}
+.admin-modal-close{float:right;background:none;border:none;color:var(--textL);font-size:1.3rem;cursor:pointer;padding:0;}
+
+/* Filter row */
+.admin-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.admin-filter-row select,.admin-filter-row input{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.78rem;outline:none;min-width:120px;flex:1;}
+.admin-filter-row select:focus,.admin-filter-row input:focus{border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -499,6 +610,12 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div class="snav-item" data-tab="tab-unica" onclick="navigateTo('tab-unica')"><span class="si">&#127919;</span><span class="sl">Foco do Dia</span></div>
       <div class="snav-item" data-tab="tab-pipeline" onclick="navigateTo('tab-pipeline')"><span class="si">&#128203;</span><span class="sl">Meus Clientes</span></div>
       <div class="snav-item" data-tab="tab-equipe" id="snav-equipe" style="display:none;" onclick="navigateTo('tab-equipe')"><span class="si">&#128101;</span><span class="sl">Minha Equipe</span></div>
+      <div class="snav-item snav-admin" data-tab="tab-admin-dash" onclick="navigateTo('tab-admin-dash')" style="display:none;"><span class="si">&#128202;</span><span class="sl">Dashboard</span></div>
+      <div class="snav-item snav-admin" data-tab="tab-admin-vendas" onclick="navigateTo('tab-admin-vendas')" style="display:none;"><span class="si">&#128181;</span><span class="sl">Vendas (Admin)</span></div>
+      <div class="snav-item snav-admin" data-tab="tab-admin-real" onclick="navigateTo('tab-admin-real')" style="display:none;"><span class="si">&#128200;</span><span class="sl">Pipeline (Admin)</span></div>
+      <div class="snav-item snav-admin" data-tab="tab-admin-corretores" onclick="navigateTo('tab-admin-corretores')" style="display:none;"><span class="si">&#128100;</span><span class="sl">Corretores</span></div>
+      <div class="snav-item snav-admin" data-tab="tab-admin-presenca" onclick="navigateTo('tab-admin-presenca')" style="display:none;"><span class="si">&#9201;</span><span class="sl">Presença</span></div>
+      <div class="snav-item snav-admin" data-tab="tab-admin-ciclo" onclick="navigateTo('tab-admin-ciclo')" style="display:none;"><span class="si">&#128178;</span><span class="sl">Ciclo Vendas</span></div>
     </div>
     <div class="sidebar-ft">
       <div class="sidebar-ft-user" id="sidebar-ft-user">-</div>
@@ -802,6 +919,183 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       </div>
     </div>
 
+    <!-- TAB: ADMIN DASHBOARD -->
+    <div class="app-page" id="tab-admin-dash">
+      <div class="admin-kpi-row" id="adash-kpis">
+        <div class="admin-kpi blue"><div class="ak-val" id="adash-corretores">0</div><div class="ak-label">Corretores Ativos</div></div>
+        <div class="admin-kpi gold"><div class="ak-val" id="adash-vgv-pipeline">R$ 0</div><div class="ak-label">VGV Pipeline</div></div>
+        <div class="admin-kpi green"><div class="ak-val" id="adash-vendas-mes">0</div><div class="ak-label">Vendas do Mês</div></div>
+        <div class="admin-kpi purple"><div class="ak-val" id="adash-ag-hoje">0</div><div class="ak-label">Agendamentos Hoje</div></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-hdr">Ranking Top 5 — Mês Atual</div>
+        <div id="adash-ranking"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: ADMIN VENDAS -->
+    <div class="app-page" id="tab-admin-vendas">
+      <div class="admin-kpi-row">
+        <div class="admin-kpi gold"><div class="ak-val" id="avd-vgv">R$ 0</div><div class="ak-label">VGV Total</div></div>
+        <div class="admin-kpi blue"><div class="ak-val" id="avd-qtd">0</div><div class="ak-label">Qtd Vendas</div></div>
+        <div class="admin-kpi green"><div class="ak-val" id="avd-maior">R$ 0</div><div class="ak-label">Maior Venda</div></div>
+        <div class="admin-kpi purple"><div class="ak-val" id="avd-comissao">R$ 0</div><div class="ak-label">Comissão Total</div></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-hdr">
+          Pódio do Mês
+        </div>
+        <div class="admin-podium" id="avd-podium"></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-hdr">
+          Todas as Vendas
+          <button class="admin-add-btn" onclick="abrirModalNovaVenda()">+ Nova Venda</button>
+        </div>
+        <div class="admin-filter-row">
+          <select id="avd-filtro-corretor" onchange="renderAdminVendas()">
+            <option value="">Todos os corretores</option>
+          </select>
+          <select id="avd-filtro-mes" onchange="renderAdminVendas()">
+            <option value="">Todos os meses</option>
+          </select>
+        </div>
+        <div id="avd-lista"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: ADMIN PIPELINE REAL -->
+    <div class="app-page" id="tab-admin-real">
+      <div class="admin-kpi-row">
+        <div class="admin-kpi gold"><div class="ak-val" id="areal-vgv">R$ 0</div><div class="ak-label">VGV Total</div></div>
+        <div class="admin-kpi blue"><div class="ak-val" id="areal-gerando">0</div><div class="ak-label">Gerando</div></div>
+        <div class="admin-kpi red"><div class="ak-val" id="areal-ngerado">0</div><div class="ak-label">N Gerado</div></div>
+        <div class="admin-kpi green"><div class="ak-val" id="areal-gerado">0</div><div class="ak-label">Gerado</div></div>
+      </div>
+      <div class="admin-filter-row">
+        <select id="areal-filtro-corretor" onchange="renderAdminReal()">
+          <option value="">Todos os corretores</option>
+        </select>
+        <select id="areal-filtro-status" onchange="renderAdminReal()">
+          <option value="">Todos os status</option>
+          <option value="GERANDO">GERANDO</option>
+          <option value="N GERADO">N GERADO</option>
+          <option value="GERADO">GERADO</option>
+        </select>
+      </div>
+      <div id="areal-lista"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- TAB: ADMIN CORRETORES -->
+    <div class="app-page" id="tab-admin-corretores">
+      <div class="admin-section">
+        <div class="admin-section-hdr">
+          Equipe
+          <button class="admin-add-btn" onclick="abrirModalNovoCorretor()">+ Novo Corretor</button>
+        </div>
+        <div id="acorr-lista"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: ADMIN PRESENÇA -->
+    <div class="app-page" id="tab-admin-presenca">
+      <div class="presenca-tabs">
+        <div class="m-filter-btn active" onclick="setPresencaTab('hoje')">Hoje</div>
+        <div class="m-filter-btn" onclick="setPresencaTab('semana')">Semana</div>
+        <div class="m-filter-btn" onclick="setPresencaTab('mes')">Mês</div>
+      </div>
+      <div id="apres-lista"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- TAB: ADMIN CICLO DE VENDAS -->
+    <div class="app-page" id="tab-admin-ciclo">
+      <div class="admin-kpi-row">
+        <div class="admin-kpi gold"><div class="ak-val" id="aciclo-vgv-total">R$ 0</div><div class="ak-label">VGV Total Negociado</div></div>
+        <div class="admin-kpi green"><div class="ak-val" id="aciclo-vgv-gerado">R$ 0</div><div class="ak-label">VGV Gerado</div></div>
+        <div class="admin-kpi blue"><div class="ak-val" id="aciclo-vgv-pipeline">R$ 0</div><div class="ak-label">VGV Pipeline</div></div>
+        <div class="admin-kpi red"><div class="ak-val" id="aciclo-vgv-perda">R$ 0</div><div class="ak-label">Perda/Descarte</div></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-hdr">Comissões</div>
+        <div class="comm-cards">
+          <div class="comm-card">
+            <div class="comm-card-label">Negociadas (Pipeline)</div>
+            <div class="comm-card-val" id="aciclo-comm-neg">R$ 0</div>
+            <div class="comm-card-sub" id="aciclo-comm-neg-sub">Projeção sobre Real</div>
+          </div>
+          <div class="comm-card">
+            <div class="comm-card-label">Efetivadas (Vendas)</div>
+            <div class="comm-card-val" id="aciclo-comm-ef">R$ 0</div>
+            <div class="comm-card-sub" id="aciclo-comm-ef-sub">Mês comercial atual</div>
+          </div>
+          <div class="comm-card" id="aciclo-comm-card3">
+            <div class="comm-card-label" id="aciclo-comm-label3">Sua Comissão (Coord)</div>
+            <div class="comm-card-val" id="aciclo-comm-val3">R$ 0</div>
+            <div class="comm-card-sub" id="aciclo-comm-sub3">0.2% sobre equipe</div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-box">
+          <div class="chart-box-title">VGV por Corretor</div>
+          <canvas id="chartCorretores"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-box-title">Distribuição por Status</div>
+          <canvas id="chartStatus"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-box-title">Evolução Mensal (Vendas)</div>
+          <canvas id="chartMensal"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-box-title">Top Empreendimentos</div>
+          <canvas id="chartEmpre"></canvas>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-hdr">Diagnóstico Estratégico</div>
+        <div id="aciclo-diagnostico"></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-section-hdr">Pipeline Detalhado</div>
+        <div class="admin-filter-row" style="margin-bottom:10px;">
+          <select id="aciclo-filtro-status" onchange="renderCicloTabela()">
+            <option value="">Todos os status</option>
+            <option value="GERANDO">GERANDO</option>
+            <option value="N GERADO">N GERADO</option>
+            <option value="GERADO">GERADO</option>
+          </select>
+          <input type="text" id="aciclo-busca" placeholder="Buscar cliente..." oninput="renderCicloTabela()">
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="aciclo-table">
+            <thead>
+              <tr>
+                <th onclick="sortCiclo('CORRETOR')">Corretor</th>
+                <th onclick="sortCiclo('CLIENTE')">Cliente</th>
+                <th onclick="sortCiclo('VGV_ESTIMADO')">VGV</th>
+                <th onclick="sortCiclo('EMPREENDIMENTO')">Empreendimento</th>
+                <th onclick="sortCiclo('STATUS')">Status</th>
+                <th onclick="sortCiclo('dias')">Dias</th>
+              </tr>
+            </thead>
+            <tbody id="aciclo-tbody"></tbody>
+          </table>
+        </div>
+        <div class="admin-table-pag">
+          <span id="aciclo-pag-info">-</span>
+          <div style="display:flex;gap:8px;">
+            <button onclick="cicloPage(-1)" id="aciclo-btn-prev">◀ Anterior</button>
+            <button onclick="cicloPage(1)" id="aciclo-btn-next">Próxima ▶</button>
+          </div>
+        </div>
+        <div style="text-align:right;margin-top:8px;">
+          <button onclick="exportarCicloCSV()" style="background:none;border:1px solid var(--border);color:var(--textL);border-radius:6px;padding:6px 14px;font-size:.7rem;cursor:pointer;">Exportar CSV</button>
+        </div>
+      </div>
+    </div>
+
   </div>
   </div><!-- fim desktop-main-wrap -->
 </div>
@@ -878,6 +1172,114 @@ textarea.modal-input{resize:vertical;min-height:60px;}
   </div>
 </div>
 
+<!-- MODAL: NOVA VENDA (Admin) -->
+<div class="admin-modal" id="modal-nova-venda" onclick="if(event.target===this)fecharModalNovaVenda()">
+  <div class="admin-modal-box">
+    <button class="admin-modal-close" onclick="fecharModalNovaVenda()">&times;</button>
+    <div class="admin-modal-title">Nova Venda</div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Corretor *</div>
+      <select class="modal-input" id="nvd-corretor"></select>
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Cliente *</div>
+      <input type="text" class="modal-input" id="nvd-cliente" placeholder="Nome completo">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">CPF</div>
+      <input type="text" class="modal-input" id="nvd-cpf" placeholder="000.000.000-00">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">VGV *</div>
+      <input type="text" class="modal-input" id="nvd-vgv" placeholder="R$ 200.000">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Empreendimento</div>
+      <input type="text" class="modal-input" id="nvd-emp" placeholder="Nome do empreendimento">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Construtora</div>
+      <select class="modal-input" id="nvd-construtora">
+        <option value="">Selecione...</option>
+        <option value="Tenda">Tenda</option><option value="Cury">Cury</option><option value="Direcional">Direcional</option><option value="VIC">VIC</option><option value="Living">Living</option><option value="Emcamp">Emcamp</option><option value="Novolar">Novolar</option><option value="Habitta">Habitta</option><option value="Outro">Outro</option>
+      </select>
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Status da Venda</div>
+      <select class="modal-input" id="nvd-status">
+        <option value="Aguardando CEF">Aguardando CEF</option>
+        <option value="Repassado">Repassado</option>
+        <option value="CONSORCIO">Consórcio</option>
+        <option value="Distrato">Distrato</option>
+      </select>
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Mês Comercial</div>
+      <input type="month" class="modal-input" id="nvd-mes">
+    </div>
+    <button class="modal-save-btn" onclick="salvarNovaVenda()">SALVAR VENDA</button>
+    <div class="modal-save-msg" id="nvd-msg">Venda salva com sucesso!</div>
+  </div>
+</div>
+
+<!-- MODAL: NOVO CORRETOR (Admin) -->
+<div class="admin-modal" id="modal-novo-corretor" onclick="if(event.target===this)fecharModalNovoCorretor()">
+  <div class="admin-modal-box">
+    <button class="admin-modal-close" onclick="fecharModalNovoCorretor()">&times;</button>
+    <div class="admin-modal-title">Novo Corretor</div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Nome (apelido) *</div>
+      <input type="text" class="modal-input" id="ncorr-nome" placeholder="Ex: João Silva">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Nome Completo</div>
+      <input type="text" class="modal-input" id="ncorr-nome-completo" placeholder="Nome completo oficial">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Equipe *</div>
+      <select class="modal-input" id="ncorr-equipe">
+        <option value="Glauco">Glauco</option>
+        <option value="Edvan">Edvan</option>
+        <option value="Marcelo Arouca">Marcelo Arouca</option>
+        <option value="Adriel">Adriel</option>
+      </select>
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Cargo</div>
+      <select class="modal-input" id="ncorr-cargo">
+        <option value="Corretor">Corretor</option>
+        <option value="Coordenador">Coordenador</option>
+        <option value="Gerente">Gerente</option>
+      </select>
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Email</div>
+      <input type="email" class="modal-input" id="ncorr-email" placeholder="email@gmail.com">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Telefone</div>
+      <input type="tel" class="modal-input" id="ncorr-telefone" placeholder="(21) 99999-9999">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Senha</div>
+      <input type="text" class="modal-input" id="ncorr-senha" placeholder="Senha de acesso ao app">
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Status</div>
+      <select class="modal-input" id="ncorr-status">
+        <option value="Ativo">Ativo</option>
+        <option value="Inativo">Inativo</option>
+      </select>
+    </div>
+    <div class="modal-input-group">
+      <div class="modal-input-label">Data de Entrada</div>
+      <input type="date" class="modal-input" id="ncorr-entrada">
+    </div>
+    <button class="modal-save-btn" onclick="salvarNovoCorretor()">SALVAR CORRETOR</button>
+    <div class="modal-save-msg" id="ncorr-msg">Corretor salvo com sucesso!</div>
+  </div>
+</div>
+
 </div><!-- fim app-wrapper -->
 
 <script>
@@ -895,7 +1297,13 @@ const PAGE_TITLES = {
   'tab-unica': ['Foco do Dia', 'A Única Coisa'],
   'tab-pipeline': ['Meus Clientes', 'Carteira de clientes'],
   'tab-equipe': ['Minha Equipe', 'Performance da equipe'],
-  'tab-registro': ['Registro', 'Check-in e 945']
+  'tab-registro': ['Registro', 'Check-in e 945'],
+  'tab-admin-dash': ['Dashboard', 'Visão macro do time'],
+  'tab-admin-vendas': ['Vendas', 'Todas as vendas do time'],
+  'tab-admin-real': ['Pipeline Real', 'Todos os clientes quentes'],
+  'tab-admin-corretores': ['Corretores', 'Gerenciar equipe'],
+  'tab-admin-presenca': ['Presença', 'Check-in e 945 do time'],
+  'tab-admin-ciclo': ['Ciclo de Vendas', 'Pipeline e comissões']
 };
 
 let CORRETORES = [];
@@ -1049,9 +1457,12 @@ async function fazerLogin() {
   tabsHtml += `<div class="tab" onclick="toggleMaisMenu()" id="tab-mais" style="position:relative;">+</div>`;
   document.getElementById('app-tabs').innerHTML = tabsHtml;
 
-  // Desktop sidebar: mostrar/esconder Equipe
+  // Desktop sidebar: mostrar/esconder Equipe e itens admin
   const snavEq = document.getElementById('snav-equipe');
   if (snavEq) snavEq.style.display = isMaster ? '' : 'none';
+  if (isMaster) {
+    document.querySelectorAll('.snav-admin').forEach(el => el.style.display = '');
+  }
 
   // Garantir que a primeira aba está ativa
   document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
@@ -1157,9 +1568,13 @@ function showTab(id, e) {
   if (id === 'tab-registro') {
     setRegistroView('checkin');
   }
-  if (id === 'tab-inicio') {
-    renderInicio();
-  }
+  if (id === 'tab-inicio') renderInicio();
+  if (id === 'tab-admin-dash') renderAdminDash();
+  if (id === 'tab-admin-vendas') renderAdminVendas();
+  if (id === 'tab-admin-real') renderAdminReal();
+  if (id === 'tab-admin-corretores') renderAdminCorretores();
+  if (id === 'tab-admin-presenca') renderAdminPresenca();
+  if (id === 'tab-admin-ciclo') renderAdminCiclo();
 }
 
 // Desktop sidebar navigation (calls showTab internally)
@@ -3500,6 +3915,15 @@ function abrirSideMenu() {
   if (isMaster) items += `<div class="side-menu-item" onclick="sideMenuNav('tab-equipe')"><span class="smi-icon">👥</span> Minha Equipe</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-pipeline')"><span class="smi-icon">📋</span> Meus Clientes</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-registro')"><span class="smi-icon">📝</span> Registro</div>`;
+  if (isMaster) {
+    items += `<div style="margin:10px 0 6px;padding:0 16px;font-size:.62rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;">Administração</div>`;
+    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-dash')"><span class="smi-icon">📊</span> Dashboard</div>`;
+    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-vendas')"><span class="smi-icon">💵</span> Vendas (Admin)</div>`;
+    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-real')"><span class="smi-icon">📈</span> Pipeline (Admin)</div>`;
+    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-corretores')"><span class="smi-icon">👤</span> Corretores</div>`;
+    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-presenca')"><span class="smi-icon">⏱</span> Presença</div>`;
+    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-ciclo')"><span class="smi-icon">💲</span> Ciclo de Vendas</div>`;
+  }
   document.getElementById('side-menu-items').innerHTML = items;
   if (USUARIO) {
     document.getElementById('side-menu-user').textContent = USUARIO.NOME;
@@ -3840,6 +4264,1055 @@ async function deletarReal(id) {
   saveReal();
   renderReal();
   renderInicio();
+}
+
+// ============================================
+// ADMIN — HELPERS
+// ============================================
+const NOMES_EQUIV_ADMIN = {
+  'DANDARA CAMPUS': 'DANDARA CAMPOS',
+  'WILIAN BUENO': 'WILLIAM BUENO',
+  'EDVAM SILVA': 'EDVAN SILVA'
+};
+
+function getTeamMembers() {
+  if (!USUARIO) return [];
+  if (USUARIO.CARGO === 'Gerente') return CORRETORES.filter(c => c.STATUS === 'Ativo');
+  return CORRETORES.filter(c => c.STATUS === 'Ativo' && c.EQUIPE === USUARIO.EQUIPE);
+}
+
+function isMyTeam(nomeCorretor) {
+  if (!USUARIO) return false;
+  if (USUARIO.CARGO === 'Gerente') return true;
+  const nome = (nomeCorretor || '').toUpperCase().trim();
+  // Traduzir equivalência
+  const nomeTrad = NOMES_EQUIV_ADMIN[nome] || nome;
+  const c = CORRETORES.find(x => {
+    const cn = (x.NOME || '').toUpperCase().trim();
+    return cn === nome || cn === nomeTrad || nome.includes(cn) || cn.includes(nome);
+  });
+  return c && c.EQUIPE === USUARIO.EQUIPE;
+}
+
+function getAdminVendas() {
+  // Vendas filtradas pela equipe do usuário
+  return VENDAS.filter(v => {
+    let corr = (v.CORRETOR || '').toUpperCase().trim();
+    if (NOMES_EQUIV_ADMIN[corr]) corr = NOMES_EQUIV_ADMIN[corr];
+    return isMyTeam(corr);
+  });
+}
+
+function getMesComercialAtualStr() {
+  const agora = new Date();
+  return agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
+}
+
+function fmtMoney(v) {
+  if (v >= 1000000) return 'R$ ' + (v / 1000000).toFixed(1) + 'M';
+  if (v >= 1000) return 'R$ ' + (v / 1000).toFixed(0) + 'k';
+  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtMoneyFull(v) {
+  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Comissão por nível
+function calcComissaoAdmin(vgv, cargo, ehVendaPropria) {
+  if (!vgv) return 0;
+  if (cargo === 'Gerente') {
+    const taxa = ehVendaPropria ? 0.024 : 0.005;
+    return vgv * taxa * 0.86;
+  }
+  if (cargo === 'Coordenador') {
+    const taxa = ehVendaPropria ? 0.019 : 0.002;
+    return vgv * taxa * 0.86;
+  }
+  return vgv * 0.017 * 0.86;
+}
+
+// ============================================
+// ADMIN DASHBOARD
+// ============================================
+function renderAdminDash() {
+  if (!USUARIO) return;
+  const membros = getTeamMembers();
+  const mesAtual = getMesComercialAtualStr();
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // VGV pipeline (ALL_REAL_DATA se disponível, senão REAL_CLIENTS)
+  const realData = typeof ALL_REAL_DATA !== 'undefined' ? ALL_REAL_DATA : REAL_CLIENTS;
+  const vgvPipeline = realData.reduce((s, c) => {
+    if (!isMyTeam(c.corretor || c.CORRETOR)) return s;
+    return s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0);
+  }, 0);
+
+  // Vendas do mês
+  const vendasMes = getAdminVendas().filter(v =>
+    String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual
+  );
+
+  // Agendamentos hoje
+  const agHoje = AGENDA.filter(a => {
+    const dt = String(a.DATA || '').substring(0, 10);
+    return dt === hoje && isMyTeam(a.CORRETOR);
+  });
+
+  document.getElementById('adash-corretores').textContent = membros.length;
+  document.getElementById('adash-vgv-pipeline').textContent = fmtMoney(vgvPipeline);
+  document.getElementById('adash-vendas-mes').textContent = vendasMes.length;
+  document.getElementById('adash-ag-hoje').textContent = agHoje.length;
+
+  // Ranking top 5 — baseado em vendas do mês
+  const porCorretor = {};
+  vendasMes.forEach(v => {
+    let corr = (v.CORRETOR || '').trim();
+    const corrUp = corr.toUpperCase();
+    if (NOMES_EQUIV_ADMIN[corrUp]) corr = NOMES_EQUIV_ADMIN[corrUp];
+    if (!porCorretor[corr]) porCorretor[corr] = { vgv: 0, qtd: 0 };
+    porCorretor[corr].vgv += parseFloat(v.VGV) || 0;
+    porCorretor[corr].qtd += 1;
+  });
+
+  const ranking = Object.entries(porCorretor)
+    .map(([nome, d]) => ({ nome, ...d }))
+    .sort((a, b) => b.vgv - a.vgv)
+    .slice(0, 5);
+
+  if (ranking.length === 0) {
+    document.getElementById('adash-ranking').innerHTML = '<div class="m-empty">Nenhuma venda no mês atual.</div>';
+    return;
+  }
+
+  let html = '';
+  ranking.forEach((r, i) => {
+    const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+    html += `<div class="admin-rank-item">
+      <div class="admin-rank-pos">${medalha || (i + 1)}</div>
+      <div>
+        <div class="admin-rank-name">${r.nome}</div>
+        <div class="admin-rank-eq">${r.qtd} venda${r.qtd !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="admin-rank-pts">${fmtMoney(r.vgv)}</div>
+    </div>`;
+  });
+  document.getElementById('adash-ranking').innerHTML = html;
+}
+
+// ============================================
+// ADMIN VENDAS
+// ============================================
+function renderAdminVendas() {
+  if (!USUARIO) return;
+  const todasVendas = getAdminVendas();
+  const mesAtual = getMesComercialAtualStr();
+  const vendasMes = todasVendas.filter(v =>
+    String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual &&
+    !(v.STATUS_VENDA || '').includes('Distrato')
+  );
+
+  // KPIs do mês atual
+  const vgvTotal = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const maiorVenda = vendasMes.reduce((m, v) => Math.max(m, parseFloat(v.VGV) || 0), 0);
+  const comTotal = vendasMes.reduce((s, v) => s + ((parseFloat(v.VGV) || 0) * 0.017 * 0.86), 0);
+
+  document.getElementById('avd-vgv').textContent = fmtMoney(vgvTotal);
+  document.getElementById('avd-qtd').textContent = vendasMes.length;
+  document.getElementById('avd-maior').textContent = fmtMoney(maiorVenda);
+  document.getElementById('avd-comissao').textContent = fmtMoney(comTotal);
+
+  // Pódio — ranking por VGV do mês
+  const porCorretor = {};
+  vendasMes.forEach(v => {
+    let corr = (v.CORRETOR || '').trim();
+    const corrUp = corr.toUpperCase();
+    if (NOMES_EQUIV_ADMIN[corrUp]) corr = NOMES_EQUIV_ADMIN[corrUp];
+    if (!porCorretor[corr]) porCorretor[corr] = { vgv: 0, qtd: 0 };
+    porCorretor[corr].vgv += parseFloat(v.VGV) || 0;
+    porCorretor[corr].qtd += 1;
+  });
+  const topCorretor = Object.entries(porCorretor)
+    .map(([nome, d]) => ({ nome, ...d }))
+    .sort((a, b) => b.vgv - a.vgv)
+    .slice(0, 3);
+
+  const podiumMedal = ['🥇', '🥈', '🥉'];
+  const podiumClass = ['p1', 'p2', 'p3'];
+  const podiumOrder = [1, 0, 2]; // posições visuais: 2°, 1°, 3°
+  let podiumHtml = '';
+  if (topCorretor.length > 0) {
+    const arranged = [topCorretor[1], topCorretor[0], topCorretor[2]].filter(Boolean);
+    const origIdx = [1, 0, 2];
+    arranged.forEach((r, vi) => {
+      const realIdx = origIdx[vi];
+      podiumHtml += `<div class="podium-item">
+        <div class="podium-bar ${podiumClass[realIdx]}">
+          <div class="podium-pos">${podiumMedal[realIdx]}</div>
+          <div class="podium-pts">${fmtMoney(r.vgv)}</div>
+          <div class="podium-label">${r.qtd} venda${r.qtd !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="podium-name">${r.nome.split(' ')[0]}</div>
+      </div>`;
+    });
+  }
+  document.getElementById('avd-podium').innerHTML = podiumHtml || '<div class="m-empty">Sem vendas ainda.</div>';
+
+  // Popular filtro de corretores
+  const selCorr = document.getElementById('avd-filtro-corretor');
+  const selMes = document.getElementById('avd-filtro-mes');
+  const filtroCorr = selCorr.value;
+  const filtroMes = selMes.value;
+
+  // Corretores únicos
+  const corrsUnicos = [...new Set(todasVendas.map(v => {
+    let c = (v.CORRETOR || '').trim();
+    if (NOMES_EQUIV_ADMIN[c.toUpperCase()]) c = NOMES_EQUIV_ADMIN[c.toUpperCase()];
+    return c;
+  }).filter(Boolean))].sort();
+  if (selCorr.options.length <= 1) {
+    corrsUnicos.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      selCorr.appendChild(o);
+    });
+  }
+
+  // Meses únicos
+  const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mesesUnicos = [...new Set(todasVendas.map(v =>
+    String(v.MES_COMERCIAL || '').substring(0, 7)
+  ).filter(m => m))].sort().reverse();
+  if (selMes.options.length <= 1) {
+    mesesUnicos.forEach(m => {
+      const [ano, mes] = m.split('-');
+      const o = document.createElement('option');
+      o.value = m;
+      o.textContent = nomesMes[parseInt(mes)] + '/' + ano;
+      if (m === mesAtual) o.selected = true;
+      selMes.appendChild(o);
+    });
+    // Trigger re-render com mês atual selecionado
+    if (!filtroMes && selMes.value) return renderAdminVendas();
+  }
+
+  // Filtrar lista
+  let lista = [...todasVendas];
+  if (filtroCorr) {
+    lista = lista.filter(v => {
+      let c = (v.CORRETOR || '').trim();
+      if (NOMES_EQUIV_ADMIN[c.toUpperCase()]) c = NOMES_EQUIV_ADMIN[c.toUpperCase()];
+      return c === filtroCorr;
+    });
+  }
+  if (filtroMes) {
+    lista = lista.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === filtroMes);
+  }
+  lista.sort((a, b) => {
+    const da = String(a.DATA_VENDA || a.MES_COMERCIAL || '').substring(0, 10);
+    const db = String(b.DATA_VENDA || b.MES_COMERCIAL || '').substring(0, 10);
+    return db.localeCompare(da);
+  });
+
+  if (lista.length === 0) {
+    document.getElementById('avd-lista').innerHTML = '<div class="m-empty">Nenhuma venda encontrada.</div>';
+    return;
+  }
+
+  let html = '';
+  lista.forEach(v => {
+    let corr = (v.CORRETOR || '').trim();
+    if (NOMES_EQUIV_ADMIN[corr.toUpperCase()]) corr = NOMES_EQUIV_ADMIN[corr.toUpperCase()];
+    const valor = parseFloat(v.VGV) || 0;
+    const comissao = valor * 0.017 * 0.86;
+    const status = v.STATUS_VENDA || '-';
+    const stTag = status.includes('Repassado') ? 'tag-aprovado' : status.includes('Distrato') ? 'tag-divida' : status.includes('CONSORCIO') ? 'tag-bacen' : 'tag-pendente';
+    const mesFmt = (() => {
+      const m = String(v.MES_COMERCIAL || '').substring(0, 7);
+      if (!m.includes('-')) return m;
+      const nms = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      const [ano, mes] = m.split('-');
+      return nms[parseInt(mes)] + '/' + ano;
+    })();
+    html += `<div class="m-client">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="m-client-name">${v.CLIENTE || '-'}</div>
+        <span style="font-size:.72rem;font-weight:800;color:var(--accent);">${corr}</span>
+      </div>
+      <div style="font-size:.72rem;color:var(--textL);margin-bottom:6px;">${v.EMPREENDIMENTO || '-'}${v.CONSTRUTORA ? ' — ' + v.CONSTRUTORA : ''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:.88rem;font-weight:900;color:var(--accent);">${fmtMoney(valor)}</span>
+        <span style="font-size:.72rem;font-weight:700;color:var(--gold);">${fmtMoneyFull(comissao)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="tag ${stTag}">${status}</span>
+        <span style="font-size:.62rem;color:var(--textL);">${mesFmt}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('avd-lista').innerHTML = html;
+}
+
+// ============================================
+// ADMIN PIPELINE REAL
+// ============================================
+let ALL_REAL_DATA = [];
+
+function renderAdminReal() {
+  if (!USUARIO) return;
+
+  // Usar dados já carregados em carregarTudo (todos) + filtrar pela equipe
+  // ALL_REAL_DATA é populado no carregarTudo estendido abaixo
+  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
+  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+
+  // KPIs
+  const vgvTotal = teamReal.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+  const gerando = teamReal.filter(c => (c.status || c.STATUS) === 'GERANDO').length;
+  const nGerado = teamReal.filter(c => (c.status || c.STATUS) === 'N GERADO').length;
+  const gerado = teamReal.filter(c => (c.status || c.STATUS) === 'GERADO').length;
+
+  document.getElementById('areal-vgv').textContent = fmtMoney(vgvTotal);
+  document.getElementById('areal-gerando').textContent = gerando;
+  document.getElementById('areal-ngerado').textContent = nGerado;
+  document.getElementById('areal-gerado').textContent = gerado;
+
+  // Popular select de corretores
+  const selCorr = document.getElementById('areal-filtro-corretor');
+  if (selCorr.options.length <= 1) {
+    const corrsUnicos = [...new Set(teamReal.map(c =>
+      (c.corretor || c.CORRETOR || '').trim()
+    ).filter(Boolean))].sort();
+    corrsUnicos.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      selCorr.appendChild(o);
+    });
+  }
+
+  const filtroCorr = selCorr.value;
+  const filtroSt = document.getElementById('areal-filtro-status').value;
+
+  let lista = [...teamReal];
+  if (filtroCorr) lista = lista.filter(c => (c.corretor || c.CORRETOR || '').trim() === filtroCorr);
+  if (filtroSt) lista = lista.filter(c => (c.status || c.STATUS) === filtroSt);
+
+  // Ordenar: N GERADO primeiro
+  const ordemSt = { 'N GERADO': 0, 'GERANDO': 1, 'GERADO': 2 };
+  lista.sort((a, b) => (ordemSt[a.status || a.STATUS] || 1) - (ordemSt[b.status || b.STATUS] || 1));
+
+  if (lista.length === 0) {
+    document.getElementById('areal-lista').innerHTML = '<div class="m-empty">Nenhum cliente no pipeline.</div>';
+    return;
+  }
+
+  let html = '';
+  lista.forEach(c => {
+    const status = c.status || c.STATUS || 'GERANDO';
+    const vgv = parseFloat(c.vgv || c.VGV_ESTIMADO) || 0;
+    const dataEntrada = c.dataEntrada || c.DATA_ENTRADA || c.DATA || '';
+    const corr = c.corretor || c.CORRETOR || '-';
+    const nome = c.nome || c.CLIENTE || '-';
+    const pendencia = c.pendencia || c.PENDENCIA || '';
+    const emp = c.empreendimento || c.EMPREENDIMENTO || '-';
+    const constr = c.construtora || c.CONSTRUTORA || '';
+    const dias = calcDiasReal(dataEntrada);
+    const diasColor = dias < 7 ? 'var(--success)' : dias < 15 ? 'var(--warning)' : 'var(--danger)';
+    const statusColor = status === 'GERADO' ? 'var(--success)' : status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
+    const opacity = status === 'GERADO' ? 'opacity:.6;' : '';
+    html += `<div class="m-client" style="border-left:4px solid ${statusColor};${opacity}">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px;">
+        <div>
+          <div class="m-client-name">${nome}</div>
+          <div style="font-size:.68rem;color:var(--accent);font-weight:700;">${corr}</div>
+        </div>
+        <div style="background:${diasColor};color:#000;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:800;">${dias}d</div>
+      </div>
+      <div class="m-client-renda">${fmtVgv(vgv)}</div>
+      <div style="font-size:.72rem;color:var(--textL);margin-bottom:6px;">${emp}${constr ? ' • ' + constr : ''}</div>
+      ${pendencia ? `<div style="font-size:.7rem;color:var(--warning);margin-bottom:6px;">⚠ ${pendencia}</div>` : ''}
+      <span class="tag" style="background:${status === 'GERADO' ? 'rgba(0,230,118,.1)' : status === 'N GERADO' ? 'rgba(239,83,80,.1)' : 'rgba(255,167,38,.1)'};color:${statusColor};border:1px solid ${statusColor};">${status}</span>
+    </div>`;
+  });
+  document.getElementById('areal-lista').innerHTML = html;
+}
+
+// ============================================
+// ADMIN CORRETORES
+// ============================================
+function renderAdminCorretores() {
+  if (!USUARIO) return;
+  const membros = getTeamMembers();
+  const mesAtual = getMesComercialAtualStr();
+  const vendasAdmin = getAdminVendas();
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Agrupar por equipe
+  const porEquipe = {};
+  membros.forEach(m => {
+    const eq = m.EQUIPE || 'Sem equipe';
+    if (!porEquipe[eq]) porEquipe[eq] = [];
+    porEquipe[eq].push(m);
+  });
+
+  let html = '';
+  Object.entries(porEquipe).forEach(([equipe, corretores]) => {
+    html += `<div class="corr-equipe-hdr">Equipe ${equipe}</div>
+    <div class="corr-cards-grid">`;
+    corretores.forEach(m => {
+      const nomeUp = m.NOME.toUpperCase();
+      // Pastas (clientes com CPF)
+      const pastas = CLIENTES.filter(c => {
+        const corrUp = (c.CORRETOR || '').toUpperCase();
+        return (corrUp === nomeUp || corrUp.includes(nomeUp) || nomeUp.includes(corrUp)) && c.CPF;
+      }).length;
+      // Vendas do mês
+      const vendasMes = vendasAdmin.filter(v => {
+        let corr = (v.CORRETOR || '').toUpperCase().trim();
+        if (NOMES_EQUIV_ADMIN[corr]) corr = NOMES_EQUIV_ADMIN[corr];
+        return (corr === nomeUp || corr.includes(nomeUp) || nomeUp.includes(corr)) &&
+          String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual;
+      }).length;
+      // Agendamentos do mês
+      const agMes = AGENDA.filter(a => {
+        const corrUp = (a.CORRETOR || '').toUpperCase();
+        const dtMes = String(a.DATA || '').substring(0, 7);
+        return (corrUp === nomeUp || corrUp.includes(nomeUp) || nomeUp.includes(corrUp)) &&
+          dtMes === mesAtual;
+      }).length;
+
+      html += `<div class="corr-card">
+        <div class="corr-card-name">${m.NOME}</div>
+        <div class="corr-card-cargo">${m.CARGO}</div>
+        <div class="corr-card-stats">
+          <span class="corr-stat">📋 <strong>${pastas}</strong> pastas</span>
+          <span class="corr-stat">💰 <strong>${vendasMes}</strong> vendas</span>
+          <span class="corr-stat">📅 <strong>${agMes}</strong> agend.</span>
+        </div>
+        ${USUARIO.CARGO === 'Gerente' ? `<div class="corr-desat-btn" onclick="desativarCorretor('${m.NOME.replace(/'/g, "\\'")}')">Desativar</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  if (!html) html = '<div class="m-empty">Nenhum corretor na equipe.</div>';
+  document.getElementById('acorr-lista').innerHTML = html;
+}
+
+async function desativarCorretor(nome) {
+  if (!confirm(`Desativar ${nome}? O corretor não conseguirá mais fazer login.`)) return;
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_corretor', nome: nome, campos: { STATUS: 'Inativo' } })
+    });
+    // Atualizar local
+    const c = CORRETORES.find(x => x.NOME === nome);
+    if (c) c.STATUS = 'Inativo';
+    renderAdminCorretores();
+    showToast(nome + ' desativado.', 'warning');
+  } catch(e) {
+    alert('Erro ao desativar corretor. Tente novamente.');
+  }
+}
+
+// ============================================
+// ADMIN PRESENÇA
+// ============================================
+let PRESENCA_TAB = 'hoje';
+
+function setPresencaTab(tab) {
+  PRESENCA_TAB = tab;
+  document.querySelectorAll('#tab-admin-presenca .presenca-tabs .m-filter-btn').forEach((btn, i) => {
+    const tabs = ['hoje', 'semana', 'mes'];
+    btn.classList.toggle('active', tabs[i] === tab);
+  });
+  renderAdminPresenca();
+}
+
+function renderAdminPresenca() {
+  if (!USUARIO) return;
+  const membros = getTeamMembers().filter(m =>
+    m.CARGO !== 'Coordenador' && m.CARGO !== 'Gerente'
+  );
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split('T')[0];
+
+  // Calcular datas do período
+  let dataInicio, dataFim;
+  if (PRESENCA_TAB === 'hoje') {
+    dataInicio = dataFim = hojeStr;
+  } else if (PRESENCA_TAB === 'semana') {
+    // Semana da empresa: quarta a terça
+    const diaSem = hoje.getDay(); // 0=dom,3=qua
+    const diasDesdeQuarta = diaSem >= 3 ? diaSem - 3 : diaSem + 4;
+    const quarta = new Date(hoje);
+    quarta.setDate(hoje.getDate() - diasDesdeQuarta);
+    dataInicio = quarta.toISOString().split('T')[0];
+    dataFim = hojeStr;
+  } else {
+    // Mês comercial — usar início do mês calendário como aproximação
+    const mesStr = getMesComercialAtualStr();
+    dataInicio = mesStr + '-01';
+    dataFim = hojeStr;
+  }
+
+  // Filtrar registros do período por tipo
+  const registrosPeriodo = (typeof DADOS_TUDO !== 'undefined' && DADOS_TUDO && DADOS_TUDO.registros)
+    ? DADOS_TUDO.registros
+    : [];
+
+  // Dias úteis no período (seg-sex)
+  function getDiasUteis(inicio, fim) {
+    const dias = [];
+    const d = new Date(inicio + 'T12:00:00');
+    const fimD = new Date(fim + 'T12:00:00');
+    while (d <= fimD) {
+      const dow = d.getDay();
+      if (dow !== 0 && dow !== 6) dias.push(d.toISOString().split('T')[0]);
+      d.setDate(d.getDate() + 1);
+    }
+    return dias;
+  }
+  const diasUteis = getDiasUteis(dataInicio, dataFim);
+
+  let html = '';
+  membros.forEach(m => {
+    const nomeUp = m.NOME.toUpperCase();
+
+    // Check-ins via API registros (pode estar vazio)
+    const checkinsDias = new Set(registrosPeriodo
+      .filter(r =>
+        r.TIPO === 'checkin' &&
+        (r.CORRETOR || '').toUpperCase() === nomeUp &&
+        String(r.DATA || '').substring(0, 10) >= dataInicio &&
+        String(r.DATA || '').substring(0, 10) <= dataFim
+      )
+      .map(r => String(r.DATA || '').substring(0, 10))
+    );
+
+    // 945 via demandas ou registros
+    const noven45Dias = new Set(registrosPeriodo
+      .filter(r =>
+        r.TIPO === '945-individual' &&
+        (r.CORRETOR || '').toUpperCase() === nomeUp &&
+        String(r.DATA || '').substring(0, 10) >= dataInicio &&
+        String(r.DATA || '').substring(0, 10) <= dataFim
+      )
+      .map(r => String(r.DATA || '').substring(0, 10))
+    );
+
+    const totalDias = diasUteis.length || 1;
+    const checkinRate = Math.round((checkinsDias.size / totalDias) * 100);
+    const noven45Rate = Math.round((noven45Dias.size / totalDias) * 100);
+
+    const zeroActivity = checkinsDias.size === 0 && noven45Dias.size === 0;
+    const checkinColor = checkinRate >= 80 ? 'var(--success)' : checkinRate >= 50 ? 'var(--warning)' : 'var(--danger)';
+    const noven45Color = noven45Rate >= 80 ? 'var(--success)' : noven45Rate >= 50 ? 'var(--warning)' : 'var(--danger)';
+
+    html += `<div class="presenca-row${zeroActivity ? ' zero-activity' : ''}">
+      <div>
+        <div class="presenca-name">${m.NOME}</div>
+        <div class="presenca-eq">${m.EQUIPE}</div>
+      </div>
+      <div class="presenca-stat">
+        <div class="ps-val" style="color:${checkinColor};">${checkinsDias.size}/${totalDias}</div>
+        <div class="ps-lbl">Check-in</div>
+      </div>
+      <div class="presenca-stat">
+        <div class="ps-val" style="color:${noven45Color};">${noven45Dias.size}/${totalDias}</div>
+        <div class="ps-lbl">945</div>
+      </div>
+      <div class="presenca-stat">
+        <div class="ps-val" style="color:${checkinColor};">${checkinRate}%</div>
+        <div class="ps-lbl">Presença</div>
+      </div>
+    </div>`;
+  });
+
+  if (!html) html = '<div class="m-empty">Nenhum corretor na equipe.</div>';
+  document.getElementById('apres-lista').innerHTML = `<div class="presenca-grid">${html}</div>`;
+}
+
+// ============================================
+// ADMIN CICLO DE VENDAS
+// ============================================
+let chartCorretores = null, chartStatus = null, chartMensal = null, chartEmpre = null;
+let cicloSortCol = 'VGV_ESTIMADO', cicloSortDir = -1, cicloPagina = 0;
+const CICLO_POR_PAGINA = 15;
+
+function renderAdminCiclo() {
+  if (!USUARIO) return;
+  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
+  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const mesAtual = getMesComercialAtualStr();
+  const vendasAdmin = getAdminVendas();
+  const vendasMes = vendasAdmin.filter(v =>
+    String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual &&
+    !(v.STATUS_VENDA || '').includes('Distrato')
+  );
+
+  // KPIs
+  const vgvTotal = teamReal.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+  const vgvGerado = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const vgvPipeline = teamReal
+    .filter(c => (c.status || c.STATUS) !== 'GERADO' && (c.status || c.STATUS) !== 'N GERADO')
+    .reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+  const vgvPerda = teamReal
+    .filter(c => (c.status || c.STATUS) === 'N GERADO')
+    .reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+
+  document.getElementById('aciclo-vgv-total').textContent = fmtMoney(vgvTotal);
+  document.getElementById('aciclo-vgv-gerado').textContent = fmtMoney(vgvGerado);
+  document.getElementById('aciclo-vgv-pipeline').textContent = fmtMoney(vgvPipeline);
+  document.getElementById('aciclo-vgv-perda').textContent = fmtMoney(vgvPerda);
+
+  // Comissões
+  const commNeg = vgvPipeline * 0.017 * 0.86;
+  const commEf = vgvGerado * 0.017 * 0.86;
+
+  // Comissão do usuário logado (coord ou gerente)
+  let commPropria = 0;
+  const nomeUp = USUARIO.NOME.toUpperCase();
+  if (USUARIO.CARGO === 'Coordenador') {
+    // Venda da equipe (0.2%) + próprias (1.9%)
+    vendasMes.forEach(v => {
+      const corrUp = (v.CORRETOR || '').toUpperCase().trim();
+      const ehPropria = corrUp === nomeUp || corrUp.includes(nomeUp) || nomeUp.includes(corrUp);
+      commPropria += calcComissaoAdmin(parseFloat(v.VGV) || 0, 'Coordenador', ehPropria);
+    });
+    document.getElementById('aciclo-comm-label3').textContent = 'Sua Comissão (Coord)';
+    document.getElementById('aciclo-comm-sub3').textContent = '0.2% equipe / 1.9% própria';
+  } else if (USUARIO.CARGO === 'Gerente') {
+    vendasAdmin.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
+      const corrUp = (v.CORRETOR || '').toUpperCase().trim();
+      const ehPropria = corrUp === nomeUp || corrUp.includes(nomeUp) || nomeUp.includes(corrUp);
+      commPropria += calcComissaoAdmin(parseFloat(v.VGV) || 0, 'Gerente', ehPropria);
+    });
+    document.getElementById('aciclo-comm-label3').textContent = 'Sua Comissão (Gerente)';
+    document.getElementById('aciclo-comm-sub3').textContent = '0.5% sobre tudo / 2.4% própria';
+  }
+
+  document.getElementById('aciclo-comm-neg').textContent = fmtMoneyFull(commNeg);
+  document.getElementById('aciclo-comm-neg-sub').textContent = `Projeção sobre ${teamReal.filter(c => (c.status || c.STATUS) === 'GERANDO').length} clientes gerando`;
+  document.getElementById('aciclo-comm-ef').textContent = fmtMoneyFull(commEf);
+  document.getElementById('aciclo-comm-ef-sub').textContent = `${vendasMes.length} vendas no mês comercial`;
+  document.getElementById('aciclo-comm-val3').textContent = fmtMoneyFull(commPropria);
+
+  // Diagnóstico
+  renderCicloDiagnostico(teamReal, vendasMes);
+
+  // Gráficos
+  renderCicloCharts(teamReal, vendasAdmin);
+
+  // Tabela
+  renderCicloTabela();
+}
+
+function renderCicloDiagnostico(teamReal, vendasMes) {
+  const gerando = teamReal.filter(c => (c.status || c.STATUS) === 'GERANDO');
+  const nGerado = teamReal.filter(c => (c.status || c.STATUS) === 'N GERADO');
+  const totalDias = gerando.reduce((s, c) => {
+    return s + calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '');
+  }, 0);
+  const mediaDias = gerando.length ? Math.round(totalDias / gerando.length) : 0;
+  const taxaConv = teamReal.length ? Math.round((vendasMes.length / Math.max(teamReal.length, 1)) * 100) : 0;
+
+  let gargalo = '';
+  if (nGerado.length > gerando.length) {
+    gargalo = `Alta taxa de <strong>N GERADO</strong> (${nGerado.length} clientes). Revisar pendências e apoiar corretores com travamentos.`;
+  } else if (mediaDias > 20) {
+    gargalo = `Tempo médio alto no pipeline: <strong>${mediaDias} dias</strong>. Clientes parados — pressionar construtoras ou resolver pendências.`;
+  } else if (vendasMes.length === 0) {
+    gargalo = `<strong>Nenhuma venda</strong> no mês atual. Prioridade: converter pipeline em contratos assinados.`;
+  } else {
+    gargalo = `Pipeline saudável. Tempo médio: <strong>${mediaDias} dias</strong>. Taxa de conversão: <strong>${taxaConv}%</strong>.`;
+  }
+
+  const html = `<div class="diagnostico-box">
+    <div class="diagnostico-title">Análise do Período</div>
+    <div class="diagnostico-item">🔍 <strong>Gargalo:</strong> ${gargalo}</div>
+    <div class="diagnostico-item">📊 <strong>Pipeline:</strong> ${gerando.length} gerando, ${nGerado.length} travados, ${teamReal.filter(c => (c.status || c.STATUS) === 'GERADO').length} gerados.</div>
+    <div class="diagnostico-item">💰 <strong>Vendas no mês:</strong> ${vendasMes.length} venda${vendasMes.length !== 1 ? 's' : ''}, VGV ${fmtMoney(vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0))}.</div>
+    <div class="diagnostico-item">⏱ <strong>Tempo médio no pipeline:</strong> ${mediaDias} dias.</div>
+  </div>`;
+  document.getElementById('aciclo-diagnostico').innerHTML = html;
+}
+
+function renderCicloCharts(teamReal, vendasAdmin) {
+  const mesAtual = getMesComercialAtualStr();
+  const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  // Chart 1: VGV por corretor (pipeline)
+  const vgvPorCorr = {};
+  teamReal.forEach(c => {
+    const corr = (c.corretor || c.CORRETOR || 'N/A').trim();
+    const primNome = corr.split(' ')[0];
+    vgvPorCorr[primNome] = (vgvPorCorr[primNome] || 0) + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0);
+  });
+  const labelsCorr = Object.keys(vgvPorCorr).sort((a, b) => vgvPorCorr[b] - vgvPorCorr[a]).slice(0, 10);
+  const dataCorr = labelsCorr.map(l => vgvPorCorr[l]);
+
+  if (chartCorretores) chartCorretores.destroy();
+  const ctxCorr = document.getElementById('chartCorretores');
+  if (ctxCorr) {
+    chartCorretores = new Chart(ctxCorr, {
+      type: 'bar',
+      data: {
+        labels: labelsCorr,
+        datasets: [{ label: 'VGV (R$)', data: dataCorr, backgroundColor: 'rgba(100,255,218,0.5)', borderColor: 'rgba(100,255,218,1)', borderWidth: 1 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#7a8ba3', font: { size: 11 } }, grid: { color: '#1e2a3a' } },
+          y: { ticks: { color: '#7a8ba3', font: { size: 10 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e2a3a' } }
+        }
+      }
+    });
+  }
+
+  // Chart 2: Distribuição por status (rosca)
+  const gerando = teamReal.filter(c => (c.status || c.STATUS) === 'GERANDO').length;
+  const nGerado = teamReal.filter(c => (c.status || c.STATUS) === 'N GERADO').length;
+  const gerado = teamReal.filter(c => (c.status || c.STATUS) === 'GERADO').length;
+  if (chartStatus) chartStatus.destroy();
+  const ctxSt = document.getElementById('chartStatus');
+  if (ctxSt && (gerando + nGerado + gerado) > 0) {
+    chartStatus = new Chart(ctxSt, {
+      type: 'doughnut',
+      data: {
+        labels: ['Gerando', 'N Gerado', 'Gerado'],
+        datasets: [{ data: [gerando, nGerado, gerado], backgroundColor: ['rgba(255,167,38,0.7)', 'rgba(239,83,80,0.7)', 'rgba(0,230,118,0.7)'], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#7a8ba3', font: { size: 11 } } } }
+      }
+    });
+  }
+
+  // Chart 3: Evolução mensal (últimos 6 meses de vendas)
+  const ultimos6 = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    ultimos6.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+  }
+  const vendasPorMes = ultimos6.map(m => {
+    const v = getAdminVendas().filter(vv =>
+      String(vv.MES_COMERCIAL || '').substring(0, 7) === m &&
+      !((vv.STATUS_VENDA || '').includes('Distrato'))
+    );
+    return v.reduce((s, vv) => s + (parseFloat(vv.VGV) || 0), 0);
+  });
+  const labelsMes = ultimos6.map(m => {
+    const [ano, mes] = m.split('-');
+    return nomesMes[parseInt(mes)] + '/' + ano.slice(2);
+  });
+  if (chartMensal) chartMensal.destroy();
+  const ctxMen = document.getElementById('chartMensal');
+  if (ctxMen) {
+    chartMensal = new Chart(ctxMen, {
+      type: 'line',
+      data: {
+        labels: labelsMes,
+        datasets: [{ label: 'VGV', data: vendasPorMes, borderColor: 'rgba(255,215,0,1)', backgroundColor: 'rgba(255,215,0,0.08)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#ffd700' }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#7a8ba3', font: { size: 10 } }, grid: { color: '#1e2a3a' } },
+          y: { ticks: { color: '#7a8ba3', font: { size: 10 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e2a3a' } }
+        }
+      }
+    });
+  }
+
+  // Chart 4: Top empreendimentos (pipeline)
+  const vgvPorEmp = {};
+  teamReal.forEach(c => {
+    const emp = (c.empreendimento || c.EMPREENDIMENTO || 'N/A').trim() || 'N/A';
+    vgvPorEmp[emp] = (vgvPorEmp[emp] || 0) + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0);
+  });
+  const labelsEmp = Object.keys(vgvPorEmp).sort((a, b) => vgvPorEmp[b] - vgvPorEmp[a]).slice(0, 7);
+  const dataEmp = labelsEmp.map(l => vgvPorEmp[l]);
+  if (chartEmpre) chartEmpre.destroy();
+  const ctxEmp = document.getElementById('chartEmpre');
+  if (ctxEmp && labelsEmp.length > 0) {
+    chartEmpre = new Chart(ctxEmp, {
+      type: 'bar',
+      data: {
+        labels: labelsEmp.map(l => l.length > 14 ? l.substring(0, 14) + '…' : l),
+        datasets: [{ label: 'VGV (R$)', data: dataEmp, backgroundColor: 'rgba(171,71,188,0.5)', borderColor: 'rgba(171,71,188,1)', borderWidth: 1 }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#7a8ba3', font: { size: 10 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e2a3a' } },
+          y: { ticks: { color: '#7a8ba3', font: { size: 10 } }, grid: { color: '#1e2a3a' } }
+        }
+      }
+    });
+  }
+}
+
+function renderCicloTabela() {
+  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
+  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const filtroSt = document.getElementById('aciclo-filtro-status').value;
+  const busca = (document.getElementById('aciclo-busca').value || '').toLowerCase();
+
+  let lista = [...teamReal];
+  if (filtroSt) lista = lista.filter(c => (c.status || c.STATUS) === filtroSt);
+  if (busca) lista = lista.filter(c => {
+    const nome = (c.nome || c.CLIENTE || '').toLowerCase();
+    const corr = (c.corretor || c.CORRETOR || '').toLowerCase();
+    return nome.includes(busca) || corr.includes(busca);
+  });
+
+  // Adicionar dias calculados
+  lista = lista.map(c => ({
+    ...c,
+    dias: calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '')
+  }));
+
+  // Ordenar
+  lista.sort((a, b) => {
+    let va, vb;
+    if (cicloSortCol === 'VGV_ESTIMADO') {
+      va = parseFloat(a.vgv || a.VGV_ESTIMADO) || 0;
+      vb = parseFloat(b.vgv || b.VGV_ESTIMADO) || 0;
+    } else if (cicloSortCol === 'dias') {
+      va = a.dias; vb = b.dias;
+    } else {
+      va = String(a[cicloSortCol] || a[cicloSortCol.toLowerCase()] || '').toLowerCase();
+      vb = String(b[cicloSortCol] || b[cicloSortCol.toLowerCase()] || '').toLowerCase();
+    }
+    if (va < vb) return cicloSortDir;
+    if (va > vb) return -cicloSortDir;
+    return 0;
+  });
+
+  const total = lista.length;
+  const inicio = cicloPagina * CICLO_POR_PAGINA;
+  const fim = Math.min(inicio + CICLO_POR_PAGINA, total);
+  const pagina = lista.slice(inicio, fim);
+
+  let tbody = '';
+  pagina.forEach(c => {
+    const status = c.status || c.STATUS || '-';
+    const statusColor = status === 'GERADO' ? 'var(--success)' : status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
+    const diasClass = c.dias < 7 ? 'td-dias-verde' : c.dias < 15 ? 'td-dias-amarelo' : 'td-dias-vermelho';
+    tbody += `<tr>
+      <td>${(c.corretor || c.CORRETOR || '-').split(' ')[0]}</td>
+      <td>${c.nome || c.CLIENTE || '-'}</td>
+      <td>${fmtMoney(parseFloat(c.vgv || c.VGV_ESTIMADO) || 0)}</td>
+      <td>${(c.empreendimento || c.EMPREENDIMENTO || '-').substring(0, 20)}</td>
+      <td><span style="color:${statusColor};font-weight:700;">${status}</span></td>
+      <td class="${diasClass}">${c.dias}d</td>
+    </tr>`;
+  });
+  document.getElementById('aciclo-tbody').innerHTML = tbody || '<tr><td colspan="6" style="text-align:center;color:var(--textL);padding:20px;">Nenhum registro encontrado.</td></tr>';
+
+  document.getElementById('aciclo-pag-info').textContent = total > 0 ? `${inicio + 1}–${fim} de ${total}` : '0 registros';
+  document.getElementById('aciclo-btn-prev').disabled = cicloPagina === 0;
+  document.getElementById('aciclo-btn-next').disabled = fim >= total;
+}
+
+function sortCiclo(col) {
+  if (cicloSortCol === col) cicloSortDir *= -1;
+  else { cicloSortCol = col; cicloSortDir = -1; }
+  cicloPagina = 0;
+  renderCicloTabela();
+}
+
+function cicloPage(dir) {
+  cicloPagina += dir;
+  renderCicloTabela();
+}
+
+function exportarCicloCSV() {
+  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
+  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const linhas = [['Corretor','Cliente','VGV','Empreendimento','Construtora','Status','Dias','Pendência']];
+  teamReal.forEach(c => {
+    linhas.push([
+      c.corretor || c.CORRETOR || '',
+      c.nome || c.CLIENTE || '',
+      parseFloat(c.vgv || c.VGV_ESTIMADO) || 0,
+      c.empreendimento || c.EMPREENDIMENTO || '',
+      c.construtora || c.CONSTRUTORA || '',
+      c.status || c.STATUS || '',
+      calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || ''),
+      c.pendencia || c.PENDENCIA || ''
+    ]);
+  });
+  const csv = linhas.map(l => l.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'pipeline-real.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================
+// ADMIN MODALS — NOVA VENDA
+// ============================================
+function abrirModalNovaVenda() {
+  // Popular select de corretores dinamicamente
+  const sel = document.getElementById('nvd-corretor');
+  sel.innerHTML = '<option value="">Selecione o corretor...</option>';
+  getTeamMembers()
+    .filter(m => m.CARGO === 'Corretor' || m.CARGO === 'Coordenador')
+    .sort((a, b) => a.NOME.localeCompare(b.NOME))
+    .forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.NOME; o.textContent = m.NOME;
+      sel.appendChild(o);
+    });
+  // Pré-preencher mês comercial atual
+  document.getElementById('nvd-mes').value = getMesComercialAtualStr();
+  ['nvd-cliente','nvd-cpf','nvd-vgv','nvd-emp'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('nvd-construtora').value = '';
+  document.getElementById('nvd-status').value = 'Aguardando CEF';
+  document.getElementById('nvd-msg').style.display = 'none';
+  document.getElementById('modal-nova-venda').classList.add('open');
+}
+
+function fecharModalNovaVenda() {
+  document.getElementById('modal-nova-venda').classList.remove('open');
+}
+
+async function salvarNovaVenda() {
+  const corretor = document.getElementById('nvd-corretor').value;
+  const cliente = document.getElementById('nvd-cliente').value.trim();
+  const vgv = parseVgvInput(document.getElementById('nvd-vgv').value);
+  if (!corretor) { alert('Selecione o corretor.'); return; }
+  if (!cliente) { alert('Preencha o nome do cliente.'); return; }
+  if (!vgv) { alert('Preencha o VGV.'); return; }
+
+  const payload = {
+    acao: 'adicionar_venda',
+    CORRETOR: corretor,
+    CLIENTE: cliente,
+    CPF: document.getElementById('nvd-cpf').value.trim(),
+    VGV: vgv,
+    EMPREENDIMENTO: document.getElementById('nvd-emp').value.trim(),
+    CONSTRUTORA: document.getElementById('nvd-construtora').value,
+    STATUS_VENDA: document.getElementById('nvd-status').value,
+    MES_COMERCIAL: document.getElementById('nvd-mes').value,
+    DATA_VENDA: new Date().toISOString().split('T')[0]
+  };
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    // Adicionar localmente pra UI atualizar
+    VENDAS.push(payload);
+    document.getElementById('nvd-msg').style.display = 'block';
+    setTimeout(() => {
+      fecharModalNovaVenda();
+      renderAdminVendas();
+      showToast('Venda salva com sucesso!', 'success');
+    }, 1200);
+  } catch(e) {
+    alert('Erro ao salvar. Tente novamente.');
+  }
+}
+
+// ============================================
+// ADMIN MODALS — NOVO CORRETOR
+// ============================================
+function abrirModalNovoCorretor() {
+  ['ncorr-nome','ncorr-nome-completo','ncorr-email','ncorr-telefone','ncorr-senha'].forEach(id =>
+    document.getElementById(id).value = ''
+  );
+  document.getElementById('ncorr-equipe').value = 'Glauco';
+  document.getElementById('ncorr-cargo').value = 'Corretor';
+  document.getElementById('ncorr-status').value = 'Ativo';
+  document.getElementById('ncorr-entrada').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ncorr-msg').style.display = 'none';
+  document.getElementById('modal-novo-corretor').classList.add('open');
+}
+
+function fecharModalNovoCorretor() {
+  document.getElementById('modal-novo-corretor').classList.remove('open');
+}
+
+async function salvarNovoCorretor() {
+  const nome = document.getElementById('ncorr-nome').value.trim();
+  const equipe = document.getElementById('ncorr-equipe').value;
+  if (!nome) { alert('Preencha o nome do corretor.'); return; }
+
+  const payload = {
+    acao: 'adicionar_corretor',
+    NOME: nome,
+    'NOME COMPLETO': document.getElementById('ncorr-nome-completo').value.trim(),
+    EQUIPE: equipe,
+    CARGO: document.getElementById('ncorr-cargo').value,
+    EMAIL: document.getElementById('ncorr-email').value.trim(),
+    TELEFONE: document.getElementById('ncorr-telefone').value.trim(),
+    SENHA: document.getElementById('ncorr-senha').value.trim(),
+    STATUS: document.getElementById('ncorr-status').value,
+    DATA_ENTRADA: document.getElementById('ncorr-entrada').value
+  };
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    // Adicionar localmente
+    CORRETORES.push(payload);
+    document.getElementById('ncorr-msg').style.display = 'block';
+    setTimeout(() => {
+      fecharModalNovoCorretor();
+      renderAdminCorretores();
+      showToast('Corretor salvo com sucesso!', 'success');
+    }, 1200);
+  } catch(e) {
+    alert('Erro ao salvar. Tente novamente.');
+  }
+}
+
+// Estender carregarTudo para popular ALL_REAL_DATA com todos os corretores
+const _carregarTudoOriginal = carregarTudo;
+async function carregarTudo() {
+  await _carregarTudoOriginal();
+  // ALL_REAL_DATA: todos os dados do real (já vêm em dados.real, sem filtro de corretor)
+  const res2 = await fetch(API_URL + '?acao=tudo').catch(() => null);
+  if (res2) {
+    try {
+      const d2 = await res2.json();
+      const realAPI = d2.real || [];
+      ALL_REAL_DATA = realAPI.map(r => ({
+        id: 'r_' + (r.CLIENTE || '').replace(/\s+/g, '_') + '_' + (r.DATA_ENTRADA || ''),
+        nome: r.CLIENTE || '',
+        telefone: r.TELEFONE || '',
+        vgv: parseFloat(r.VGV_ESTIMADO) || 0,
+        empreendimento: r.EMPREENDIMENTO || '',
+        construtora: r.CONSTRUTORA || '',
+        status: r.STATUS || 'GERANDO',
+        pendencia: r.PENDENCIA || '',
+        dataEntrada: String(r.DATA_ENTRADA || r.DATA || '').substring(0, 10),
+        corretor: r.CORRETOR || '',
+        comissaoStatus: r.COMISSAO_STATUS || 'NÃO PAGO'
+      }));
+    } catch(e) {}
+  }
 }
 
 // ============================================
