@@ -708,10 +708,10 @@ textarea.modal-input{resize:vertical;min-height:60px;}
     <div class="sidebar-nav-list" id="sidebar-nav-list">
       <div class="snav-item active" data-tab="tab-inicio" onclick="navigateTo('tab-inicio')"><span class="si">&#127968;</span><span class="sl">Início</span></div>
       <div class="snav-item" data-tab="tab-real" onclick="navigateTo('tab-real')"><span class="si">&#128293;</span><span class="sl">Real</span></div>
-      <div class="snav-item" data-tab="tab-demandas" onclick="navigateTo('tab-demandas')"><span class="si">&#9889;</span><span class="sl">Demandas</span></div>
+      <div class="snav-item" data-tab="tab-demandas" onclick="navigateTo('tab-demandas')" style="display:none;"><span class="si">&#9889;</span><span class="sl">Demandas</span></div>
       <div class="snav-item" data-tab="tab-agenda" onclick="navigateTo('tab-agenda')"><span class="si">&#128197;</span><span class="sl">Agenda</span></div>
       <div class="snav-item" data-tab="tab-vendas" onclick="navigateTo('tab-vendas')"><span class="si">&#128176;</span><span class="sl">Vendas</span></div>
-      <div class="snav-item" data-tab="tab-unica" onclick="navigateTo('tab-unica')"><span class="si">&#127919;</span><span class="sl">Foco do Dia</span></div>
+      <div class="snav-item" data-tab="tab-unica" onclick="navigateTo('tab-unica')" style="display:none;"><span class="si">&#127919;</span><span class="sl">Foco do Dia</span></div>
       <div class="snav-item" data-tab="tab-pipeline" onclick="navigateTo('tab-pipeline')"><span class="si">&#128203;</span><span class="sl">Meus Clientes</span></div>
       <div class="snav-item" data-tab="tab-equipe" id="snav-equipe" style="display:none;" onclick="navigateTo('tab-equipe')"><span class="si">&#128101;</span><span class="sl">Minha Equipe</span></div>
       <div class="snav-item" data-tab="tab-crm" onclick="navigateTo('tab-crm')"><span class="si">&#128203;</span><span class="sl">CRM</span></div>
@@ -787,7 +787,7 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div class="inicio-kpi-row" id="inicio-kpis"></div>
       <div class="desktop-quick-links" id="desk-quick-links">
         <div class="desktop-ql" onclick="navigateTo('tab-real')"><div class="ql-icon">&#128293;</div><div class="ql-label">Pipeline Real</div><div class="ql-value" id="ql-real">0</div></div>
-        <div class="desktop-ql" onclick="navigateTo('tab-demandas')"><div class="ql-icon">&#9889;</div><div class="ql-label">Demandas Hoje</div><div class="ql-value" id="ql-demandas">0</div></div>
+        <div class="desktop-ql" onclick="navigateTo('tab-demandas')" style="display:none;"><div class="ql-icon">&#9889;</div><div class="ql-label">Demandas Hoje</div><div class="ql-value" id="ql-demandas">0</div></div>
         <div class="desktop-ql" onclick="navigateTo('tab-agenda')"><div class="ql-icon">&#128197;</div><div class="ql-label">Agenda</div><div class="ql-value" id="ql-agenda">0</div></div>
         <div class="desktop-ql" onclick="navigateTo('tab-pipeline')"><div class="ql-icon">&#128203;</div><div class="ql-label">Meus Clientes</div><div class="ql-value" id="ql-clientes">0</div></div>
       </div>
@@ -802,7 +802,7 @@ textarea.modal-input{resize:vertical;min-height:60px;}
         <div class="m-kpi yellow"><div class="v" id="realKpiVgv">R$ 0</div><div class="l">VGV Estimado</div></div>
         <div class="m-kpi blue"><div class="v" id="realKpiDias">0</div><div class="l">Dias Médio</div></div>
       </div>
-      <button onclick="abrirModalReal()" style="width:100%;background:var(--gold);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:14px;">🔥 NOVO CLIENTE QUENTE</button>
+      <button onclick="abrirModalReal()" id="btn-novo-real" style="display:none;width:100%;background:var(--gold);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:14px;">NOVO CLIENTE QUENTE</button>
       <div class="m-filter" id="real-filter">
         <div class="m-filter-btn active" onclick="setRealFiltro('todos')">Todos</div>
         <div class="m-filter-btn" onclick="setRealFiltro('GERANDO')">Gerando</div>
@@ -1085,111 +1085,46 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div id="apres-lista"><div class="loading">Carregando...</div></div>
     </div>
 
-    <!-- TAB: ADMIN CICLO DE VENDAS -->
+    <!-- TAB: ADMIN CICLO DE VENDAS (redesenhado) -->
     <div class="app-page" id="tab-admin-ciclo">
-      <!-- Filtros do Ciclo -->
-      <div class="admin-filter-row" style="margin-bottom:14px;">
-        <select id="ciclo-filtro-mes" onchange="setCicloFiltro('mes',this.value)">
-          <option value="">Todos os meses</option>
-        </select>
-        <select id="ciclo-filtro-corretor" onchange="setCicloFiltro('corretor',this.value)">
-          <option value="">Todos os corretores</option>
-        </select>
-        <select id="ciclo-filtro-acionado" onchange="setCicloFiltro('acionado',this.value)">
-          <option value="">Acionados e Não</option>
-          <option value="S">Acionados</option>
-          <option value="N">Não Acionados</option>
-        </select>
-      </div>
+      <!-- KPIs -->
       <div class="admin-kpi-row">
-        <div class="admin-kpi gold"><div class="ak-val" id="aciclo-vgv-total">R$ 0</div><div class="ak-label">VGV Total Negociado</div></div>
-        <div class="admin-kpi green"><div class="ak-val" id="aciclo-vgv-gerado">R$ 0</div><div class="ak-label">VGV Gerado</div></div>
+        <div class="admin-kpi gold"><div class="ak-val" id="aciclo-aprovados-count">0</div><div class="ak-label">Aprovados Pendentes</div></div>
+        <div class="admin-kpi green"><div class="ak-val" id="aciclo-ativados-count">0</div><div class="ak-label">Ativados no Real</div></div>
         <div class="admin-kpi blue"><div class="ak-val" id="aciclo-vgv-pipeline">R$ 0</div><div class="ak-label">VGV Pipeline</div></div>
-        <div class="admin-kpi red"><div class="ak-val" id="aciclo-vgv-perda">R$ 0</div><div class="ak-label">Perda/Descarte</div></div>
       </div>
-      <!-- KPIs Acionado -->
-      <div class="admin-kpi-row" style="margin-top:-8px;">
-        <div class="admin-kpi green"><div class="ak-val" id="aciclo-vgv-acionado">R$ 0</div><div class="ak-label">VGV Acionado</div></div>
-        <div class="admin-kpi" style="border-bottom:3px solid var(--textL);"><div class="ak-val" id="aciclo-vgv-nacionado">R$ 0</div><div class="ak-label">VGV Não Acionado</div></div>
-      </div>
+      <!-- Secao 1: Aprovados pendentes -->
       <div class="admin-section">
-        <div class="admin-section-hdr">Comissões</div>
-        <div class="comm-cards">
-          <div class="comm-card">
-            <div class="comm-card-label">Negociadas (Pipeline)</div>
-            <div class="comm-card-val" id="aciclo-comm-neg">R$ 0</div>
-            <div class="comm-card-sub" id="aciclo-comm-neg-sub">Projeção sobre Real</div>
-          </div>
-          <div class="comm-card">
-            <div class="comm-card-label">Efetivadas (Vendas)</div>
-            <div class="comm-card-val" id="aciclo-comm-ef">R$ 0</div>
-            <div class="comm-card-sub" id="aciclo-comm-ef-sub">Mês comercial atual</div>
-          </div>
-          <div class="comm-card" id="aciclo-comm-card3">
-            <div class="comm-card-label" id="aciclo-comm-label3">Sua Comissão (Coord)</div>
-            <div class="comm-card-val" id="aciclo-comm-val3">R$ 0</div>
-            <div class="comm-card-sub" id="aciclo-comm-sub3">0.2% sobre equipe</div>
-          </div>
-        </div>
+        <div class="admin-section-hdr">Clientes Aprovados — Pendentes de Ativacao</div>
+        <div id="ciclo-aprovados-list"><div class="loading">Carregando aprovados...</div></div>
       </div>
-      <div class="chart-grid">
-        <div class="chart-box">
-          <div class="chart-box-title">VGV por Corretor</div>
-          <canvas id="chartCorretores"></canvas>
-        </div>
-        <div class="chart-box">
-          <div class="chart-box-title">Distribuição por Status</div>
-          <canvas id="chartStatus"></canvas>
-        </div>
-        <div class="chart-box">
-          <div class="chart-box-title">Evolução Mensal (Vendas)</div>
-          <canvas id="chartMensal"></canvas>
-        </div>
-        <div class="chart-box">
-          <div class="chart-box-title">Top Empreendimentos</div>
-          <canvas id="chartEmpre"></canvas>
-        </div>
-      </div>
+      <!-- Secao 2: Pipeline Real ativados -->
       <div class="admin-section">
-        <div class="admin-section-hdr">Diagnóstico Estratégico</div>
-        <div id="aciclo-diagnostico"></div>
-      </div>
-      <div class="admin-section">
-        <div class="admin-section-hdr">Pipeline Detalhado</div>
+        <div class="admin-section-hdr">Pipeline Real — Clientes Ativados</div>
         <div class="admin-filter-row" style="margin-bottom:10px;">
-          <select id="aciclo-filtro-status" onchange="renderCicloTabela()">
+          <select id="ciclo-real-filtro-corretor" onchange="renderCicloRealSection()">
+            <option value="">Todos os corretores</option>
+          </select>
+          <select id="ciclo-real-filtro-status" onchange="renderCicloRealSection()">
             <option value="">Todos os status</option>
             <option value="GERANDO">GERANDO</option>
             <option value="N GERADO">N GERADO</option>
             <option value="GERADO">GERADO</option>
           </select>
-          <input type="text" id="aciclo-busca" placeholder="Buscar cliente..." oninput="renderCicloTabela()">
         </div>
         <div class="admin-table-wrap">
           <table class="admin-table" id="aciclo-table">
             <thead>
               <tr>
-                <th onclick="sortCiclo('CORRETOR')">Corretor</th>
-                <th onclick="sortCiclo('CLIENTE')">Cliente</th>
-                <th onclick="sortCiclo('VGV_ESTIMADO')">VGV</th>
-                <th onclick="sortCiclo('EMPREENDIMENTO')">Empreendimento</th>
-                <th onclick="sortCiclo('STATUS')">Status</th>
-                <th onclick="sortCiclo('dias')">Dias</th>
-                <th>Acionado</th>
+                <th>Corretor</th>
+                <th>Cliente</th>
+                <th>VGV</th>
+                <th>Status</th>
+                <th>Dias</th>
               </tr>
             </thead>
             <tbody id="aciclo-tbody"></tbody>
           </table>
-        </div>
-        <div class="admin-table-pag">
-          <span id="aciclo-pag-info">-</span>
-          <div style="display:flex;gap:8px;">
-            <button onclick="cicloPage(-1)" id="aciclo-btn-prev">◀ Anterior</button>
-            <button onclick="cicloPage(1)" id="aciclo-btn-next">Próxima ▶</button>
-          </div>
-        </div>
-        <div style="text-align:right;margin-top:8px;">
-          <button onclick="exportarCicloCSV()" style="background:none;border:1px solid var(--border);color:var(--textL);border-radius:6px;padding:6px 14px;font-size:.7rem;cursor:pointer;">Exportar CSV</button>
         </div>
       </div>
     </div>
@@ -1406,7 +1341,7 @@ const PAGE_TITLES = {
   'tab-admin-real': ['Pipeline Real', 'Todos os clientes quentes'],
   'tab-admin-corretores': ['Corretores', 'Gerenciar equipe'],
   'tab-admin-presenca': ['Presença', 'Check-in e 945 do time'],
-  'tab-admin-ciclo': ['Ciclo de Vendas', 'Pipeline e comissões'],
+  'tab-admin-ciclo': ['Ciclo de Vendas', 'Aprovados e Pipeline Real'],
   'tab-crm': ['CRM', 'Gestao de clientes'],
 };
 
@@ -1550,12 +1485,7 @@ async function fazerLogin() {
   // Montar tabs dinamicamente conforme cargo (mobile)
   let tabsHtml = '';
   tabsHtml += `<div class="tab active" onclick="showTab('tab-inicio', event)">Início</div>`;
-  if (isGerente) {
-    tabsHtml += `<div class="tab" onclick="showTab('tab-demandas', event)">Urgências</div>`;
-  } else {
-    tabsHtml += `<div class="tab" onclick="showTab('tab-demandas', event)">Demandas</div>`;
-  }
-  tabsHtml += `<div class="tab" onclick="showTab('tab-unica', event)">Foco</div>`;
+  tabsHtml += `<div class="tab" onclick="showTab('tab-real', event)">Real</div>`;
   tabsHtml += `<div class="tab" onclick="showTab('tab-agenda', event)">Agenda</div>`;
   tabsHtml += `<div class="tab" onclick="showTab('tab-vendas', event)">Vendas</div>`;
   tabsHtml += `<div class="tab" onclick="toggleMaisMenu()" id="tab-mais" style="position:relative;">+</div>`;
@@ -4128,7 +4058,6 @@ function abrirSideMenu() {
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-real')"><span class="smi-icon">🔥</span> Real</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-agenda')"><span class="smi-icon">📅</span> Agenda</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-vendas')"><span class="smi-icon">💰</span> Vendas</div>`;
-  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-unica')"><span class="smi-icon">🎯</span> Foco do Dia</div>`;
   if (isMaster) items += `<div class="side-menu-item" onclick="sideMenuNav('tab-equipe')"><span class="smi-icon">👥</span> Minha Equipe</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-pipeline')"><span class="smi-icon">📋</span> Meus Clientes</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-crm')"><span class="smi-icon">&#128203;</span> CRM</div>`;
@@ -4538,7 +4467,6 @@ function renderReal() {
         <span class="tag" style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor};">${c.status}</span>
         <div style="display:flex;gap:8px;">
           <button onclick="editarReal('${c.id}')" style="background:none;border:none;color:var(--textL);font-size:1rem;cursor:pointer;">✏️</button>
-          <button onclick="deletarReal('${c.id}')" style="background:none;border:none;color:var(--danger);font-size:1rem;cursor:pointer;">🗑️</button>
         </div>
       </div>
     </div>`;
@@ -5232,118 +5160,222 @@ function setCicloFiltro(campo, valor) {
   renderAdminCiclo();
 }
 
+// Cache de aprovados pendentes
+let CICLO_APROVADOS_CACHE = [];
+
 function renderAdminCiclo() {
   if (!USUARIO) return;
+
+  // Buscar aprovados pendentes da API
+  fetch(API_URL + '?acao=aprovados_pendentes')
+    .then(r => r.json())
+    .then(data => {
+      CICLO_APROVADOS_CACHE = Array.isArray(data) ? data : (data.dados || []);
+      renderCicloAprovados();
+    })
+    .catch(() => {
+      // Fallback: sem dados da API, mostrar vazio
+      CICLO_APROVADOS_CACHE = [];
+      renderCicloAprovados();
+    });
+
+  // Buscar pipeline Real
+  renderCicloRealSection();
+}
+
+function renderCicloAprovados() {
+  const aprovados = CICLO_APROVADOS_CACHE.filter(c => {
+    const status = (c.STATUS || c.status || '').toUpperCase();
+    return status.includes('APROVADO') || status.includes('CONDICIONADO');
+  });
+
+  // KPI: Aprovados Pendentes
+  const elAprov = document.getElementById('aciclo-aprovados-count');
+  if (elAprov) elAprov.textContent = aprovados.length;
+
+  // Atualizar KPI de ativados e VGV do Real
+  renderCicloKpis();
+
+  const container = document.getElementById('ciclo-aprovados-list');
+  if (!container) return;
+
+  if (aprovados.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--textL);font-size:.82rem;">Nenhum cliente aprovado pendente de ativacao.</div>';
+    return;
+  }
+
+  let html = '';
+  aprovados.forEach((c, idx) => {
+    const nome = c.CLIENTE || c.cliente || '-';
+    const corretor = c.CORRETOR || c.corretor || '-';
+    const cpf = c.CPF || c.cpf || '-';
+    const telefone = c.TELEFONE || c.telefone || '-';
+    const status = c.STATUS || c.status || 'APROVADO';
+    const valorAprov = c.VALOR_APROVADO || c['VALOR APROVADO'] || c.valor_aprovado || '-';
+    const regiao = c.REGIAO || c['REGIÃO'] || c.regiao || '-';
+    const statusColor = status.toUpperCase().includes('CONDICIONADO') ? 'var(--warning)' : 'var(--success)';
+    const statusBg = status.toUpperCase().includes('CONDICIONADO') ? 'rgba(255,167,38,.1)' : 'rgba(0,230,118,.1)';
+    const idSafe = String(idx);
+
+    html += `<div class="m-client" style="border-left:4px solid ${statusColor};margin-bottom:10px;" id="ciclo-aprov-card-${idSafe}">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div class="m-client-name">${nome}</div>
+          <div style="font-size:.72rem;color:var(--textL);margin-top:2px;">${corretor}</div>
+        </div>
+        <span class="tag" style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor};">${status}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:8px 0;font-size:.72rem;color:var(--textL);">
+        <div>CPF: <span style="color:var(--text);">${cpf}</span></div>
+        <div>Tel: <span style="color:var(--text);">${telefone}</span></div>
+        <div>Valor Aprovado: <span style="color:var(--accent);">${valorAprov}</span></div>
+        <div>Regiao: <span style="color:var(--text);">${regiao}</span></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;">
+        <div style="flex:1;">
+          <label style="font-size:.65rem;color:var(--textL);display:block;margin-bottom:2px;">VGV Estimado</label>
+          <input type="text" id="ciclo-vgv-${idSafe}" value="R$ 200.000" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.8rem;outline:none;">
+        </div>
+        <button onclick="ativarClienteReal(${idSafe})" style="background:var(--success);color:#000;border:none;border-radius:8px;padding:10px 18px;font-size:.78rem;font-weight:800;cursor:pointer;white-space:nowrap;margin-top:14px;touch-action:manipulation;">ATIVAR</button>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+async function ativarClienteReal(idx) {
+  const c = CICLO_APROVADOS_CACHE.filter(cl => {
+    const st = (cl.STATUS || cl.status || '').toUpperCase();
+    return st.includes('APROVADO') || st.includes('CONDICIONADO');
+  })[idx];
+  if (!c) { alert('Cliente nao encontrado.'); return; }
+
+  const vgvInput = document.getElementById('ciclo-vgv-' + idx);
+  const vgvVal = vgvInput ? parseVgvInput(vgvInput.value) : 200000;
+  if (!vgvVal) { alert('Informe um VGV valido.'); return; }
+
+  const nome = c.CLIENTE || c.cliente || '';
+  const corretor = c.CORRETOR || c.corretor || '';
+  const telefone = c.TELEFONE || c.telefone || '';
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Enviar POST para ativar no Real
+  const payload = JSON.stringify({
+    acao: 'ativar_cliente_real',
+    CORRETOR: corretor,
+    CLIENTE: nome,
+    TELEFONE: telefone,
+    VGV_ESTIMADO: vgvVal,
+    STATUS: 'GERANDO',
+    DATA_ENTRADA: hoje,
+    CPF: c.CPF || c.cpf || ''
+  });
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: payload,
+      mode: 'no-cors'
+    });
+  } catch(e) {}
+
+  // Fallback: tambem adicionar via GET add_real
+  try {
+    const params = new URLSearchParams({
+      acao: 'add_real', dt: hoje, corretor: corretor, cliente: nome,
+      telefone: telefone, vgv: vgvVal, emp: '', construtora: '',
+      status: 'GERANDO', pendencia: '', entrada: hoje, comissao: 'NAO PAGO'
+    });
+    await fetch(API_URL + '?' + params.toString());
+  } catch(e) {}
+
+  // Remover card visualmente
+  const card = document.getElementById('ciclo-aprov-card-' + idx);
+  if (card) {
+    card.style.transition = 'opacity .3s, transform .3s';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(40px)';
+    setTimeout(() => card.remove(), 300);
+  }
+
+  // Atualizar contadores
+  const elAprov = document.getElementById('aciclo-aprovados-count');
+  if (elAprov) {
+    const atual = parseInt(elAprov.textContent) || 0;
+    elAprov.textContent = Math.max(0, atual - 1);
+  }
+
+  mostrarConfirmacao('Cliente ativado no Real!');
+
+  // Recarregar Real apos 1s
+  setTimeout(() => {
+    renderCicloRealSection();
+    renderReal();
+  }, 1000);
+}
+
+function renderCicloKpis() {
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
-  const baseTeam = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const ativados = teamReal.filter(c => (c.status || c.STATUS) !== 'GERADO');
+  const vgvPipeline = teamReal.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+
+  const elAtiv = document.getElementById('aciclo-ativados-count');
+  if (elAtiv) elAtiv.textContent = ativados.length;
+  const elVgv = document.getElementById('aciclo-vgv-pipeline');
+  if (elVgv) elVgv.textContent = fmtMoney(vgvPipeline);
+}
+
+function renderCicloRealSection() {
+  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
+  let teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
 
   // Popular filtro de corretores
-  const selCorr = document.getElementById('ciclo-filtro-corretor');
+  const selCorr = document.getElementById('ciclo-real-filtro-corretor');
   if (selCorr) {
-    const corrAtual = selCorr.value || CICLO_FILTRO_CORRETOR;
-    const corretoresUniq = [...new Set(baseTeam.map(c => (c.corretor || c.CORRETOR || '').trim()).filter(Boolean))].sort();
-    selCorr.innerHTML = '<option value="">Todos corretores</option>' + corretoresUniq.map(n => `<option value="${n}"${n === corrAtual ? ' selected' : ''}>${n}</option>`).join('');
-    CICLO_FILTRO_CORRETOR = corrAtual;
+    const corrAtual = selCorr.value;
+    const corretoresUniq = [...new Set(teamReal.map(c => (c.corretor || c.CORRETOR || '').trim()).filter(Boolean))].sort();
+    const opts = '<option value="">Todos os corretores</option>' + corretoresUniq.map(n => `<option value="${n}"${n === corrAtual ? ' selected' : ''}>${n}</option>`).join('');
+    if (selCorr.innerHTML !== opts) selCorr.innerHTML = opts;
+    if (corrAtual) teamReal = teamReal.filter(c => (c.corretor || c.CORRETOR || '').trim() === corrAtual);
   }
 
-  // Popular filtro de meses (da data de entrada)
-  const selMes = document.getElementById('ciclo-filtro-mes');
-  if (selMes) {
-    const mesAtualFiltro = selMes.value || CICLO_FILTRO_MES;
-    const mesesUniq = [...new Set(baseTeam.map(c => {
-      const d = c.dataEntrada || c.DATA_ENTRADA || c.DATA || '';
-      return String(d).substring(0, 7);
-    }).filter(m => m && m.length === 7))].sort().reverse();
-    selMes.innerHTML = '<option value="">Todos os meses</option>' + mesesUniq.map(m => `<option value="${m}"${m === mesAtualFiltro ? ' selected' : ''}>${m}</option>`).join('');
-    CICLO_FILTRO_MES = mesAtualFiltro;
+  // Filtro de status
+  const selSt = document.getElementById('ciclo-real-filtro-status');
+  if (selSt && selSt.value) {
+    teamReal = teamReal.filter(c => (c.status || c.STATUS) === selSt.value);
   }
 
-  // Sincronizar filtro acionado
-  const selAc = document.getElementById('ciclo-filtro-acionado');
-  if (selAc && !selAc.dataset.init) {
-    selAc.value = CICLO_FILTRO_ACIONADO;
-    selAc.dataset.init = '1';
-  }
+  // Ordenar: N GERADO primeiro, depois GERANDO, depois GERADO
+  const ordem = { 'N GERADO': 0, 'GERANDO': 1, 'GERADO': 2 };
+  teamReal.sort((a, b) => (ordem[a.status || a.STATUS] || 1) - (ordem[b.status || b.STATUS] || 1));
 
-  // Aplicar filtros ao teamReal
-  let teamReal = [...baseTeam];
-  if (CICLO_FILTRO_CORRETOR) teamReal = teamReal.filter(c => (c.corretor || c.CORRETOR || '').trim() === CICLO_FILTRO_CORRETOR);
-  if (CICLO_FILTRO_MES) teamReal = teamReal.filter(c => {
-    const d = c.dataEntrada || c.DATA_ENTRADA || c.DATA || '';
-    return String(d).substring(0, 7) === CICLO_FILTRO_MES;
+  // Atualizar KPIs
+  renderCicloKpis();
+
+  let tbody = '';
+  teamReal.forEach(c => {
+    const status = c.status || c.STATUS || '-';
+    const statusColor = status === 'GERADO' ? 'var(--success)' : status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
+    const dias = calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '');
+    const diasColor = dias < 7 ? 'var(--success)' : dias < 15 ? 'var(--warning)' : 'var(--danger)';
+    const corrNome = (c.corretor || c.CORRETOR || '').trim();
+    const clienteNome = (c.nome || c.CLIENTE || '').trim();
+    const vgv = parseFloat(c.vgv || c.VGV_ESTIMADO) || 0;
+    const rowBg = dias >= 30 ? ' style="background:rgba(255,80,80,0.08);"' : '';
+
+    tbody += `<tr${rowBg}>
+      <td>${corrNome.split(' ')[0]}</td>
+      <td>${clienteNome}</td>
+      <td>${fmtMoney(vgv)}</td>
+      <td><span style="color:${statusColor};font-weight:700;">${status}</span></td>
+      <td><span style="color:${diasColor};font-weight:700;">${dias}d</span></td>
+    </tr>`;
   });
-  if (CICLO_FILTRO_ACIONADO) teamReal = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S') === CICLO_FILTRO_ACIONADO);
 
-  const mesAtual = getMesComercialAtualStr();
-  const vendasAdmin = getAdminVendas();
-  const vendasMes = vendasAdmin.filter(v =>
-    String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual &&
-    !(v.STATUS_VENDA || '').includes('Distrato')
-  );
-
-  // KPIs
-  const vgvTotal = teamReal.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
-  const vgvGerado = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
-  const vgvPipeline = teamReal
-    .filter(c => (c.status || c.STATUS) !== 'GERADO' && (c.status || c.STATUS) !== 'N GERADO')
-    .reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
-  const vgvPerda = teamReal
-    .filter(c => (c.status || c.STATUS) === 'N GERADO')
-    .reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
-
-  document.getElementById('aciclo-vgv-total').textContent = fmtMoney(vgvTotal);
-  document.getElementById('aciclo-vgv-gerado').textContent = fmtMoney(vgvGerado);
-  document.getElementById('aciclo-vgv-pipeline').textContent = fmtMoney(vgvPipeline);
-  document.getElementById('aciclo-vgv-perda').textContent = fmtMoney(vgvPerda);
-
-  // KPIs Acionado
-  const vgvAcionado = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S') === 'S').reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
-  const vgvNacionado = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S') === 'N').reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
-  const elAcionado = document.getElementById('aciclo-vgv-acionado');
-  const elNacionado = document.getElementById('aciclo-vgv-nacionado');
-  if (elAcionado) elAcionado.textContent = fmtMoney(vgvAcionado);
-  if (elNacionado) elNacionado.textContent = fmtMoney(vgvNacionado);
-
-  // Comissões
-  const commNeg = vgvPipeline * 0.017 * 0.86;
-  const commEf = vgvGerado * 0.017 * 0.86;
-
-  // Comissão do usuário logado (coord ou gerente)
-  let commPropria = 0;
-  const nomeUp = USUARIO.NOME.toUpperCase();
-  if (USUARIO.CARGO === 'Coordenador') {
-    // Venda da equipe (0.2%) + próprias (1.9%)
-    vendasMes.forEach(v => {
-      const corrUp = (v.CORRETOR || '').toUpperCase().trim();
-      const ehPropria = corrUp === nomeUp || corrUp.includes(nomeUp) || nomeUp.includes(corrUp);
-      commPropria += calcComissaoAdmin(parseFloat(v.VGV) || 0, 'Coordenador', ehPropria);
-    });
-    document.getElementById('aciclo-comm-label3').textContent = 'Sua Comissão (Coord)';
-    document.getElementById('aciclo-comm-sub3').textContent = '0.2% equipe / 1.9% própria';
-  } else if (USUARIO.CARGO === 'Gerente') {
-    vendasAdmin.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual).forEach(v => {
-      const corrUp = (v.CORRETOR || '').toUpperCase().trim();
-      const ehPropria = corrUp === nomeUp || corrUp.includes(nomeUp) || nomeUp.includes(corrUp);
-      commPropria += calcComissaoAdmin(parseFloat(v.VGV) || 0, 'Gerente', ehPropria);
-    });
-    document.getElementById('aciclo-comm-label3').textContent = 'Sua Comissão (Gerente)';
-    document.getElementById('aciclo-comm-sub3').textContent = '0.5% sobre tudo / 2.4% própria';
-  }
-
-  document.getElementById('aciclo-comm-neg').textContent = fmtMoneyFull(commNeg);
-  document.getElementById('aciclo-comm-neg-sub').textContent = `Projeção sobre ${teamReal.filter(c => (c.status || c.STATUS) === 'GERANDO').length} clientes gerando`;
-  document.getElementById('aciclo-comm-ef').textContent = fmtMoneyFull(commEf);
-  document.getElementById('aciclo-comm-ef-sub').textContent = `${vendasMes.length} vendas no mês comercial`;
-  document.getElementById('aciclo-comm-val3').textContent = fmtMoneyFull(commPropria);
-
-  // Diagnóstico
-  renderCicloDiagnostico(teamReal, vendasMes);
-
-  // Gráficos
-  renderCicloCharts(teamReal, vendasAdmin);
-
-  // Tabela
-  renderCicloTabela();
+  const tbodyEl = document.getElementById('aciclo-tbody');
+  if (tbodyEl) tbodyEl.innerHTML = tbody || '<tr><td colspan="5" style="text-align:center;color:var(--textL);padding:20px;">Nenhum cliente ativado no Real.</td></tr>';
 }
 
 function renderCicloDiagnostico(teamReal, vendasMes) {

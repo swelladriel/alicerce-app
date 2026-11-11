@@ -239,6 +239,9 @@ function doGet(e) {
         'ACIONADO': e.parameter.acionado || 'S'
       }]);
       break;
+    case 'aprovados_pendentes':
+      resultado = obterAprovadosPendentes();
+      break;
     default:
       resultado = { erro: 'Ação não reconhecida. Use: clientes, corretores, registros, demandas, unica, reunioes, empreendimentos, real, tudo' };
   }
@@ -351,6 +354,12 @@ function doPost(e) {
         break;
       case 'deletar_real':
         resultado = deletarReal(dados.corretor, dados.cliente);
+        break;
+      case 'ativar_cliente_real':
+        resultado = ativarClienteReal(dados);
+        break;
+      case 'limpar_real_total':
+        resultado = limparReal();
         break;
       default:
         resultado = { erro: 'Ação POST não reconhecida.' };
@@ -2306,13 +2315,67 @@ function sincronizarVendasSwell() {
     Logger.log('Pagina vendas: ' + html.length + ' chars');
 
     // Passo 3: Extrair JSON de vendas do RSC payload
-    const rowsMatch = html.match(/"rows":\[(\{.*?\}(?:,\{.*?\})*)\]/);
-    if (!rowsMatch) {
-      Logger.log('ERRO: Nao encontrou rows na pagina');
+    // Os dados vem escapados dentro de self.__next_f.push([1,"..."])
+    // Entao "rows" aparece como \"rows\" no HTML bruto
+    // Tentar ambos os formatos
+    let startMarker = '"rows":[{';
+    let startIdx = html.indexOf(startMarker);
+    let escaped = false;
+
+    if (startIdx === -1) {
+      // Tentar formato escapado
+      startMarker = '\\"rows\\":[{';
+      startIdx = html.indexOf(startMarker);
+      if (startIdx === -1) {
+        startMarker = '\\u0022rows\\u0022:[{';
+        startIdx = html.indexOf(startMarker);
+      }
+      if (startIdx !== -1) escaped = true;
+    }
+
+    if (startIdx === -1) {
+      // Debug: mostrar trecho onde "rows" aparece
+      const ri = html.indexOf('rows');
+      Logger.log('ERRO: Nao encontrou rows. indexOf("rows")=' + ri);
+      if (ri > -1) Logger.log('Contexto: ' + html.substring(ri - 20, ri + 100));
       return { erro: 'Sem dados de vendas na pagina' };
     }
 
-    const vendas = JSON.parse('[' + rowsMatch[1] + ']');
+    Logger.log('rows encontrado na posicao ' + startIdx + ' (escaped=' + escaped + ')');
+
+    // Extrair o trecho do array
+    let rawChunk = '';
+    if (escaped) {
+      // Pegar do inicio do array ate o fechamento
+      const arrayStart = startIdx + startMarker.length - 2; // volta pro [{
+      let depth = 0;
+      let endPos = arrayStart;
+      for (let i = arrayStart; i < html.length && i < arrayStart + 200000; i++) {
+        const ch = html[i];
+        if (ch === '[') depth++;
+        if (ch === ']') { depth--; if (depth === 0) { endPos = i + 1; break; } }
+      }
+      rawChunk = html.substring(arrayStart, endPos);
+      // Desescapar: \" -> " e \\ -> \
+      rawChunk = rawChunk.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    } else {
+      const arrayStart = startIdx + '"rows":'.length;
+      let depth = 0;
+      let endPos = arrayStart;
+      for (let i = arrayStart; i < html.length && i < arrayStart + 200000; i++) {
+        if (html[i] === '[') depth++;
+        if (html[i] === ']') { depth--; if (depth === 0) { endPos = i + 1; break; } }
+      }
+      rawChunk = html.substring(arrayStart, endPos);
+    }
+
+    let vendas;
+    try {
+      vendas = JSON.parse(rawChunk);
+    } catch(pe) {
+      Logger.log('ERRO parse JSON: ' + pe.message + ' | Trecho: ' + rawChunk.substring(0, 300));
+      return { erro: 'Erro ao parsear vendas: ' + pe.message };
+    }
     Logger.log('Vendas encontradas: ' + vendas.length);
 
     // Passo 4: Gravar na aba SwellVendas
@@ -2378,4 +2441,163 @@ function configurarTriggerSwell() {
     .nearMinute(30)
     .create();
   Logger.log('Trigger Swell configurado: diario as 8:30');
+}
+
+// ============================================
+// SEPARAR CLIENTES — Mover sem CPF pra aba Agendamentos
+// Rodar UMA VEZ no editor (Play)
+// ============================================
+function separarClientesAgendamentos() {
+  const ss = SpreadsheetApp.openById(PLANILHA_ID);
+  const abaClientes = ss.getSheetByName('Clientes');
+  if (!abaClientes) { Logger.log('ERRO: Aba Clientes nao encontrada'); return; }
+
+  const dados = abaClientes.getDataRange().getValues();
+  const headers = dados[0];
+  const cpfCol = headers.indexOf('CPF');
+  if (cpfCol === -1) { Logger.log('ERRO: Coluna CPF nao encontrada'); return; }
+
+  Logger.log('Total de linhas (sem header): ' + (dados.length - 1));
+  Logger.log('Coluna CPF: indice ' + cpfCol);
+
+  // Separar: com CPF = pasta, sem CPF = agendamento
+  const pastas = [];
+  const agendamentos = [];
+
+  for (let i = 1; i < dados.length; i++) {
+    const cpf = String(dados[i][cpfCol] || '').trim();
+    // CPF valido: tem pelo menos 11 digitos numericos
+    const cpfLimpo = cpf.replace(/\D/g, '');
+    if (cpfLimpo.length >= 11) {
+      pastas.push(dados[i]);
+    } else {
+      agendamentos.push(dados[i]);
+    }
+  }
+
+  Logger.log('Pastas (com CPF): ' + pastas.length);
+  Logger.log('Agendamentos (sem CPF): ' + agendamentos.length);
+
+  if (agendamentos.length === 0) {
+    Logger.log('Nenhum agendamento pra mover. Tudo ja tem CPF.');
+    return;
+  }
+
+  // Criar ou limpar aba Agendamentos
+  let abaAg = ss.getSheetByName('Agendamentos');
+  if (!abaAg) {
+    abaAg = ss.insertSheet('Agendamentos');
+    Logger.log('Aba Agendamentos criada');
+  } else {
+    abaAg.clear();
+    Logger.log('Aba Agendamentos limpa');
+  }
+
+  // Gravar headers + agendamentos
+  abaAg.getRange(1, 1, 1, headers.length).setValues([headers]);
+  if (agendamentos.length > 0) {
+    abaAg.getRange(2, 1, agendamentos.length, headers.length).setValues(agendamentos);
+  }
+  Logger.log('Agendamentos gravados: ' + agendamentos.length);
+
+  // Reescrever aba Clientes so com pastas
+  abaClientes.clear();
+  abaClientes.getRange(1, 1, 1, headers.length).setValues([headers]);
+  if (pastas.length > 0) {
+    abaClientes.getRange(2, 1, pastas.length, headers.length).setValues(pastas);
+  }
+  Logger.log('Clientes (pastas) restantes: ' + pastas.length);
+  Logger.log('SEPARACAO CONCLUIDA! Clientes=' + pastas.length + ' | Agendamentos=' + agendamentos.length);
+}
+
+// ============================================
+// LIMPAR REAL — apaga todos os dados da aba Real (mantém cabeçalho)
+// ============================================
+function limparReal() {
+  const ss = SpreadsheetApp.openById(PLANILHA_ID);
+  const aba = ss.getSheetByName('Real');
+  if (!aba) return { erro: 'Aba Real não encontrada' };
+
+  const ultimaLinha = aba.getLastRow();
+  if (ultimaLinha <= 1) {
+    Logger.log('Aba Real já está vazia (só cabeçalho).');
+    return { sucesso: true, removidos: 0, msg: 'Aba Real já estava vazia' };
+  }
+
+  const linhasRemover = ultimaLinha - 1;
+  aba.deleteRows(2, linhasRemover);
+  Logger.log('limparReal: removidas ' + linhasRemover + ' linhas da aba Real.');
+  return { sucesso: true, removidos: linhasRemover, msg: linhasRemover + ' linhas removidas da aba Real' };
+}
+
+// ============================================
+// OBTER APROVADOS PENDENTES — clientes APROVADO/APROVADO-CONDICIONADO que ainda não estão no Real
+// ============================================
+function obterAprovadosPendentes() {
+  const clientes = lerAba('Clientes');
+  const real = lerAba('Real');
+
+  // Montar conjunto de identificadores já no Real (CPF e nome)
+  const cpfsNoReal = new Set();
+  const nomesNoReal = new Set();
+  real.forEach(function(r) {
+    if (r.CLIENTE) nomesNoReal.add(String(r.CLIENTE).trim().toUpperCase());
+  });
+
+  // Buscar CPF na aba Clientes para cruzar com Real
+  // A aba Real não tem CPF diretamente — cruzamos por nome do cliente
+  const aprovados = clientes.filter(function(c) {
+    const status = String(c.STATUS || '').trim().toUpperCase();
+    const isAprovado = status === 'APROVADO' || status === 'APROVADO - CONDICIONADO';
+    if (!isAprovado) return false;
+    const nomeCliente = String(c.CLIENTE || '').trim().toUpperCase();
+    return !nomesNoReal.has(nomeCliente);
+  });
+
+  return aprovados.map(function(c) {
+    return {
+      CORRETOR: c.CORRETOR || '',
+      CLIENTE: c.CLIENTE || '',
+      CPF: c.CPF || '',
+      TELEFONE: c.TELEFONE || '',
+      EMAIL: c.EMAIL || '',
+      RENDA: c.RENDA || '',
+      VALOR_APROVADO: c['VALOR APROVADO'] || '',
+      STATUS: c.STATUS || '',
+      REGIAO: c['REGIÃO'] || c.REGIAO || '',
+      DATA_CRIACAO: c['DATA CRIAÇÃO'] || c['DATA CRIACAO'] || ''
+    };
+  });
+}
+
+// ============================================
+// ATIVAR CLIENTE REAL — cria entrada no pipeline Real a partir de cliente aprovado
+// ============================================
+function ativarClienteReal(dados) {
+  if (!dados.cliente) return { erro: 'Campo "cliente" obrigatório' };
+
+  const hoje = new Date();
+  hoje.setHours(hoje.getHours() - 3); // UTC-3 Brasília
+  const hojeStr = hoje.toISOString().split('T')[0];
+
+  const novaLinha = {
+    'DATA': hojeStr,
+    'CORRETOR': dados.corretor || '',
+    'CLIENTE': dados.cliente || '',
+    'TELEFONE': dados.telefone || '',
+    'VGV_ESTIMADO': dados.vgv || 200000,
+    'EMPREENDIMENTO': '',
+    'CONSTRUTORA': '',
+    'STATUS': 'GERANDO',
+    'PENDENCIA': '',
+    'DATA_ENTRADA': hojeStr,
+    'COMISSAO_STATUS': 'NÃO PAGO',
+    'ACIONADO': 'S'
+  };
+
+  const resultado = adicionarLinhas('Real', [novaLinha]);
+  if (resultado.sucesso) {
+    Logger.log('ativarClienteReal: ' + dados.cliente + ' adicionado ao Real por ' + dados.corretor);
+  }
+  return resultado;
 }
