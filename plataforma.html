@@ -921,30 +921,13 @@ function renderSwell() {
   }
 }
 
-async function atualizarDoSwell() {
-  const btn = document.getElementById('btn-sync-swell');
+function atualizarDoSwell() {
   const info = document.getElementById('swell-sync-info');
-  btn.disabled = true;
-  btn.textContent = '⏳ Atualizando...';
-  info.textContent = 'Buscando dados do portal Swell...';
-
-  try {
-    const res = await fetch(API_URL + '?acao=swell');
-    const json = await res.json();
-    if (json.dados) {
-      SWELL_DATA = json.dados;
-      info.textContent = 'Última sync: ' + (json.atualizado_em || '—');
-      renderSwell();
-    } else {
-      info.textContent = 'Sem dados ainda — peça sync ao Claude Code';
-      renderSwell();
-    }
-  } catch(e) {
-    info.textContent = 'Erro ao buscar dados do Swell';
-    console.error('Erro Swell:', e);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '↻ Atualizar';
+  if (SWELL_DATA) {
+    info.textContent = 'Última sync: ' + (SWELL_DATA.atualizado_em || '—');
+    renderSwell();
+  } else {
+    info.textContent = 'Sem dados do Swell ainda';
   }
 }
 
