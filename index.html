@@ -4199,7 +4199,7 @@ function renderInicioGestor() {
     </div>
 
     <!-- Status Swell -->
-    ${SWELL_DATA ? `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;">
+    ${SWELL_DATA ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
       <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
         <div style="font-size:1.1rem;font-weight:900;color:#22c55e;">${SWELL_DATA.vendas_competencia?.total_geral?.validadas?.vendas || 0}</div>
         <div style="font-size:.55rem;color:var(--textL);text-transform:uppercase;">Validadas</div>
@@ -4211,10 +4211,6 @@ function renderInicioGestor() {
       <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
         <div style="font-size:1.1rem;font-weight:900;color:#ef4444;">${SWELL_DATA.vendas_competencia?.total_geral?.devolvidas?.vendas || 0}</div>
         <div style="font-size:.55rem;color:var(--textL);text-transform:uppercase;">Devolvidas</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
-        <div style="font-size:1.1rem;font-weight:900;color:var(--accent);">${SWELL_DATA.apuracao?.concluidas || 0}/${SWELL_DATA.apuracao?.apuracoes || 0}</div>
-        <div style="font-size:.55rem;color:var(--textL);text-transform:uppercase;">Apurações</div>
       </div>
     </div>
     <div style="text-align:right;margin:-10px 0 12px;font-size:.55rem;color:var(--textL);">Swell · ${SWELL_DATA.atualizado_em || ''}</div>` : ''}
