@@ -275,6 +275,9 @@ function doPost(e) {
       case 'adicionar_venda':
         resultado = adicionarLinhas('Vendas', dados.vendas);
         break;
+      case 'atualizar_venda':
+        resultado = atualizarVenda(dados.busca, dados.campos);
+        break;
       case 'adicionar_corretor':
         resultado = adicionarLinhas('Corretores', dados.corretores);
         break;
@@ -472,6 +475,43 @@ function atualizarAgenda(busca, campos) {
   }
 
   return { erro: 'Agendamento não encontrado' };
+}
+
+// ============================================
+// ATUALIZAR VENDA POR CLIENTE + MES_COMERCIAL
+// ============================================
+function atualizarVenda(busca, campos) {
+  if (!busca || !campos) return { erro: 'Busca e campos obrigatórios' };
+
+  const ss = SpreadsheetApp.openById(PLANILHA_ID);
+  const aba = ss.getSheetByName('Vendas');
+  if (!aba) return { erro: 'Aba Vendas não encontrada' };
+
+  const dados = aba.getDataRange().getValues();
+  const cabecalho = dados[0].map(c => String(c).trim());
+
+  for (let i = 1; i < dados.length; i++) {
+    let match = true;
+    Object.keys(busca).forEach(campo => {
+      const colIdx = cabecalho.indexOf(campo);
+      if (colIdx < 0) { match = false; return; }
+      const valorPlanilha = String(dados[i][colIdx] || '').trim().toUpperCase();
+      const valorBusca = String(busca[campo] || '').trim().toUpperCase();
+      if (!valorPlanilha.includes(valorBusca) && !valorBusca.includes(valorPlanilha)) match = false;
+    });
+
+    if (match) {
+      Object.keys(campos).forEach(campo => {
+        const colIdx = cabecalho.indexOf(campo);
+        if (colIdx >= 0) {
+          aba.getRange(i + 1, colIdx + 1).setValue(campos[campo]);
+        }
+      });
+      return { sucesso: true, linha: i + 1, cliente: String(dados[i][cabecalho.indexOf('CLIENTE')] || '') };
+    }
+  }
+
+  return { erro: 'Venda não encontrada', busca: busca };
 }
 
 // ============================================
