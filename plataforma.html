@@ -837,6 +837,118 @@ function toggleSidebar() {
 }
 
 // ============================================
+// PORTAL SWELL
+// ============================================
+let SWELL_DATA = null;
+
+function renderSwell() {
+  const kpi = document.getElementById('kpi-swell');
+  const tbVendas = document.getElementById('tb-swell-vendas');
+  const tbDetalhe = document.getElementById('tb-swell-detalhe');
+  if (!SWELL_DATA) {
+    kpi.innerHTML = '<div style="text-align:center;padding:20px;color:var(--textL);">Nenhum dado do Swell ainda. Clique em "Atualizar".</div>';
+    tbVendas.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--textL);">—</td></tr>';
+    tbDetalhe.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--textL);">—</td></tr>';
+    return;
+  }
+
+  const d = SWELL_DATA;
+  const vc = d.vendas_competencia || {};
+  const ap = d.apuracao || {};
+  const co = d.consorcio || {};
+  const vendas = d.vendas_lista || [];
+  const totalG = vc.total_geral || {};
+
+  // KPIs
+  kpi.innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Vendas no Mês</div><div class="kpi-value">${totalG.total?.vendas || 0}</div></div>
+    <div class="kpi-card"><div class="kpi-label">VGV Total</div><div class="kpi-value">${totalG.total?.vgv || 'R$ 0'}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Validadas</div><div class="kpi-value" style="color:#22c55e;">${totalG.validadas?.vendas || 0}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Lançadas</div><div class="kpi-value" style="color:#f59e0b;">${totalG.lancadas?.vendas || 0}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Devolvidas</div><div class="kpi-value" style="color:#ef4444;">${totalG.devolvidas?.vendas || 0}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Apurações</div><div class="kpi-value">${ap.apuracoes || 0}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Apurações Concluídas</div><div class="kpi-value" style="color:#22c55e;">${ap.concluidas || 0}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Consórcio (cotas)</div><div class="kpi-value">${co.cotas || 0}</div></div>
+  `;
+
+  // Tabela por corretor
+  const grupos = vc.grupos || [];
+  if (grupos.length === 0) {
+    tbVendas.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--textL);">Nenhuma venda no período</td></tr>';
+  } else {
+    tbVendas.innerHTML = grupos.map(g => `<tr>
+      <td><strong>${g.corretor}</strong></td>
+      <td>${g.lancadas?.vendas || 0}</td>
+      <td>${g.aguardando_validacao?.vendas || 0}</td>
+      <td>${g.devolvidas?.vendas || 0}</td>
+      <td style="color:#22c55e;font-weight:600;">${g.validadas?.vendas || 0}</td>
+      <td style="color:#ef4444;">${g.distratadas?.vendas || 0}</td>
+      <td><strong>${g.total?.vendas || 0}</strong></td>
+      <td><strong>${g.total?.vgv || 'R$ 0'}</strong></td>
+    </tr>`).join('') + `<tr style="background:rgba(255,255,255,.05);font-weight:700;">
+      <td>TOTAL</td>
+      <td>${totalG.lancadas?.vendas || 0}</td>
+      <td>${totalG.aguardando_validacao?.vendas || 0}</td>
+      <td>${totalG.devolvidas?.vendas || 0}</td>
+      <td style="color:#22c55e;">${totalG.validadas?.vendas || 0}</td>
+      <td style="color:#ef4444;">${totalG.distratadas?.vendas || 0}</td>
+      <td>${totalG.total?.vendas || 0}</td>
+      <td>${totalG.total?.vgv || 'R$ 0'}</td>
+    </tr>`;
+  }
+
+  // Detalhamento
+  if (vendas.length === 0) {
+    tbDetalhe.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--textL);">Nenhuma venda</td></tr>';
+  } else {
+    const statusCor = s => {
+      if (!s) return '';
+      if (s.includes('validada') || s.includes('Validada')) return 'color:#22c55e;';
+      if (s.includes('lançada') || s.includes('Lançada')) return 'color:#f59e0b;';
+      if (s.includes('devolvida') || s.includes('Devolvida')) return 'color:#ef4444;';
+      if (s.includes('distrat')) return 'color:#ef4444;';
+      return '';
+    };
+    tbDetalhe.innerHTML = vendas.map(v => `<tr>
+      <td>${v.data_venda || '—'}</td>
+      <td>${v.cliente || '—'}</td>
+      <td>${v.empreendimento || '—'}</td>
+      <td>${v.construtora || '—'}</td>
+      <td><strong>${v.vgv || '—'}</strong></td>
+      <td>${v.corretor || '—'}</td>
+      <td style="${statusCor(v.situacao)}font-weight:600;">${v.situacao || '—'}</td>
+    </tr>`).join('');
+  }
+}
+
+async function atualizarDoSwell() {
+  const btn = document.getElementById('btn-sync-swell');
+  const info = document.getElementById('swell-sync-info');
+  btn.disabled = true;
+  btn.textContent = '⏳ Atualizando...';
+  info.textContent = 'Buscando dados do portal Swell...';
+
+  try {
+    const res = await fetch(API_URL + '?acao=swell');
+    const json = await res.json();
+    if (json.dados) {
+      SWELL_DATA = json.dados;
+      info.textContent = 'Última sync: ' + (json.atualizado_em || '—');
+      renderSwell();
+    } else {
+      info.textContent = 'Sem dados ainda — peça sync ao Claude Code';
+      renderSwell();
+    }
+  } catch(e) {
+    info.textContent = 'Erro ao buscar dados do Swell';
+    console.error('Erro Swell:', e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Atualizar';
+  }
+}
+
+// ============================================
 // CARREGAR DADOS
 // ============================================
 async function carregarDados() {
