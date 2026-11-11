@@ -1540,10 +1540,29 @@ async function atualizarTudo() {
   const btn = document.getElementById('btn-atualizar');
   btn.textContent = '...';
   btn.disabled = true;
+
+  // Descobrir qual tab esta ativa
+  const tabAtiva = document.querySelector('.app-page.active');
+  const tabId = tabAtiva ? tabAtiva.id : '';
+
   try {
-    await carregarTudo();
-    const isMaster = USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente';
-    if (isMaster) carregarEquipe();
+    // Tabs que precisam re-buscar dados da API
+    const tabsApi = ['tab-inicio', 'tab-vendas', 'tab-real', 'tab-agenda', 'tab-pipeline', 'tab-equipe', 'tab-admin-corretores', 'tab-admin-presenca', 'tab-admin-ciclo'];
+
+    if (tabId === 'tab-crm') {
+      // CRM: recarregar do Google Sheets
+      await crmLoadData();
+      crmRenderBoard();
+    } else if (tabsApi.includes(tabId)) {
+      // Recarregar dados da API e renderizar só a tab ativa
+      await carregarTudo();
+      const isMaster = USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente';
+      if (isMaster) carregarEquipe();
+    } else {
+      // Tab desconhecida: recarregar tudo
+      await carregarTudo();
+    }
+
     btn.textContent = 'Atualizado!';
     setTimeout(() => { btn.textContent = 'Atualizar'; btn.disabled = false; }, 1500);
   } catch(e) {
