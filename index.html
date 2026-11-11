@@ -610,8 +610,6 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div class="snav-item" data-tab="tab-unica" onclick="navigateTo('tab-unica')"><span class="si">&#127919;</span><span class="sl">Foco do Dia</span></div>
       <div class="snav-item" data-tab="tab-pipeline" onclick="navigateTo('tab-pipeline')"><span class="si">&#128203;</span><span class="sl">Meus Clientes</span></div>
       <div class="snav-item" data-tab="tab-equipe" id="snav-equipe" style="display:none;" onclick="navigateTo('tab-equipe')"><span class="si">&#128101;</span><span class="sl">Minha Equipe</span></div>
-      <div class="snav-item snav-admin" data-tab="tab-admin-dash" onclick="navigateTo('tab-admin-dash')" style="display:none;"><span class="si">&#128202;</span><span class="sl">Dashboard</span></div>
-      <div class="snav-item snav-admin" data-tab="tab-admin-vendas" onclick="navigateTo('tab-admin-vendas')" style="display:none;"><span class="si">&#128181;</span><span class="sl">Vendas (Admin)</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-real" onclick="navigateTo('tab-admin-real')" style="display:none;"><span class="si">&#128200;</span><span class="sl">Pipeline (Admin)</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-corretores" onclick="navigateTo('tab-admin-corretores')" style="display:none;"><span class="si">&#128100;</span><span class="sl">Corretores</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-presenca" onclick="navigateTo('tab-admin-presenca')" style="display:none;"><span class="si">&#9201;</span><span class="sl">Presença</span></div>
@@ -795,6 +793,17 @@ textarea.modal-input{resize:vertical;min-height:60px;}
         <div class="m-filter-btn active" onclick="setVendasView('mes')">Este Mês</div>
         <div class="m-filter-btn" onclick="setVendasView('todos')">Histórico</div>
       </div>
+      <!-- Filtros admin (visível só pra coord/gerente via JS) -->
+      <div id="vendas-admin-filtros" style="display:none;margin-bottom:14px;">
+        <div class="admin-filter-row">
+          <select id="vd-filtro-corretor" onchange="renderMinhasVendas()">
+            <option value="">Todos os corretores</option>
+          </select>
+          <select id="vd-filtro-mes-admin" onchange="renderMinhasVendas()">
+            <option value="">Todos os meses</option>
+          </select>
+        </div>
+      </div>
       <div id="vendas-view-mes">
         <div class="m-kpis" id="vd-kpis"></div>
         <div id="vd-comissao" style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:14px;text-align:center;"></div>
@@ -804,6 +813,10 @@ textarea.modal-input{resize:vertical;min-height:60px;}
         <div class="m-kpis" id="hist-kpis"></div>
         <div id="hist-filtro" style="margin-bottom:14px;"></div>
         <div id="hist-lista"><div class="loading">Carregando...</div></div>
+      </div>
+      <!-- Botão Nova Venda (só admin) -->
+      <div id="vendas-add-btn-wrap" style="display:none;margin-top:14px;">
+        <button class="admin-add-btn" style="width:100%;padding:12px;" onclick="abrirModalNovaVenda()">+ Nova Venda</button>
       </div>
     </div>
 
@@ -919,51 +932,6 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       </div>
     </div>
 
-    <!-- TAB: ADMIN DASHBOARD -->
-    <div class="app-page" id="tab-admin-dash">
-      <div class="admin-kpi-row" id="adash-kpis">
-        <div class="admin-kpi blue"><div class="ak-val" id="adash-corretores">0</div><div class="ak-label">Corretores Ativos</div></div>
-        <div class="admin-kpi gold"><div class="ak-val" id="adash-vgv-pipeline">R$ 0</div><div class="ak-label">VGV Pipeline</div></div>
-        <div class="admin-kpi green"><div class="ak-val" id="adash-vendas-mes">0</div><div class="ak-label">Vendas do Mês</div></div>
-        <div class="admin-kpi purple"><div class="ak-val" id="adash-ag-hoje">0</div><div class="ak-label">Agendamentos Hoje</div></div>
-      </div>
-      <div class="admin-section">
-        <div class="admin-section-hdr">Ranking Top 5 — Mês Atual</div>
-        <div id="adash-ranking"><div class="loading">Carregando...</div></div>
-      </div>
-    </div>
-
-    <!-- TAB: ADMIN VENDAS -->
-    <div class="app-page" id="tab-admin-vendas">
-      <div class="admin-kpi-row">
-        <div class="admin-kpi gold"><div class="ak-val" id="avd-vgv">R$ 0</div><div class="ak-label">VGV Total</div></div>
-        <div class="admin-kpi blue"><div class="ak-val" id="avd-qtd">0</div><div class="ak-label">Qtd Vendas</div></div>
-        <div class="admin-kpi green"><div class="ak-val" id="avd-maior">R$ 0</div><div class="ak-label">Maior Venda</div></div>
-        <div class="admin-kpi purple"><div class="ak-val" id="avd-comissao">R$ 0</div><div class="ak-label">Comissão Total</div></div>
-      </div>
-      <div class="admin-section">
-        <div class="admin-section-hdr">
-          Pódio do Mês
-        </div>
-        <div class="admin-podium" id="avd-podium"></div>
-      </div>
-      <div class="admin-section">
-        <div class="admin-section-hdr">
-          Todas as Vendas
-          <button class="admin-add-btn" onclick="abrirModalNovaVenda()">+ Nova Venda</button>
-        </div>
-        <div class="admin-filter-row">
-          <select id="avd-filtro-corretor" onchange="renderAdminVendas()">
-            <option value="">Todos os corretores</option>
-          </select>
-          <select id="avd-filtro-mes" onchange="renderAdminVendas()">
-            <option value="">Todos os meses</option>
-          </select>
-        </div>
-        <div id="avd-lista"><div class="loading">Carregando...</div></div>
-      </div>
-    </div>
-
     <!-- TAB: ADMIN PIPELINE REAL -->
     <div class="app-page" id="tab-admin-real">
       <div class="admin-kpi-row">
@@ -1009,11 +977,30 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 
     <!-- TAB: ADMIN CICLO DE VENDAS -->
     <div class="app-page" id="tab-admin-ciclo">
+      <!-- Filtros do Ciclo -->
+      <div class="admin-filter-row" style="margin-bottom:14px;">
+        <select id="ciclo-filtro-mes" onchange="setCicloFiltro('mes',this.value)">
+          <option value="">Todos os meses</option>
+        </select>
+        <select id="ciclo-filtro-corretor" onchange="setCicloFiltro('corretor',this.value)">
+          <option value="">Todos os corretores</option>
+        </select>
+        <select id="ciclo-filtro-acionado" onchange="setCicloFiltro('acionado',this.value)">
+          <option value="">Acionados e Não</option>
+          <option value="S">Acionados</option>
+          <option value="N">Não Acionados</option>
+        </select>
+      </div>
       <div class="admin-kpi-row">
         <div class="admin-kpi gold"><div class="ak-val" id="aciclo-vgv-total">R$ 0</div><div class="ak-label">VGV Total Negociado</div></div>
         <div class="admin-kpi green"><div class="ak-val" id="aciclo-vgv-gerado">R$ 0</div><div class="ak-label">VGV Gerado</div></div>
         <div class="admin-kpi blue"><div class="ak-val" id="aciclo-vgv-pipeline">R$ 0</div><div class="ak-label">VGV Pipeline</div></div>
         <div class="admin-kpi red"><div class="ak-val" id="aciclo-vgv-perda">R$ 0</div><div class="ak-label">Perda/Descarte</div></div>
+      </div>
+      <!-- KPIs Acionado -->
+      <div class="admin-kpi-row" style="margin-top:-8px;">
+        <div class="admin-kpi green"><div class="ak-val" id="aciclo-vgv-acionado">R$ 0</div><div class="ak-label">VGV Acionado</div></div>
+        <div class="admin-kpi" style="border-bottom:3px solid var(--textL);"><div class="ak-val" id="aciclo-vgv-nacionado">R$ 0</div><div class="ak-label">VGV Não Acionado</div></div>
       </div>
       <div class="admin-section">
         <div class="admin-section-hdr">Comissões</div>
@@ -1078,6 +1065,7 @@ textarea.modal-input{resize:vertical;min-height:60px;}
                 <th onclick="sortCiclo('EMPREENDIMENTO')">Empreendimento</th>
                 <th onclick="sortCiclo('STATUS')">Status</th>
                 <th onclick="sortCiclo('dias')">Dias</th>
+                <th>Acionado</th>
               </tr>
             </thead>
             <tbody id="aciclo-tbody"></tbody>
@@ -1298,8 +1286,6 @@ const PAGE_TITLES = {
   'tab-pipeline': ['Meus Clientes', 'Carteira de clientes'],
   'tab-equipe': ['Minha Equipe', 'Performance da equipe'],
   'tab-registro': ['Registro', 'Check-in e 945'],
-  'tab-admin-dash': ['Dashboard', 'Visão macro do time'],
-  'tab-admin-vendas': ['Vendas', 'Todas as vendas do time'],
   'tab-admin-real': ['Pipeline Real', 'Todos os clientes quentes'],
   'tab-admin-corretores': ['Corretores', 'Gerenciar equipe'],
   'tab-admin-presenca': ['Presença', 'Check-in e 945 do time'],
@@ -1569,8 +1555,6 @@ function showTab(id, e) {
     setRegistroView('checkin');
   }
   if (id === 'tab-inicio') renderInicio();
-  if (id === 'tab-admin-dash') renderAdminDash();
-  if (id === 'tab-admin-vendas') renderAdminVendas();
   if (id === 'tab-admin-real') renderAdminReal();
   if (id === 'tab-admin-corretores') renderAdminCorretores();
   if (id === 'tab-admin-presenca') renderAdminPresenca();
@@ -1620,7 +1604,8 @@ async function carregarTudo() {
     pendencia: r.PENDENCIA || '',
     dataEntrada: String(r.DATA_ENTRADA || r.DATA || '').substring(0, 10),
     corretor: r.CORRETOR || USUARIO.NOME,
-    comissaoStatus: r.COMISSAO_STATUS || 'NÃO PAGO'
+    comissaoStatus: r.COMISSAO_STATUS || 'NÃO PAGO',
+    acionado: r.ACIONADO === 'N' ? 'N' : 'S'
   });
   // ALL_REAL_DATA = todos (pra views admin)
   ALL_REAL_DATA = realAPI.map(mapReal);
@@ -2401,7 +2386,7 @@ function getMesComercialAtual() {
   return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function renderVendaCard(v) {
+function renderVendaCard(v, showCorretor) {
   const valor = parseFloat(v.VGV) || 0;
   const valorFmt = valor ? `R$ ${valor.toLocaleString('pt-BR')}` : '-';
   const comissao = valor ? calcComissao(valor) : 0;
@@ -2418,6 +2403,7 @@ function renderVendaCard(v) {
   }
 
   return `<div class="m-client">
+    ${showCorretor && v.CORRETOR ? `<div style="font-size:.7rem;font-weight:800;color:var(--accent);margin-bottom:3px;">${v.CORRETOR}</div>` : ''}
     <div class="m-client-name">${v.CLIENTE || '-'}</div>
     <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">${v.EMPREENDIMENTO || '-'} — ${v.CONSTRUTORA || ''}</div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -2432,8 +2418,48 @@ function renderVendaCard(v) {
 }
 
 function renderMinhasVendas() {
+  const isGestor = USUARIO && (USUARIO.CARGO === 'Gerente' || USUARIO.CARGO === 'Coordenador');
+
+  // Mostrar/ocultar filtros admin e botão nova venda
+  const filtrosAdmin = document.getElementById('vendas-admin-filtros');
+  const addBtnWrap = document.getElementById('vendas-add-btn-wrap');
+  if (filtrosAdmin) filtrosAdmin.style.display = isGestor ? 'flex' : 'none';
+  if (addBtnWrap) addBtnWrap.style.display = isGestor ? 'block' : 'none';
+
+  let fonteVendas = isGestor ? getAdminVendas() : MINHAS_VENDAS;
+
+  if (isGestor) {
+    // Popular dropdown de corretores
+    const selCorr = document.getElementById('vd-filtro-corretor');
+    if (selCorr) {
+      const corrAtual = selCorr.value;
+      const corretoresUniq = [...new Set(fonteVendas.map(v => (v.CORRETOR || '').trim()).filter(Boolean))].sort();
+      selCorr.innerHTML = '<option value="">Todos corretores</option>' + corretoresUniq.map(n => `<option value="${n}"${n === corrAtual ? ' selected' : ''}>${n.split(' ')[0]}</option>`).join('');
+    }
+    // Popular dropdown de meses
+    const selMes = document.getElementById('vd-filtro-mes-admin');
+    if (selMes) {
+      const mesAtualVal = selMes.value;
+      const mesesUniq = [...new Set(fonteVendas.map(v => String(v.MES_COMERCIAL || '').substring(0, 7)).filter(m => m && m.length === 7))].sort().reverse();
+      const nomesMesOpt = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      selMes.innerHTML = '<option value="">Todos meses</option>' + mesesUniq.map(m => {
+        const [ano, mes] = m.split('-');
+        const lbl = nomesMesOpt[parseInt(mes)] + '/' + ano;
+        return `<option value="${m}"${m === mesAtualVal ? ' selected' : ''}>${lbl}</option>`;
+      }).join('');
+    }
+
+    // Aplicar filtros
+    const corrFiltro = document.getElementById('vd-filtro-corretor') ? document.getElementById('vd-filtro-corretor').value : '';
+    const mesFiltro = document.getElementById('vd-filtro-mes-admin') ? document.getElementById('vd-filtro-mes-admin').value : '';
+    if (corrFiltro) fonteVendas = fonteVendas.filter(v => (v.CORRETOR || '').trim() === corrFiltro);
+    if (mesFiltro) fonteVendas = fonteVendas.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesFiltro);
+  }
+
   const mesAtual = getMesComercialAtual();
-  const vendasMes = MINHAS_VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual);
+  const vendasMes = isGestor
+    ? fonteVendas.filter(v => !(v.STATUS_VENDA || '').includes('Distrato'))
+    : fonteVendas.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual);
 
   const total = vendasMes.length;
   const vgv = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
@@ -2443,8 +2469,8 @@ function renderMinhasVendas() {
   const comissaoTotal = vendasMes.reduce((s, v) => s + calcComissao(parseFloat(v.VGV) || 0), 0);
 
   document.getElementById('vd-kpis').innerHTML = `
-    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Vendas no Mês</div></div>
-    <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV do Mês</div></div>
+    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">${isGestor ? 'Vendas' : 'Vendas no Mês'}</div></div>
+    <div class="m-kpi green"><div class="v">R$ ${(vgv/1000).toFixed(0)}k</div><div class="l">VGV</div></div>
     <div class="m-kpi green"><div class="v">${repassados}</div><div class="l">Repassados</div></div>
     <div class="m-kpi" style="border-bottom:3px solid #f0ad4e;"><div class="v" style="color:#f0ad4e;">${aguardando}</div><div class="l">Aguardando CEF</div></div>
     ${consorcios ? `<div class="m-kpi" style="border-bottom:3px solid #9b59b6;"><div class="v" style="color:#9b59b6;">${consorcios}</div><div class="l">Consórcios</div></div>` : ''}
@@ -2453,20 +2479,20 @@ function renderMinhasVendas() {
   // Card de comissão
   const comFmt = comissaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   document.getElementById('vd-comissao').innerHTML = `
-    <div style="font-size:.65rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Comissão Estimada do Mês</div>
+    <div style="font-size:.65rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">${isGestor ? 'Comissão da Equipe' : 'Comissão Estimada do Mês'}</div>
     <div style="font-size:1.8rem;font-weight:900;color:var(--gold);">R$ ${comFmt}</div>
     <div style="font-size:.6rem;color:var(--textL);margin-top:4px;">VGV × 1.7% − 14%</div>
   `;
 
   if (total === 0) {
-    document.getElementById('vd-lista').innerHTML = '<div class="m-empty">Nenhuma venda este mês.</div>';
+    document.getElementById('vd-lista').innerHTML = `<div class="m-empty">${isGestor ? 'Nenhuma venda encontrada.' : 'Nenhuma venda este mês.'}</div>`;
   } else {
     const lista = [...vendasMes].sort((a, b) => {
-      const da = String(a.DATA_VENDA || '').substring(0, 10);
-      const db = String(b.DATA_VENDA || '').substring(0, 10);
+      const da = String(a.DATA_VENDA || a.MES_COMERCIAL || '').substring(0, 10);
+      const db = String(b.DATA_VENDA || b.MES_COMERCIAL || '').substring(0, 10);
       return db.localeCompare(da);
     });
-    document.getElementById('vd-lista').innerHTML = lista.map(v => renderVendaCard(v)).join('');
+    document.getElementById('vd-lista').innerHTML = lista.map(v => renderVendaCard(v, isGestor)).join('');
   }
 
   // Renderizar histórico sempre
@@ -2479,16 +2505,25 @@ function renderMinhasVendas() {
 let HIST_FILTRO_MES = '';
 
 function renderHistoricoVendas() {
+  const isGestor = USUARIO && (USUARIO.CARGO === 'Gerente' || USUARIO.CARGO === 'Coordenador');
+  const fonteTotal = isGestor ? getAdminVendas() : MINHAS_VENDAS;
+
+  // Aplicar filtro de corretor do gestor se ativo
+  let fonteHist = [...fonteTotal];
+  if (isGestor) {
+    const corrFiltro = document.getElementById('vd-filtro-corretor') ? document.getElementById('vd-filtro-corretor').value : '';
+    if (corrFiltro) fonteHist = fonteHist.filter(v => (v.CORRETOR || '').trim() === corrFiltro);
+  }
+
   const lista = HIST_FILTRO_MES
-    ? MINHAS_VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === HIST_FILTRO_MES)
-    : [...MINHAS_VENDAS];
+    ? fonteHist.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === HIST_FILTRO_MES)
+    : fonteHist;
 
   const total = lista.length;
   const vgv = lista.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
   const repassados = lista.filter(v => (v.STATUS_VENDA || '').includes('Repassado')).length;
   const distratos = lista.filter(v => (v.STATUS_VENDA || '').includes('Distrato')).length;
   const comissaoTotal = lista.reduce((s, v) => s + calcComissao(parseFloat(v.VGV) || 0), 0);
-  const comFmt = comissaoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
   const aguardandoH = lista.filter(v => (v.STATUS_VENDA || '').includes('Aguardando')).length;
   const consorciosH = lista.filter(v => (v.STATUS_VENDA || '').includes('CONSORCIO')).length;
@@ -2504,7 +2539,7 @@ function renderHistoricoVendas() {
   `;
 
   // Filtro por mês
-  const meses = [...new Set(MINHAS_VENDAS.map(v => String(v.MES_COMERCIAL || '').substring(0, 7)).filter(m => m))].sort().reverse();
+  const meses = [...new Set(fonteHist.map(v => String(v.MES_COMERCIAL || '').substring(0, 7)).filter(m => m && m.length === 7))].sort().reverse();
   const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   let filtroHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;">';
   filtroHtml += `<div class="m-filter-btn ${HIST_FILTRO_MES === '' ? 'active' : ''}" onclick="HIST_FILTRO_MES='';renderHistoricoVendas()">Todos</div>`;
@@ -2527,7 +2562,7 @@ function renderHistoricoVendas() {
     return db.localeCompare(da);
   });
 
-  document.getElementById('hist-lista').innerHTML = ordenada.map(v => renderVendaCard(v)).join('');
+  document.getElementById('hist-lista').innerHTML = ordenada.map(v => renderVendaCard(v, isGestor)).join('');
 }
 
 // ============================================
@@ -3922,8 +3957,6 @@ function abrirSideMenu() {
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-registro')"><span class="smi-icon">📝</span> Registro</div>`;
   if (isMaster) {
     items += `<div style="margin:10px 0 6px;padding:0 16px;font-size:.62rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;">Administração</div>`;
-    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-dash')"><span class="smi-icon">📊</span> Dashboard</div>`;
-    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-vendas')"><span class="smi-icon">💵</span> Vendas (Admin)</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-real')"><span class="smi-icon">📈</span> Pipeline (Admin)</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-corretores')"><span class="smi-icon">👤</span> Corretores</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-presenca')"><span class="smi-icon">⏱</span> Presença</div>`;
@@ -3963,23 +3996,22 @@ function sideMenuNav(tabId) {
 // ============================================
 function renderInicio() {
   if (!USUARIO) return;
+  const isGestor = USUARIO.CARGO === 'Gerente' || USUARIO.CARGO === 'Coordenador';
+  if (isGestor) {
+    renderInicioGestor();
+  } else {
+    renderInicioCorretor();
+  }
+}
 
-  // KPIs
-  const nomeUpper = USUARIO.NOME.toUpperCase();
-  const NOMES_EQUIV = { 'DANDARA CAMPUS': 'DANDARA CAMPOS', 'WILIAN BUENO': 'WILLIAM BUENO' };
-
-  // Comissão estimada (clientes quentes do Real/API)
+function renderInicioCorretor() {
+  // KPIs do corretor
   const vgvReal = REAL_CLIENTS.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
   const comEstimada = vgvReal * 0.017 * 0.86;
   const clientesQuentes = REAL_CLIENTS.length;
-
-  // Comissão real (vendas do mês)
-  const mesAtual = new Date();
-  const mesStr = mesAtual.getFullYear() + '-' + String(mesAtual.getMonth() + 1).padStart(2, '0');
+  const mesStr = getMesComercialAtualStr();
   const vendasMes = MINHAS_VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesStr);
   const comReal = vendasMes.reduce((s, v) => s + ((parseFloat(v.VGV) || 0) * 0.017 * 0.86), 0);
-
-  const fmtMoney = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 
   document.getElementById('inicio-kpis').innerHTML = `
     <div class="inicio-kpi ik-gold"><div class="ik-val">${fmtMoney(comEstimada)}</div><div class="ik-label">Comissão Estimada</div></div>
@@ -4008,7 +4040,93 @@ function renderInicio() {
     document.getElementById('ql-clientes').textContent = MEUS_CLIENTES.length;
   }
 
-  // Demandas do dia (reutilizar dados)
+  renderInicioDemandas();
+}
+
+function renderInicioGestor() {
+  const mesAtual = getMesComercialAtualStr();
+  const vendasAdmin = getAdminVendas();
+  const vendasMes = vendasAdmin.filter(v =>
+    String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual &&
+    !(v.STATUS_VENDA || '').includes('Distrato')
+  );
+  const vgvVendido = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
+  const qtdVendas = vendasMes.length;
+
+  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
+  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const vgvPipeline = teamReal.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const agHoje = AGENDA.filter(a => a.DATA === hoje && isMyTeam(a.CORRETOR || a.corretor));
+  const agHojeCount = agHoje.length;
+
+  // Semana quarta-terça
+  const agora = new Date();
+  const diaSemana = agora.getDay(); // 0=dom,1=seg,...,6=sab
+  // Dias desde quarta: qua=0, qui=1, sex=2, sab=3, dom=4, seg=5, ter=6
+  const diasDesdeQua = (diaSemana + 4) % 7;
+  const inicioSemana = new Date(agora);
+  inicioSemana.setDate(agora.getDate() - diasDesdeQua);
+  const inicioSemStr = inicioSemana.toISOString().split('T')[0];
+  const fimSemStr = hoje;
+
+  // Ranking semanal top 5 por VGV vendido
+  const vendasSemana = vendasAdmin.filter(v => {
+    const d = String(v.DATA_VENDA || v.DATA || '').substring(0, 10);
+    return d >= inicioSemStr && d <= fimSemStr && !(v.STATUS_VENDA || '').includes('Distrato');
+  });
+  const vgvPorCorr = {};
+  vendasSemana.forEach(v => {
+    const corr = (v.CORRETOR || '').trim();
+    if (!corr) return;
+    vgvPorCorr[corr] = (vgvPorCorr[corr] || 0) + (parseFloat(v.VGV) || 0);
+  });
+  const rankingSem = Object.entries(vgvPorCorr)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  // Alertas: pipeline parado 15+ dias
+  const paradosAlerta = teamReal.filter(c => {
+    const dias = calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '');
+    return dias >= 15 && (c.status || c.STATUS) === 'GERANDO';
+  });
+
+  // Alertas: agendamentos de hoje não atendidos
+  const agNaoAtendidos = agHoje.filter(a => !(a.ATENDIDO || '').toUpperCase().includes('S'));
+
+  document.getElementById('inicio-kpis').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
+      <div class="inicio-kpi ik-green"><div class="ik-val">${fmtMoney(vgvVendido)}</div><div class="ik-label">VGV Vendido (mês)</div></div>
+      <div class="inicio-kpi ik-gold"><div class="ik-val">${qtdVendas}</div><div class="ik-label">Vendas no mês</div></div>
+      <div class="inicio-kpi ik-blue"><div class="ik-val">${fmtMoney(vgvPipeline)}</div><div class="ik-label">Pipeline Acionado</div></div>
+      <div class="inicio-kpi ik-purple" style="background:rgba(171,71,188,0.15);border:1px solid rgba(171,71,188,0.3);"><div class="ik-val">${agHojeCount}</div><div class="ik-label">Agendamentos Hoje</div></div>
+    </div>
+    ${(paradosAlerta.length > 0 || agNaoAtendidos.length > 0) ? `
+    <div style="background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,0,0.3);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:.72rem;font-weight:800;color:var(--gold);margin-bottom:8px;">⚠ Alertas</div>
+      ${paradosAlerta.length > 0 ? `<div style="font-size:.75rem;color:#ffd;margin-bottom:5px;">• ${paradosAlerta.length} cliente${paradosAlerta.length > 1 ? 's' : ''} parado${paradosAlerta.length > 1 ? 's' : ''} há 15+ dias no pipeline: ${paradosAlerta.slice(0,3).map(c => (c.nome || c.CLIENTE || '').split(' ')[0]).join(', ')}${paradosAlerta.length > 3 ? '…' : ''}</div>` : ''}
+      ${agNaoAtendidos.length > 0 ? `<div style="font-size:.75rem;color:#ffd;">• ${agNaoAtendidos.length} agendamento${agNaoAtendidos.length > 1 ? 's' : ''} de hoje sem atendimento confirmado</div>` : ''}
+    </div>` : ''}
+    ${rankingSem.length > 0 ? `
+    <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:.72rem;font-weight:800;color:var(--gold);margin-bottom:10px;">🏆 Ranking Semanal — Top 5 (VGV)</div>
+      ${rankingSem.map(([nome, vgv], i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="font-size:.78rem;color:#fff;">${medal} ${nome.split(' ')[0]}</span>
+          <span style="font-size:.78rem;color:var(--gold);font-weight:700;">${fmtMoney(vgv)}</span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;">
+      <button onclick="showTab('tab-admin-ciclo')" style="background:rgba(100,255,218,0.1);border:1px solid rgba(100,255,218,0.3);color:var(--accent);border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Pipeline</button>
+      <button onclick="showTab('tab-vendas')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Vendas</button>
+      <button onclick="showTab('tab-admin-pres')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Presença</button>
+      <button onclick="abrirModalNovaVenda()" style="background:rgba(255,180,0,0.15);border:1px solid rgba(255,180,0,0.35);color:var(--gold);border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">+ Venda</button>
+    </div>
+  `;
+
   renderInicioDemandas();
 }
 
@@ -4341,6 +4459,8 @@ function calcComissaoAdmin(vgv, cargo, ehVendaPropria) {
 // ADMIN DASHBOARD
 // ============================================
 function renderAdminDash() {
+  // Dashboard movido para Início do Gestor (renderInicioGestor)
+  return;
   if (!USUARIO) return;
   const membros = getTeamMembers();
   const mesAtual = getMesComercialAtualStr();
@@ -4409,6 +4529,8 @@ function renderAdminDash() {
 // ADMIN VENDAS
 // ============================================
 function renderAdminVendas() {
+  // Vendas admin unificado em tab-vendas (renderMinhasVendas para gestor)
+  return;
   if (!USUARIO) return;
   const todasVendas = getAdminVendas();
   const mesAtual = getMesComercialAtualStr();
@@ -4847,11 +4969,60 @@ function renderAdminPresenca() {
 let chartCorretores = null, chartStatus = null, chartMensal = null, chartEmpre = null;
 let cicloSortCol = 'VGV_ESTIMADO', cicloSortDir = -1, cicloPagina = 0;
 const CICLO_POR_PAGINA = 15;
+let CICLO_FILTRO_MES = '';
+let CICLO_FILTRO_CORRETOR = '';
+let CICLO_FILTRO_ACIONADO = '';
+
+function setCicloFiltro(campo, valor) {
+  if (campo === 'mes') CICLO_FILTRO_MES = valor;
+  else if (campo === 'corretor') CICLO_FILTRO_CORRETOR = valor;
+  else if (campo === 'acionado') CICLO_FILTRO_ACIONADO = valor;
+  cicloPagina = 0;
+  renderAdminCiclo();
+}
 
 function renderAdminCiclo() {
   if (!USUARIO) return;
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
-  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const baseTeam = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+
+  // Popular filtro de corretores
+  const selCorr = document.getElementById('ciclo-filtro-corretor');
+  if (selCorr) {
+    const corrAtual = selCorr.value || CICLO_FILTRO_CORRETOR;
+    const corretoresUniq = [...new Set(baseTeam.map(c => (c.corretor || c.CORRETOR || '').trim()).filter(Boolean))].sort();
+    selCorr.innerHTML = '<option value="">Todos corretores</option>' + corretoresUniq.map(n => `<option value="${n}"${n === corrAtual ? ' selected' : ''}>${n}</option>`).join('');
+    CICLO_FILTRO_CORRETOR = corrAtual;
+  }
+
+  // Popular filtro de meses (da data de entrada)
+  const selMes = document.getElementById('ciclo-filtro-mes');
+  if (selMes) {
+    const mesAtualFiltro = selMes.value || CICLO_FILTRO_MES;
+    const mesesUniq = [...new Set(baseTeam.map(c => {
+      const d = c.dataEntrada || c.DATA_ENTRADA || c.DATA || '';
+      return String(d).substring(0, 7);
+    }).filter(m => m && m.length === 7))].sort().reverse();
+    selMes.innerHTML = '<option value="">Todos os meses</option>' + mesesUniq.map(m => `<option value="${m}"${m === mesAtualFiltro ? ' selected' : ''}>${m}</option>`).join('');
+    CICLO_FILTRO_MES = mesAtualFiltro;
+  }
+
+  // Sincronizar filtro acionado
+  const selAc = document.getElementById('ciclo-filtro-acionado');
+  if (selAc && !selAc.dataset.init) {
+    selAc.value = CICLO_FILTRO_ACIONADO;
+    selAc.dataset.init = '1';
+  }
+
+  // Aplicar filtros ao teamReal
+  let teamReal = [...baseTeam];
+  if (CICLO_FILTRO_CORRETOR) teamReal = teamReal.filter(c => (c.corretor || c.CORRETOR || '').trim() === CICLO_FILTRO_CORRETOR);
+  if (CICLO_FILTRO_MES) teamReal = teamReal.filter(c => {
+    const d = c.dataEntrada || c.DATA_ENTRADA || c.DATA || '';
+    return String(d).substring(0, 7) === CICLO_FILTRO_MES;
+  });
+  if (CICLO_FILTRO_ACIONADO) teamReal = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S') === CICLO_FILTRO_ACIONADO);
+
   const mesAtual = getMesComercialAtualStr();
   const vendasAdmin = getAdminVendas();
   const vendasMes = vendasAdmin.filter(v =>
@@ -4873,6 +5044,14 @@ function renderAdminCiclo() {
   document.getElementById('aciclo-vgv-gerado').textContent = fmtMoney(vgvGerado);
   document.getElementById('aciclo-vgv-pipeline').textContent = fmtMoney(vgvPipeline);
   document.getElementById('aciclo-vgv-perda').textContent = fmtMoney(vgvPerda);
+
+  // KPIs Acionado
+  const vgvAcionado = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S') === 'S').reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+  const vgvNacionado = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S') === 'N').reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+  const elAcionado = document.getElementById('aciclo-vgv-acionado');
+  const elNacionado = document.getElementById('aciclo-vgv-nacionado');
+  if (elAcionado) elAcionado.textContent = fmtMoney(vgvAcionado);
+  if (elNacionado) elNacionado.textContent = fmtMoney(vgvNacionado);
 
   // Comissões
   const commNeg = vgvPipeline * 0.017 * 0.86;
@@ -5070,11 +5249,21 @@ function renderCicloCharts(teamReal, vendasAdmin) {
 
 function renderCicloTabela() {
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
-  const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
+  const baseTeam = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
   const filtroSt = document.getElementById('aciclo-filtro-status').value;
   const busca = (document.getElementById('aciclo-busca').value || '').toLowerCase();
 
-  let lista = [...teamReal];
+  let lista = [...baseTeam];
+
+  // Aplicar filtros globais
+  if (CICLO_FILTRO_CORRETOR) lista = lista.filter(c => (c.corretor || c.CORRETOR || '').trim() === CICLO_FILTRO_CORRETOR);
+  if (CICLO_FILTRO_MES) lista = lista.filter(c => {
+    const d = c.dataEntrada || c.DATA_ENTRADA || c.DATA || '';
+    return String(d).substring(0, 7) === CICLO_FILTRO_MES;
+  });
+  if (CICLO_FILTRO_ACIONADO) lista = lista.filter(c => (c.acionado || c.ACIONADO || 'S') === CICLO_FILTRO_ACIONADO);
+
+  // Filtros locais da tabela
   if (filtroSt) lista = lista.filter(c => (c.status || c.STATUS) === filtroSt);
   if (busca) lista = lista.filter(c => {
     const nome = (c.nome || c.CLIENTE || '').toLowerCase();
@@ -5114,21 +5303,62 @@ function renderCicloTabela() {
   pagina.forEach(c => {
     const status = c.status || c.STATUS || '-';
     const statusColor = status === 'GERADO' ? 'var(--success)' : status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
-    const diasClass = c.dias < 7 ? 'td-dias-verde' : c.dias < 15 ? 'td-dias-amarelo' : 'td-dias-vermelho';
-    tbody += `<tr>
-      <td>${(c.corretor || c.CORRETOR || '-').split(' ')[0]}</td>
-      <td>${c.nome || c.CLIENTE || '-'}</td>
+    const dias = c.dias;
+    const diasClass = dias < 7 ? 'td-dias-verde' : dias < 15 ? 'td-dias-amarelo' : 'td-dias-vermelho';
+    const rowStyle = dias >= 30 ? ' style="background:rgba(255,80,80,0.08);"' : '';
+    const acionado = (c.acionado || c.ACIONADO || 'S');
+    const corrNome = (c.corretor || c.CORRETOR || '').trim();
+    const clienteNome = (c.nome || c.CLIENTE || '').trim();
+    const corrEsc = corrNome.replace(/'/g, "\\'");
+    const clienteEsc = clienteNome.replace(/'/g, "\\'");
+    const acionadoBadge = acionado === 'S'
+      ? `<span onclick="toggleAcionado('${corrEsc}','${clienteEsc}')" style="cursor:pointer;background:#1a7a4a;color:#fff;border-radius:12px;padding:3px 10px;font-size:.68rem;font-weight:700;white-space:nowrap;touch-action:manipulation;">Acionado ✓</span>`
+      : `<span onclick="toggleAcionado('${corrEsc}','${clienteEsc}')" style="cursor:pointer;background:#555;color:#ccc;border-radius:12px;padding:3px 10px;font-size:.68rem;font-weight:700;white-space:nowrap;touch-action:manipulation;">Não acionado</span>`;
+    tbody += `<tr${rowStyle}>
+      <td>${corrNome.split(' ')[0]}</td>
+      <td>${clienteNome}</td>
       <td>${fmtMoney(parseFloat(c.vgv || c.VGV_ESTIMADO) || 0)}</td>
       <td>${(c.empreendimento || c.EMPREENDIMENTO || '-').substring(0, 20)}</td>
       <td><span style="color:${statusColor};font-weight:700;">${status}</span></td>
-      <td class="${diasClass}">${c.dias}d</td>
+      <td class="${diasClass}">${dias}d</td>
+      <td>${acionadoBadge}</td>
     </tr>`;
   });
-  document.getElementById('aciclo-tbody').innerHTML = tbody || '<tr><td colspan="6" style="text-align:center;color:var(--textL);padding:20px;">Nenhum registro encontrado.</td></tr>';
+  document.getElementById('aciclo-tbody').innerHTML = tbody || '<tr><td colspan="7" style="text-align:center;color:var(--textL);padding:20px;">Nenhum registro encontrado.</td></tr>';
 
   document.getElementById('aciclo-pag-info').textContent = total > 0 ? `${inicio + 1}–${fim} de ${total}` : '0 registros';
   document.getElementById('aciclo-btn-prev').disabled = cicloPagina === 0;
   document.getElementById('aciclo-btn-next').disabled = fim >= total;
+}
+
+function toggleAcionado(corretor, cliente) {
+  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
+  const item = realData.find(c =>
+    (c.corretor || c.CORRETOR || '').trim() === corretor &&
+    (c.nome || c.CLIENTE || '').trim() === cliente
+  );
+  if (!item) return;
+  const novoValor = (item.acionado || item.ACIONADO || 'S') === 'S' ? 'N' : 'S';
+  item.acionado = novoValor;
+  item.ACIONADO = novoValor;
+
+  // Atualizar no REAL_CLIENTS também
+  const rc = REAL_CLIENTS.find(c =>
+    (c.corretor || c.CORRETOR || '').trim() === corretor &&
+    (c.nome || c.CLIENTE || '').trim() === cliente
+  );
+  if (rc) { rc.acionado = novoValor; rc.ACIONADO = novoValor; }
+
+  // POST para API
+  const payload = JSON.stringify({ acao: 'atualizar_real', corretor, cliente, campos: { ACIONADO: novoValor } });
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: payload,
+    mode: 'no-cors'
+  }).catch(() => {});
+
+  renderAdminCiclo();
 }
 
 function sortCiclo(col) {
