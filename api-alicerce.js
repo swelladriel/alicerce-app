@@ -242,6 +242,18 @@ function doGet(e) {
     case 'aprovados_pendentes':
       resultado = obterAprovadosPendentes();
       break;
+    case 'sincronizar_aprovados_real':
+      resultado = sincronizarAprovadosReal();
+      break;
+    case 'marcar_vendido_real':
+      resultado = marcarVendidoReal(JSON.parse(e.parameter.dados || '{}'));
+      break;
+    case 'desativar_real':
+      resultado = desativarClienteReal(JSON.parse(e.parameter.dados || '{}'));
+      break;
+    case 'reativar_real':
+      resultado = reativarClienteReal(JSON.parse(e.parameter.dados || '{}'));
+      break;
     case 'crm_cards':
       resultado = lerAba('CRM');
       break;
@@ -2718,20 +2730,18 @@ function obterAprovadosPendentes() {
   const clientes = lerAba('Clientes');
   const real = lerAba('Real');
 
-  // Montar conjunto de identificadores já no Real (CPF e nome)
-  const cpfsNoReal = new Set();
+  // Montar conjunto de nomes já no Real (case-insensitive trim)
   const nomesNoReal = new Set();
   real.forEach(function(r) {
-    if (r.CLIENTE) nomesNoReal.add(String(r.CLIENTE).trim().toUpperCase());
+    if (r.CLIENTE) nomesNoReal.add(String(r.CLIENTE).trim().toLowerCase());
   });
 
-  // Buscar CPF na aba Clientes para cruzar com Real
-  // A aba Real não tem CPF diretamente — cruzamos por nome do cliente
+  // Filtrar aprovados que ainda não estão no Real
   const aprovados = clientes.filter(function(c) {
     const status = String(c.STATUS || '').trim().toUpperCase();
     const isAprovado = status === 'APROVADO' || status === 'APROVADO - CONDICIONADO';
     if (!isAprovado) return false;
-    const nomeCliente = String(c.CLIENTE || '').trim().toUpperCase();
+    const nomeCliente = String(c.CLIENTE || '').trim().toLowerCase();
     return !nomesNoReal.has(nomeCliente);
   });
 
@@ -2749,6 +2759,220 @@ function obterAprovadosPendentes() {
       DATA_CRIACAO: c['DATA CRIAÇÃO'] || c['DATA CRIACAO'] || ''
     };
   });
+}
+
+// ============================================
+// SINCRONIZAR APROVADOS → REAL (função principal)
+// Adiciona ao pipeline Real todos os clientes aprovados que ainda não estão lá.
+// Cruza com SwellVendas por CPF para marcar VENDIDO automaticamente.
+// ============================================
+function sincronizarAprovadosReal() {
+  const hoje = new Date(new Date().getTime() - 3 * 60 * 60 * 1000); // UTC-3 Brasília
+  const hojeStr = hoje.toISOString().split('T')[0];
+
+  const clientes = lerAba('Clientes');
+  const real = lerAba('Real');
+  const swellVendas = lerAba('SwellVendas');
+
+  // --- Montar set de nomes já no Real (case-insensitive) ---
+  const nomesNoReal = new Set();
+  real.forEach(function(r) {
+    if (r.CLIENTE) nomesNoReal.add(String(r.CLIENTE).trim().toLowerCase());
+  });
+
+  // --- Montar set de CPFs com venda validada no Swell ---
+  const cpfsVendidos = new Set();
+  swellVendas.forEach(function(v) {
+    const validacao = String(v.VALIDACAO || '').trim().toLowerCase();
+    if (validacao === 'validada') {
+      const cpf = String(v.CPF || '').replace(/\D/g, '');
+      if (cpf) cpfsVendidos.add(cpf);
+    }
+  });
+
+  // --- Processar cada cliente aprovado ---
+  const ss = SpreadsheetApp.openById(PLANILHA_ID);
+  const abaReal = ss.getSheetByName('Real');
+  if (!abaReal) return { erro: 'Aba Real não encontrada' };
+
+  const cabReal = abaReal.getRange(1, 1, 1, abaReal.getLastColumn()).getValues()[0].map(function(c) { return String(c).trim(); });
+
+  let adicionados = 0;
+  let jaExistiam = 0;
+  let marcadosVendido = 0;
+
+  clientes.forEach(function(c) {
+    const status = String(c.STATUS || '').trim().toUpperCase();
+    const isAprovado = status === 'APROVADO' || status === 'APROVADO - CONDICIONADO';
+    if (!isAprovado) return;
+
+    const nomeCliente = String(c.CLIENTE || '').trim().toLowerCase();
+    if (!nomeCliente) return;
+
+    if (nomesNoReal.has(nomeCliente)) {
+      jaExistiam++;
+      return;
+    }
+
+    // Determinar se já tem venda validada no Swell por CPF
+    const cpfLimpo = String(c.CPF || '').replace(/\D/g, '');
+    const temVendaValidada = cpfLimpo && cpfsVendidos.has(cpfLimpo);
+
+    const novaLinha = {
+      'DATA': hojeStr,
+      'CORRETOR': c.CORRETOR || '',
+      'CLIENTE': c.CLIENTE || '',
+      'TELEFONE': c.TELEFONE || '',
+      'VGV_ESTIMADO': 200000,
+      'EMPREENDIMENTO': '',
+      'CONSTRUTORA': '',
+      'STATUS': temVendaValidada ? 'GERADO' : 'GERANDO',
+      'PENDENCIA': '',
+      'DATA_ENTRADA': hojeStr,
+      'COMISSAO_STATUS': 'NÃO PAGO',
+      'ACIONADO': temVendaValidada ? 'VENDIDO' : 'S'
+    };
+
+    const row = cabReal.map(function(col) { return novaLinha[col] !== undefined ? novaLinha[col] : ''; });
+    abaReal.appendRow(row);
+
+    // Atualizar o set para evitar duplicatas dentro da mesma execução
+    nomesNoReal.add(nomeCliente);
+    adicionados++;
+    if (temVendaValidada) marcadosVendido++;
+  });
+
+  const msg = 'Sincronizacao concluida: ' + adicionados + ' adicionados (' + marcadosVendido + ' ja vendidos), ' + jaExistiam + ' ja existiam no Real.';
+  Logger.log(msg);
+  return {
+    sucesso: true,
+    adicionados: adicionados,
+    ja_existiam: jaExistiam,
+    marcados_vendido: marcadosVendido,
+    msg: msg
+  };
+}
+
+// ============================================
+// MARCAR VENDIDO NO REAL — atualiza STATUS=GERADO e ACIONADO=VENDIDO
+// Recebe: { corretor, cliente } ou { cpf }
+// ============================================
+function marcarVendidoReal(dados) {
+  if (!dados.cliente && !dados.cpf) return { erro: 'Informe "cliente" ou "cpf"' };
+
+  const ss = SpreadsheetApp.openById(PLANILHA_ID);
+  const aba = ss.getSheetByName('Real');
+  if (!aba) return { erro: 'Aba Real não encontrada' };
+
+  const linhas = aba.getDataRange().getValues();
+  const cab = linhas[0].map(function(c) { return String(c).trim(); });
+  const colCliente = cab.indexOf('CLIENTE');
+  const colStatus = cab.indexOf('STATUS');
+  const colAcionado = cab.indexOf('ACIONADO');
+
+  if (colCliente < 0) return { erro: 'Coluna CLIENTE não encontrada na aba Real' };
+
+  const nomeAlvo = dados.cliente ? String(dados.cliente).trim().toLowerCase() : null;
+
+  for (var i = 1; i < linhas.length; i++) {
+    const nomeLinha = String(linhas[i][colCliente] || '').trim().toLowerCase();
+    if (nomeAlvo && nomeLinha !== nomeAlvo) continue;
+
+    // Se chegou aqui: match por nome (ou futuramente por CPF se aba Real tiver coluna CPF)
+    if (colStatus >= 0) aba.getRange(i + 1, colStatus + 1).setValue('GERADO');
+    if (colAcionado >= 0) aba.getRange(i + 1, colAcionado + 1).setValue('VENDIDO');
+    Logger.log('marcarVendidoReal: ' + linhas[i][colCliente] + ' marcado como VENDIDO');
+    return { sucesso: true, linha: i + 1, cliente: linhas[i][colCliente] };
+  }
+
+  return { erro: 'Cliente não encontrado na aba Real: ' + (dados.cliente || dados.cpf) };
+}
+
+// ============================================
+// DESATIVAR CLIENTE NO REAL — define ACIONADO=N
+// Recebe: { corretor, cliente } ou { cpf }
+// ============================================
+function desativarClienteReal(dados) {
+  if (!dados.cliente && !dados.cpf) return { erro: 'Informe "cliente" ou "cpf"' };
+
+  const ss = SpreadsheetApp.openById(PLANILHA_ID);
+  const aba = ss.getSheetByName('Real');
+  if (!aba) return { erro: 'Aba Real não encontrada' };
+
+  const linhas = aba.getDataRange().getValues();
+  const cab = linhas[0].map(function(c) { return String(c).trim(); });
+  const colCliente = cab.indexOf('CLIENTE');
+  const colAcionado = cab.indexOf('ACIONADO');
+
+  if (colCliente < 0) return { erro: 'Coluna CLIENTE não encontrada na aba Real' };
+
+  const nomeAlvo = dados.cliente ? String(dados.cliente).trim().toLowerCase() : null;
+
+  for (var i = 1; i < linhas.length; i++) {
+    const nomeLinha = String(linhas[i][colCliente] || '').trim().toLowerCase();
+    if (nomeAlvo && nomeLinha !== nomeAlvo) continue;
+
+    if (colAcionado >= 0) aba.getRange(i + 1, colAcionado + 1).setValue('N');
+    Logger.log('desativarClienteReal: ' + linhas[i][colCliente] + ' desativado');
+    return { sucesso: true, linha: i + 1, cliente: linhas[i][colCliente] };
+  }
+
+  return { erro: 'Cliente não encontrado na aba Real: ' + (dados.cliente || dados.cpf) };
+}
+
+// ============================================
+// REATIVAR CLIENTE NO REAL — define ACIONADO=S
+// Recebe: { corretor, cliente }
+// ============================================
+function reativarClienteReal(dados) {
+  if (!dados.cliente) return { erro: 'Informe "cliente"' };
+
+  const ss = SpreadsheetApp.openById(PLANILHA_ID);
+  const aba = ss.getSheetByName('Real');
+  if (!aba) return { erro: 'Aba Real não encontrada' };
+
+  const linhas = aba.getDataRange().getValues();
+  const cab = linhas[0].map(function(c) { return String(c).trim(); });
+  const colCliente = cab.indexOf('CLIENTE');
+  const colAcionado = cab.indexOf('ACIONADO');
+
+  if (colCliente < 0) return { erro: 'Coluna CLIENTE não encontrada na aba Real' };
+
+  const nomeAlvo = String(dados.cliente).trim().toLowerCase();
+
+  for (var i = 1; i < linhas.length; i++) {
+    const nomeLinha = String(linhas[i][colCliente] || '').trim().toLowerCase();
+    if (nomeLinha !== nomeAlvo) continue;
+
+    if (colAcionado >= 0) aba.getRange(i + 1, colAcionado + 1).setValue('S');
+    Logger.log('reativarClienteReal: ' + linhas[i][colCliente] + ' reativado');
+    return { sucesso: true, linha: i + 1, cliente: linhas[i][colCliente] };
+  }
+
+  return { erro: 'Cliente não encontrado na aba Real: ' + dados.cliente };
+}
+
+// ============================================
+// CONFIGURAR TRIGGER DIÁRIO — sincronizarAprovadosReal às 9h
+// Rodar UMA VEZ no editor para ativar
+// ============================================
+function configurarTriggerAprovados() {
+  // Remover triggers existentes desta função
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === 'sincronizarAprovadosReal') {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+
+  // Criar trigger diário às 9h (Brasília)
+  ScriptApp.newTrigger('sincronizarAprovadosReal')
+    .timeBased()
+    .atHour(9)
+    .everyDays(1)
+    .inTimezone('America/Sao_Paulo')
+    .create();
+
+  Logger.log('Trigger aprovados configurado! sincronizarAprovadosReal vai rodar todo dia às 9h.');
 }
 
 // ============================================

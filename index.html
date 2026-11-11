@@ -1087,46 +1087,22 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 
     <!-- TAB: ADMIN CICLO DE VENDAS (redesenhado) -->
     <div class="app-page" id="tab-admin-ciclo">
-      <!-- KPIs -->
-      <div class="admin-kpi-row">
-        <div class="admin-kpi gold"><div class="ak-val" id="aciclo-aprovados-count">0</div><div class="ak-label">Aprovados Pendentes</div></div>
-        <div class="admin-kpi green"><div class="ak-val" id="aciclo-ativados-count">0</div><div class="ak-label">Ativados no Real</div></div>
-        <div class="admin-kpi blue"><div class="ak-val" id="aciclo-vgv-pipeline">R$ 0</div><div class="ak-label">VGV Pipeline</div></div>
-      </div>
-      <!-- Secao 1: Aprovados pendentes -->
-      <div class="admin-section">
-        <div class="admin-section-hdr">Clientes Aprovados — Pendentes de Ativacao</div>
-        <div id="ciclo-aprovados-list"><div class="loading">Carregando aprovados...</div></div>
-      </div>
-      <!-- Secao 2: Pipeline Real ativados -->
-      <div class="admin-section">
-        <div class="admin-section-hdr">Pipeline Real — Clientes Ativados</div>
-        <div class="admin-filter-row" style="margin-bottom:10px;">
-          <select id="ciclo-real-filtro-corretor" onchange="renderCicloRealSection()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <select id="ciclo-filtro-corretor" onchange="renderCicloTabela()" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.75rem;">
             <option value="">Todos os corretores</option>
           </select>
-          <select id="ciclo-real-filtro-status" onchange="renderCicloRealSection()">
-            <option value="">Todos os status</option>
-            <option value="GERANDO">GERANDO</option>
-            <option value="N GERADO">N GERADO</option>
-            <option value="GERADO">GERADO</option>
+          <select id="ciclo-filtro-status" onchange="renderCicloTabela()" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.75rem;">
+            <option value="">Todos</option>
+            <option value="S">Ativos</option>
+            <option value="N">Desativados</option>
+            <option value="VENDIDO">Vendidos</option>
           </select>
         </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table" id="aciclo-table">
-            <thead>
-              <tr>
-                <th>Corretor</th>
-                <th>Cliente</th>
-                <th>VGV</th>
-                <th>Status</th>
-                <th>Dias</th>
-              </tr>
-            </thead>
-            <tbody id="aciclo-tbody"></tbody>
-          </table>
-        </div>
+        <button onclick="sincronizarAprovados()" id="btn-sync-aprovados" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:.72rem;font-weight:700;cursor:pointer;">Sincronizar Aprovados</button>
       </div>
+      <div class="admin-kpi-row" id="ciclo-kpis"></div>
+      <div id="ciclo-tabela-wrap"></div>
     </div>
 
     <!-- TAB: CRM (Kanban) -->
@@ -4443,15 +4419,20 @@ function parseVgvInput(str) {
 
 function renderReal() {
   loadReal();
-  const ativos = REAL_CLIENTS.filter(c => c.status !== 'GERADO');
-  const vgvTotal = REAL_CLIENTS.reduce((s, c) => s + (c.vgv || 0), 0);
+  // Filtrar: corretor so ve ACIONADO=S ou VENDIDO (esconde desativados)
+  const visiveis = REAL_CLIENTS.filter(c => {
+    const ac = (c.acionado || c.ACIONADO || 'S').toUpperCase();
+    return ac === 'S' || ac === 'VENDIDO';
+  });
+  const ativos = visiveis.filter(c => c.status !== 'GERADO');
+  const vgvTotal = visiveis.reduce((s, c) => s + (c.vgv || 0), 0);
   const diasTotal = ativos.length > 0 ? ativos.reduce((s, c) => s + calcDiasReal(c.dataEntrada), 0) / ativos.length : 0;
 
   document.getElementById('realKpiCount').textContent = ativos.length;
   document.getElementById('realKpiVgv').textContent = fmtVgv(vgvTotal);
   document.getElementById('realKpiDias').textContent = Math.round(diasTotal);
 
-  let lista = REAL_CLIENTS;
+  let lista = visiveis;
   if (REAL_FILTRO !== 'todos') lista = lista.filter(c => c.status === REAL_FILTRO);
 
   // Ordenar: N GERADO primeiro, depois GERANDO, depois GERADO
@@ -4470,27 +4451,77 @@ function renderReal() {
     const statusColor = c.status === 'GERADO' ? 'var(--success)' : c.status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
     const statusBg = c.status === 'GERADO' ? 'rgba(0,230,118,.1)' : c.status === 'N GERADO' ? 'rgba(239,83,80,.1)' : 'rgba(255,167,38,.1)';
     const opacity = c.status === 'GERADO' ? 'opacity:.6;' : '';
+    const acionado = (c.acionado || c.ACIONADO || 'S').toUpperCase();
+    const vendidoBadge = acionado === 'VENDIDO' ? '<span style="background:var(--success);color:#000;padding:2px 8px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;">VENDIDO</span>' : '';
+    const idSafe = (c.id || '').replace(/'/g, "\\'");
 
     html += `<div class="m-client" style="border-left:4px solid ${statusColor};${opacity}">
       <div style="display:flex;justify-content:space-between;align-items:start;">
         <div>
-          <div class="m-client-name">${c.nome || '-'}</div>
+          <div class="m-client-name">${c.nome || '-'}${vendidoBadge}</div>
           <div class="m-client-cpf">${c.telefone || 'Sem telefone'}</div>
         </div>
         <div style="background:${diasColor};color:#000;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:800;">${dias}d</div>
       </div>
-      <div class="m-client-renda">${fmtVgv(c.vgv)}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin:4px 0;">
+        <span class="m-client-renda" id="real-vgv-display-${c.id}">${fmtVgv(c.vgv)}</span>
+        <button onclick="iniciarEdicaoVgvReal('${idSafe}')" style="background:none;border:none;color:var(--textL);font-size:.82rem;cursor:pointer;padding:2px;touch-action:manipulation;" title="Editar VGV">✏️</button>
+        <span id="real-vgv-edit-${c.id}" style="display:none;">
+          <input type="text" id="real-vgv-input-${c.id}" value="${fmtVgv(c.vgv)}" style="width:110px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:.78rem;">
+          <button onclick="salvarVgvReal('${idSafe}')" style="background:var(--success);color:#000;border:none;border-radius:6px;padding:4px 8px;font-size:.7rem;font-weight:700;cursor:pointer;touch-action:manipulation;">OK</button>
+          <button onclick="cancelarEdicaoVgvReal('${idSafe}')" style="background:var(--card2);color:var(--textL);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:.7rem;cursor:pointer;touch-action:manipulation;">X</button>
+        </span>
+      </div>
       <div style="font-size:.72rem;color:var(--textL);margin-bottom:4px;">${c.empreendimento || '-'}${c.construtora ? ' • ' + c.construtora : ''}</div>
       ${c.pendencia ? '<div style="font-size:.7rem;color:var(--warning);margin-bottom:6px;">⚠ ' + c.pendencia + '</div>' : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span class="tag" style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor};">${c.status}</span>
         <div style="display:flex;gap:8px;">
-          <button onclick="editarReal('${c.id}')" style="background:none;border:none;color:var(--textL);font-size:1rem;cursor:pointer;">✏️</button>
+          <button onclick="editarReal('${idSafe}')" style="background:none;border:none;color:var(--textL);font-size:1rem;cursor:pointer;">✏️</button>
         </div>
       </div>
     </div>`;
   });
   document.getElementById('real-list').innerHTML = html;
+}
+
+function iniciarEdicaoVgvReal(id) {
+  const display = document.getElementById('real-vgv-display-' + id);
+  const edit = document.getElementById('real-vgv-edit-' + id);
+  if (display) display.style.display = 'none';
+  if (edit) edit.style.display = 'inline';
+  const input = document.getElementById('real-vgv-input-' + id);
+  if (input) { input.focus(); input.select(); }
+}
+
+function cancelarEdicaoVgvReal(id) {
+  const display = document.getElementById('real-vgv-display-' + id);
+  const edit = document.getElementById('real-vgv-edit-' + id);
+  if (display) display.style.display = '';
+  if (edit) edit.style.display = 'none';
+}
+
+async function salvarVgvReal(id) {
+  const input = document.getElementById('real-vgv-input-' + id);
+  if (!input) return;
+  const novoVgv = parseVgvInput(input.value);
+  if (!novoVgv) { alert('VGV invalido'); return; }
+  const c = REAL_CLIENTS.find(x => x.id === id);
+  if (!c) return;
+  const nomeOriginal = c.nome;
+  c.vgv = novoVgv;
+  // Atualizar na API via POST
+  try {
+    await fetch(API_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ acao: 'atualizar_real', busca: { CORRETOR: USUARIO.NOME, CLIENTE: nomeOriginal }, campos: { VGV_ESTIMADO: novoVgv } })
+    });
+  } catch(e) {}
+  saveReal();
+  renderReal();
+  renderInicio();
+  mostrarConfirmacao('VGV atualizado!');
 }
 
 function setRealFiltro(f) {
@@ -5164,419 +5195,64 @@ function renderAdminPresenca() {
 // ============================================
 // ADMIN CICLO DE VENDAS
 // ============================================
-let chartCorretores = null, chartStatus = null, chartMensal = null, chartEmpre = null;
 let cicloSortCol = 'VGV_ESTIMADO', cicloSortDir = -1, cicloPagina = 0;
-const CICLO_POR_PAGINA = 15;
-let CICLO_FILTRO_MES = '';
-let CICLO_FILTRO_CORRETOR = '';
-let CICLO_FILTRO_ACIONADO = '';
-
-function setCicloFiltro(campo, valor) {
-  if (campo === 'mes') CICLO_FILTRO_MES = valor;
-  else if (campo === 'corretor') CICLO_FILTRO_CORRETOR = valor;
-  else if (campo === 'acionado') CICLO_FILTRO_ACIONADO = valor;
-  cicloPagina = 0;
-  renderAdminCiclo();
-}
-
-// Cache de aprovados pendentes
-let CICLO_APROVADOS_CACHE = [];
+const CICLO_POR_PAGINA = 20;
 
 function renderAdminCiclo() {
   if (!USUARIO) return;
 
-  // Buscar aprovados pendentes da API
-  fetch(API_URL + '?acao=aprovados_pendentes')
-    .then(r => r.json())
-    .then(data => {
-      CICLO_APROVADOS_CACHE = Array.isArray(data) ? data : (data.dados || []);
-      renderCicloAprovados();
-    })
-    .catch(() => {
-      // Fallback: sem dados da API, mostrar vazio
-      CICLO_APROVADOS_CACHE = [];
-      renderCicloAprovados();
-    });
-
-  // Buscar pipeline Real
-  renderCicloRealSection();
-}
-
-function renderCicloAprovados() {
-  const aprovados = CICLO_APROVADOS_CACHE.filter(c => {
-    const status = (c.STATUS || c.status || '').toUpperCase();
-    return status.includes('APROVADO') || status.includes('CONDICIONADO');
-  });
-
-  // KPI: Aprovados Pendentes
-  const elAprov = document.getElementById('aciclo-aprovados-count');
-  if (elAprov) elAprov.textContent = aprovados.length;
-
-  // Atualizar KPI de ativados e VGV do Real
-  renderCicloKpis();
-
-  const container = document.getElementById('ciclo-aprovados-list');
-  if (!container) return;
-
-  if (aprovados.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--textL);font-size:.82rem;">Nenhum cliente aprovado pendente de ativacao.</div>';
-    return;
-  }
-
-  let html = '';
-  aprovados.forEach((c, idx) => {
-    const nome = c.CLIENTE || c.cliente || '-';
-    const corretor = c.CORRETOR || c.corretor || '-';
-    const cpf = c.CPF || c.cpf || '-';
-    const telefone = c.TELEFONE || c.telefone || '-';
-    const status = c.STATUS || c.status || 'APROVADO';
-    const valorAprov = c.VALOR_APROVADO || c['VALOR APROVADO'] || c.valor_aprovado || '-';
-    const regiao = c.REGIAO || c['REGIÃO'] || c.regiao || '-';
-    const statusColor = status.toUpperCase().includes('CONDICIONADO') ? 'var(--warning)' : 'var(--success)';
-    const statusBg = status.toUpperCase().includes('CONDICIONADO') ? 'rgba(255,167,38,.1)' : 'rgba(0,230,118,.1)';
-    const idSafe = String(idx);
-
-    html += `<div class="m-client" style="border-left:4px solid ${statusColor};margin-bottom:10px;" id="ciclo-aprov-card-${idSafe}">
-      <div style="display:flex;justify-content:space-between;align-items:start;">
-        <div>
-          <div class="m-client-name">${nome}</div>
-          <div style="font-size:.72rem;color:var(--textL);margin-top:2px;">${corretor}</div>
-        </div>
-        <span class="tag" style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor};">${status}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:8px 0;font-size:.72rem;color:var(--textL);">
-        <div>CPF: <span style="color:var(--text);">${cpf}</span></div>
-        <div>Tel: <span style="color:var(--text);">${telefone}</span></div>
-        <div>Valor Aprovado: <span style="color:var(--accent);">${valorAprov}</span></div>
-        <div>Regiao: <span style="color:var(--text);">${regiao}</span></div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;">
-        <div style="flex:1;">
-          <label style="font-size:.65rem;color:var(--textL);display:block;margin-bottom:2px;">VGV Estimado</label>
-          <input type="text" id="ciclo-vgv-${idSafe}" value="R$ 200.000" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.8rem;outline:none;">
-        </div>
-        <button onclick="ativarClienteReal(${idSafe})" style="background:var(--success);color:#000;border:none;border-radius:8px;padding:10px 18px;font-size:.78rem;font-weight:800;cursor:pointer;white-space:nowrap;margin-top:14px;touch-action:manipulation;">ATIVAR</button>
-      </div>
-    </div>`;
-  });
-  container.innerHTML = html;
-}
-
-async function ativarClienteReal(idx) {
-  const c = CICLO_APROVADOS_CACHE.filter(cl => {
-    const st = (cl.STATUS || cl.status || '').toUpperCase();
-    return st.includes('APROVADO') || st.includes('CONDICIONADO');
-  })[idx];
-  if (!c) { alert('Cliente nao encontrado.'); return; }
-
-  const vgvInput = document.getElementById('ciclo-vgv-' + idx);
-  const vgvVal = vgvInput ? parseVgvInput(vgvInput.value) : 200000;
-  if (!vgvVal) { alert('Informe um VGV valido.'); return; }
-
-  const nome = c.CLIENTE || c.cliente || '';
-  const corretor = c.CORRETOR || c.corretor || '';
-  const telefone = c.TELEFONE || c.telefone || '';
-  const hoje = new Date().toISOString().split('T')[0];
-
-  // Enviar POST para ativar no Real
-  const payload = JSON.stringify({
-    acao: 'ativar_cliente_real',
-    CORRETOR: corretor,
-    CLIENTE: nome,
-    TELEFONE: telefone,
-    VGV_ESTIMADO: vgvVal,
-    STATUS: 'GERANDO',
-    DATA_ENTRADA: hoje,
-    CPF: c.CPF || c.cpf || ''
-  });
-
-  try {
-    await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: payload,
-      mode: 'no-cors'
-    });
-  } catch(e) {}
-
-  // Fallback: tambem adicionar via GET add_real
-  try {
-    const params = new URLSearchParams({
-      acao: 'add_real', dt: hoje, corretor: corretor, cliente: nome,
-      telefone: telefone, vgv: vgvVal, emp: '', construtora: '',
-      status: 'GERANDO', pendencia: '', entrada: hoje, comissao: 'NAO PAGO'
-    });
-    await fetch(API_URL + '?' + params.toString());
-  } catch(e) {}
-
-  // Remover card visualmente
-  const card = document.getElementById('ciclo-aprov-card-' + idx);
-  if (card) {
-    card.style.transition = 'opacity .3s, transform .3s';
-    card.style.opacity = '0';
-    card.style.transform = 'translateX(40px)';
-    setTimeout(() => card.remove(), 300);
-  }
-
-  // Atualizar contadores
-  const elAprov = document.getElementById('aciclo-aprovados-count');
-  if (elAprov) {
-    const atual = parseInt(elAprov.textContent) || 0;
-    elAprov.textContent = Math.max(0, atual - 1);
-  }
-
-  mostrarConfirmacao('Cliente ativado no Real!');
-
-  // Recarregar Real apos 1s
-  setTimeout(() => {
-    renderCicloRealSection();
-    renderReal();
-  }, 1000);
-}
-
-function renderCicloKpis() {
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
   const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
-  const ativados = teamReal.filter(c => (c.status || c.STATUS) !== 'GERADO');
-  const vgvPipeline = teamReal.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
-
-  const elAtiv = document.getElementById('aciclo-ativados-count');
-  if (elAtiv) elAtiv.textContent = ativados.length;
-  const elVgv = document.getElementById('aciclo-vgv-pipeline');
-  if (elVgv) elVgv.textContent = fmtMoney(vgvPipeline);
-}
-
-function renderCicloRealSection() {
-  const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
-  let teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
 
   // Popular filtro de corretores
-  const selCorr = document.getElementById('ciclo-real-filtro-corretor');
+  const selCorr = document.getElementById('ciclo-filtro-corretor');
   if (selCorr) {
     const corrAtual = selCorr.value;
     const corretoresUniq = [...new Set(teamReal.map(c => (c.corretor || c.CORRETOR || '').trim()).filter(Boolean))].sort();
-    const opts = '<option value="">Todos os corretores</option>' + corretoresUniq.map(n => `<option value="${n}"${n === corrAtual ? ' selected' : ''}>${n}</option>`).join('');
+    let opts = '<option value="">Todos os corretores</option>';
+    corretoresUniq.forEach(n => { opts += '<option value="' + n + '"' + (n === corrAtual ? ' selected' : '') + '>' + n + '</option>'; });
     if (selCorr.innerHTML !== opts) selCorr.innerHTML = opts;
-    if (corrAtual) teamReal = teamReal.filter(c => (c.corretor || c.CORRETOR || '').trim() === corrAtual);
   }
 
-  // Filtro de status
-  const selSt = document.getElementById('ciclo-real-filtro-status');
-  if (selSt && selSt.value) {
-    teamReal = teamReal.filter(c => (c.status || c.STATUS) === selSt.value);
+  // Calcular KPIs
+  const totalReal = teamReal.length;
+  const ativos = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S').toUpperCase() === 'S').length;
+  const vendidos = teamReal.filter(c => (c.acionado || c.ACIONADO || '').toUpperCase() === 'VENDIDO').length;
+  const desativados = teamReal.filter(c => (c.acionado || c.ACIONADO || '').toUpperCase() === 'N').length;
+
+  const kpisEl = document.getElementById('ciclo-kpis');
+  if (kpisEl) {
+    kpisEl.innerHTML = `
+      <div class="admin-kpi blue"><div class="ak-val">${totalReal}</div><div class="ak-label">Total no Real</div></div>
+      <div class="admin-kpi gold"><div class="ak-val">${ativos}</div><div class="ak-label">Ativos</div></div>
+      <div class="admin-kpi green"><div class="ak-val">${vendidos}</div><div class="ak-label">Vendidos</div></div>
+      <div class="admin-kpi" style="border-color:#666;"><div class="ak-val" style="color:#999;">${desativados}</div><div class="ak-label">Desativados</div></div>
+    `;
   }
 
-  // Ordenar: N GERADO primeiro, depois GERANDO, depois GERADO
-  const ordem = { 'N GERADO': 0, 'GERANDO': 1, 'GERADO': 2 };
-  teamReal.sort((a, b) => (ordem[a.status || a.STATUS] || 1) - (ordem[b.status || b.STATUS] || 1));
-
-  // Atualizar KPIs
-  renderCicloKpis();
-
-  let tbody = '';
-  teamReal.forEach(c => {
-    const status = c.status || c.STATUS || '-';
-    const statusColor = status === 'GERADO' ? 'var(--success)' : status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
-    const dias = calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '');
-    const diasColor = dias < 7 ? 'var(--success)' : dias < 15 ? 'var(--warning)' : 'var(--danger)';
-    const corrNome = (c.corretor || c.CORRETOR || '').trim();
-    const clienteNome = (c.nome || c.CLIENTE || '').trim();
-    const vgv = parseFloat(c.vgv || c.VGV_ESTIMADO) || 0;
-    const rowBg = dias >= 30 ? ' style="background:rgba(255,80,80,0.08);"' : '';
-
-    tbody += `<tr${rowBg}>
-      <td>${corrNome.split(' ')[0]}</td>
-      <td>${clienteNome}</td>
-      <td>${fmtMoney(vgv)}</td>
-      <td><span style="color:${statusColor};font-weight:700;">${status}</span></td>
-      <td><span style="color:${diasColor};font-weight:700;">${dias}d</span></td>
-    </tr>`;
-  });
-
-  const tbodyEl = document.getElementById('aciclo-tbody');
-  if (tbodyEl) tbodyEl.innerHTML = tbody || '<tr><td colspan="5" style="text-align:center;color:var(--textL);padding:20px;">Nenhum cliente ativado no Real.</td></tr>';
-}
-
-function renderCicloDiagnostico(teamReal, vendasMes) {
-  const gerando = teamReal.filter(c => (c.status || c.STATUS) === 'GERANDO');
-  const nGerado = teamReal.filter(c => (c.status || c.STATUS) === 'N GERADO');
-  const totalDias = gerando.reduce((s, c) => {
-    return s + calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '');
-  }, 0);
-  const mediaDias = gerando.length ? Math.round(totalDias / gerando.length) : 0;
-  const taxaConv = teamReal.length ? Math.round((vendasMes.length / Math.max(teamReal.length, 1)) * 100) : 0;
-
-  let gargalo = '';
-  if (nGerado.length > gerando.length) {
-    gargalo = `Alta taxa de <strong>N GERADO</strong> (${nGerado.length} clientes). Revisar pendências e apoiar corretores com travamentos.`;
-  } else if (mediaDias > 20) {
-    gargalo = `Tempo médio alto no pipeline: <strong>${mediaDias} dias</strong>. Clientes parados — pressionar construtoras ou resolver pendências.`;
-  } else if (vendasMes.length === 0) {
-    gargalo = `<strong>Nenhuma venda</strong> no mês atual. Prioridade: converter pipeline em contratos assinados.`;
-  } else {
-    gargalo = `Pipeline saudável. Tempo médio: <strong>${mediaDias} dias</strong>. Taxa de conversão: <strong>${taxaConv}%</strong>.`;
-  }
-
-  const html = `<div class="diagnostico-box">
-    <div class="diagnostico-title">Análise do Período</div>
-    <div class="diagnostico-item">🔍 <strong>Gargalo:</strong> ${gargalo}</div>
-    <div class="diagnostico-item">📊 <strong>Pipeline:</strong> ${gerando.length} gerando, ${nGerado.length} travados, ${teamReal.filter(c => (c.status || c.STATUS) === 'GERADO').length} gerados.</div>
-    <div class="diagnostico-item">💰 <strong>Vendas no mês:</strong> ${vendasMes.length} venda${vendasMes.length !== 1 ? 's' : ''}, VGV ${fmtMoney(vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0))}.</div>
-    <div class="diagnostico-item">⏱ <strong>Tempo médio no pipeline:</strong> ${mediaDias} dias.</div>
-  </div>`;
-  document.getElementById('aciclo-diagnostico').innerHTML = html;
-}
-
-function renderCicloCharts(teamReal, vendasAdmin) {
-  const mesAtual = getMesComercialAtualStr();
-  const nomesMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-
-  // Chart 1: VGV por corretor (pipeline)
-  const vgvPorCorr = {};
-  teamReal.forEach(c => {
-    const corr = (c.corretor || c.CORRETOR || 'N/A').trim();
-    const primNome = corr.split(' ')[0];
-    vgvPorCorr[primNome] = (vgvPorCorr[primNome] || 0) + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0);
-  });
-  const labelsCorr = Object.keys(vgvPorCorr).sort((a, b) => vgvPorCorr[b] - vgvPorCorr[a]).slice(0, 10);
-  const dataCorr = labelsCorr.map(l => vgvPorCorr[l]);
-
-  if (chartCorretores) chartCorretores.destroy();
-  const ctxCorr = document.getElementById('chartCorretores');
-  if (ctxCorr) {
-    chartCorretores = new Chart(ctxCorr, {
-      type: 'bar',
-      data: {
-        labels: labelsCorr,
-        datasets: [{ label: 'VGV (R$)', data: dataCorr, backgroundColor: 'rgba(100,255,218,0.5)', borderColor: 'rgba(100,255,218,1)', borderWidth: 1 }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#7a8ba3', font: { size: 11 } }, grid: { color: '#1e2a3a' } },
-          y: { ticks: { color: '#7a8ba3', font: { size: 10 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e2a3a' } }
-        }
-      }
-    });
-  }
-
-  // Chart 2: Distribuição por status (rosca)
-  const gerando = teamReal.filter(c => (c.status || c.STATUS) === 'GERANDO').length;
-  const nGerado = teamReal.filter(c => (c.status || c.STATUS) === 'N GERADO').length;
-  const gerado = teamReal.filter(c => (c.status || c.STATUS) === 'GERADO').length;
-  if (chartStatus) chartStatus.destroy();
-  const ctxSt = document.getElementById('chartStatus');
-  if (ctxSt && (gerando + nGerado + gerado) > 0) {
-    chartStatus = new Chart(ctxSt, {
-      type: 'doughnut',
-      data: {
-        labels: ['Gerando', 'N Gerado', 'Gerado'],
-        datasets: [{ data: [gerando, nGerado, gerado], backgroundColor: ['rgba(255,167,38,0.7)', 'rgba(239,83,80,0.7)', 'rgba(0,230,118,0.7)'], borderWidth: 0 }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { color: '#7a8ba3', font: { size: 11 } } } }
-      }
-    });
-  }
-
-  // Chart 3: Evolução mensal (últimos 6 meses de vendas)
-  const ultimos6 = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    ultimos6.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
-  }
-  const vendasPorMes = ultimos6.map(m => {
-    const v = getAdminVendas().filter(vv =>
-      String(vv.MES_COMERCIAL || '').substring(0, 7) === m &&
-      !((vv.STATUS_VENDA || '').includes('Distrato'))
-    );
-    return v.reduce((s, vv) => s + (parseFloat(vv.VGV) || 0), 0);
-  });
-  const labelsMes = ultimos6.map(m => {
-    const [ano, mes] = m.split('-');
-    return nomesMes[parseInt(mes)] + '/' + ano.slice(2);
-  });
-  if (chartMensal) chartMensal.destroy();
-  const ctxMen = document.getElementById('chartMensal');
-  if (ctxMen) {
-    chartMensal = new Chart(ctxMen, {
-      type: 'line',
-      data: {
-        labels: labelsMes,
-        datasets: [{ label: 'VGV', data: vendasPorMes, borderColor: 'rgba(255,215,0,1)', backgroundColor: 'rgba(255,215,0,0.08)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#ffd700' }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#7a8ba3', font: { size: 10 } }, grid: { color: '#1e2a3a' } },
-          y: { ticks: { color: '#7a8ba3', font: { size: 10 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e2a3a' } }
-        }
-      }
-    });
-  }
-
-  // Chart 4: Top empreendimentos (pipeline)
-  const vgvPorEmp = {};
-  teamReal.forEach(c => {
-    const emp = (c.empreendimento || c.EMPREENDIMENTO || 'N/A').trim() || 'N/A';
-    vgvPorEmp[emp] = (vgvPorEmp[emp] || 0) + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0);
-  });
-  const labelsEmp = Object.keys(vgvPorEmp).sort((a, b) => vgvPorEmp[b] - vgvPorEmp[a]).slice(0, 7);
-  const dataEmp = labelsEmp.map(l => vgvPorEmp[l]);
-  if (chartEmpre) chartEmpre.destroy();
-  const ctxEmp = document.getElementById('chartEmpre');
-  if (ctxEmp && labelsEmp.length > 0) {
-    chartEmpre = new Chart(ctxEmp, {
-      type: 'bar',
-      data: {
-        labels: labelsEmp.map(l => l.length > 14 ? l.substring(0, 14) + '…' : l),
-        datasets: [{ label: 'VGV (R$)', data: dataEmp, backgroundColor: 'rgba(171,71,188,0.5)', borderColor: 'rgba(171,71,188,1)', borderWidth: 1 }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#7a8ba3', font: { size: 10 }, callback: v => 'R$' + (v/1000).toFixed(0) + 'k' }, grid: { color: '#1e2a3a' } },
-          y: { ticks: { color: '#7a8ba3', font: { size: 10 } }, grid: { color: '#1e2a3a' } }
-        }
-      }
-    });
-  }
+  renderCicloTabela();
 }
 
 function renderCicloTabela() {
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
-  const baseTeam = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
-  const filtroSt = document.getElementById('aciclo-filtro-status').value;
-  const busca = (document.getElementById('aciclo-busca').value || '').toLowerCase();
+  let lista = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
 
-  let lista = [...baseTeam];
+  // Filtro de corretor
+  const selCorr = document.getElementById('ciclo-filtro-corretor');
+  if (selCorr && selCorr.value) {
+    lista = lista.filter(c => (c.corretor || c.CORRETOR || '').trim() === selCorr.value);
+  }
 
-  // Aplicar filtros globais
-  if (CICLO_FILTRO_CORRETOR) lista = lista.filter(c => (c.corretor || c.CORRETOR || '').trim() === CICLO_FILTRO_CORRETOR);
-  if (CICLO_FILTRO_MES) lista = lista.filter(c => {
-    const d = c.dataEntrada || c.DATA_ENTRADA || c.DATA || '';
-    return String(d).substring(0, 7) === CICLO_FILTRO_MES;
-  });
-  if (CICLO_FILTRO_ACIONADO) lista = lista.filter(c => (c.acionado || c.ACIONADO || 'S') === CICLO_FILTRO_ACIONADO);
-
-  // Filtros locais da tabela
-  if (filtroSt) lista = lista.filter(c => (c.status || c.STATUS) === filtroSt);
-  if (busca) lista = lista.filter(c => {
-    const nome = (c.nome || c.CLIENTE || '').toLowerCase();
-    const corr = (c.corretor || c.CORRETOR || '').toLowerCase();
-    return nome.includes(busca) || corr.includes(busca);
-  });
+  // Filtro de status (ACIONADO)
+  const selSt = document.getElementById('ciclo-filtro-status');
+  if (selSt && selSt.value) {
+    lista = lista.filter(c => (c.acionado || c.ACIONADO || 'S').toUpperCase() === selSt.value);
+  }
 
   // Adicionar dias calculados
   lista = lista.map(c => ({
     ...c,
-    dias: calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '')
+    _dias: calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '')
   }));
 
   // Ordenar
@@ -5586,7 +5262,7 @@ function renderCicloTabela() {
       va = parseFloat(a.vgv || a.VGV_ESTIMADO) || 0;
       vb = parseFloat(b.vgv || b.VGV_ESTIMADO) || 0;
     } else if (cicloSortCol === 'dias') {
-      va = a.dias; vb = b.dias;
+      va = a._dias; vb = b._dias;
     } else {
       va = String(a[cicloSortCol] || a[cicloSortCol.toLowerCase()] || '').toLowerCase();
       vb = String(b[cicloSortCol] || b[cicloSortCol.toLowerCase()] || '').toLowerCase();
@@ -5601,66 +5277,135 @@ function renderCicloTabela() {
   const fim = Math.min(inicio + CICLO_POR_PAGINA, total);
   const pagina = lista.slice(inicio, fim);
 
-  let tbody = '';
+  let rows = '';
   pagina.forEach(c => {
-    const status = c.status || c.STATUS || '-';
-    const statusColor = status === 'GERADO' ? 'var(--success)' : status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
-    const dias = c.dias;
-    const diasClass = dias < 7 ? 'td-dias-verde' : dias < 15 ? 'td-dias-amarelo' : 'td-dias-vermelho';
-    const rowStyle = dias >= 30 ? ' style="background:rgba(255,80,80,0.08);"' : '';
-    const acionado = (c.acionado || c.ACIONADO || 'S');
     const corrNome = (c.corretor || c.CORRETOR || '').trim();
     const clienteNome = (c.nome || c.CLIENTE || '').trim();
+    const vgv = parseFloat(c.vgv || c.VGV_ESTIMADO) || 0;
+    const status = c.status || c.STATUS || '-';
+    const dias = c._dias;
+    const diasColor = dias < 7 ? 'var(--success)' : dias < 15 ? 'var(--warning)' : 'var(--danger)';
+    const acionado = (c.acionado || c.ACIONADO || 'S').toUpperCase();
     const corrEsc = corrNome.replace(/'/g, "\\'");
     const clienteEsc = clienteNome.replace(/'/g, "\\'");
-    const acionadoBadge = acionado === 'S'
-      ? `<span onclick="toggleAcionado('${corrEsc}','${clienteEsc}')" style="cursor:pointer;background:#1a7a4a;color:#fff;border-radius:12px;padding:3px 10px;font-size:.68rem;font-weight:700;white-space:nowrap;touch-action:manipulation;">Acionado ✓</span>`
-      : `<span onclick="toggleAcionado('${corrEsc}','${clienteEsc}')" style="cursor:pointer;background:#555;color:#ccc;border-radius:12px;padding:3px 10px;font-size:.68rem;font-weight:700;white-space:nowrap;touch-action:manipulation;">Não acionado</span>`;
-    tbody += `<tr${rowStyle}>
+
+    // Color coding por ACIONADO
+    let rowBg = '';
+    if (acionado === 'VENDIDO') rowBg = ' style="background:rgba(0,230,118,0.06);"';
+    else if (acionado === 'N') rowBg = ' style="background:rgba(150,150,150,0.06);"';
+    else if (dias >= 30) rowBg = ' style="background:rgba(255,80,80,0.08);"';
+
+    // Status color
+    const statusColor = acionado === 'VENDIDO' ? 'var(--success)' : acionado === 'N' ? '#888' : status === 'GERADO' ? 'var(--success)' : status === 'N GERADO' ? 'var(--danger)' : 'var(--warning)';
+    const statusLabel = acionado === 'VENDIDO' ? 'VENDIDO' : acionado === 'N' ? 'DESATIVADO' : status;
+
+    // Action buttons
+    let acoes = '';
+    if (acionado === 'VENDIDO') {
+      acoes = '<span style="background:var(--success);color:#000;border-radius:12px;padding:3px 10px;font-size:.66rem;font-weight:800;">Vendido</span>';
+    } else if (acionado === 'N') {
+      acoes = `<button onclick="cicloReativar('${corrEsc}','${clienteEsc}')" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:4px 10px;font-size:.66rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Reativar</button>`;
+    } else {
+      acoes = `<button onclick="cicloDesativar('${corrEsc}','${clienteEsc}')" style="background:#555;color:#ccc;border:none;border-radius:8px;padding:4px 8px;font-size:.64rem;font-weight:700;cursor:pointer;touch-action:manipulation;margin-right:4px;">Desativar</button><button onclick="cicloVendido('${corrEsc}','${clienteEsc}')" style="background:var(--success);color:#000;border:none;border-radius:8px;padding:4px 8px;font-size:.64rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Vendido</button>`;
+    }
+
+    rows += `<tr${rowBg}>
       <td>${corrNome.split(' ')[0]}</td>
       <td>${clienteNome}</td>
-      <td>${fmtMoney(parseFloat(c.vgv || c.VGV_ESTIMADO) || 0)}</td>
-      <td>${(c.empreendimento || c.EMPREENDIMENTO || '-').substring(0, 20)}</td>
-      <td><span style="color:${statusColor};font-weight:700;">${status}</span></td>
-      <td class="${diasClass}">${dias}d</td>
-      <td>${acionadoBadge}</td>
+      <td>${fmtMoney(vgv)}</td>
+      <td><span style="color:${statusColor};font-weight:700;">${statusLabel}</span></td>
+      <td><span style="color:${diasColor};font-weight:700;">${dias}d</span></td>
+      <td style="white-space:nowrap;">${acoes}</td>
     </tr>`;
   });
-  document.getElementById('aciclo-tbody').innerHTML = tbody || '<tr><td colspan="7" style="text-align:center;color:var(--textL);padding:20px;">Nenhum registro encontrado.</td></tr>';
 
-  document.getElementById('aciclo-pag-info').textContent = total > 0 ? `${inicio + 1}–${fim} de ${total}` : '0 registros';
-  document.getElementById('aciclo-btn-prev').disabled = cicloPagina === 0;
-  document.getElementById('aciclo-btn-next').disabled = fim >= total;
+  const wrap = document.getElementById('ciclo-tabela-wrap');
+  if (!wrap) return;
+
+  let paginacao = '';
+  if (total > CICLO_POR_PAGINA) {
+    paginacao = `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:.72rem;color:var(--textL);">
+      <span>${total > 0 ? (inicio + 1) + '–' + fim + ' de ' + total : '0 registros'}</span>
+      <div style="display:flex;gap:6px;">
+        <button onclick="cicloPage(-1)" ${cicloPagina === 0 ? 'disabled' : ''} style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.7rem;cursor:pointer;">Ant</button>
+        <button onclick="cicloPage(1)" ${fim >= total ? 'disabled' : ''} style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.7rem;cursor:pointer;">Prox</button>
+      </div>
+    </div>`;
+  }
+
+  wrap.innerHTML = `<div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th onclick="sortCiclo('CORRETOR')" style="cursor:pointer;">Corretor</th>
+          <th onclick="sortCiclo('CLIENTE')" style="cursor:pointer;">Cliente</th>
+          <th onclick="sortCiclo('VGV_ESTIMADO')" style="cursor:pointer;">VGV</th>
+          <th>Status</th>
+          <th onclick="sortCiclo('dias')" style="cursor:pointer;">Dias</th>
+          <th>Acoes</th>
+        </tr>
+      </thead>
+      <tbody>${rows || '<tr><td colspan="6" style="text-align:center;color:var(--textL);padding:20px;">Nenhum registro encontrado.</td></tr>'}</tbody>
+    </table>
+  </div>${paginacao}`;
 }
 
-function toggleAcionado(corretor, cliente) {
+async function cicloDesativar(corretor, cliente) {
+  if (!confirm('Desativar "' + cliente + '"?')) return;
+  const dados = JSON.stringify({ corretor: corretor, cliente: cliente });
+  try { await fetch(API_URL + '?acao=desativar_real&dados=' + encodeURIComponent(dados)); } catch(e) {}
+  // Atualizar localmente
+  _setCicloAcionado(corretor, cliente, 'N');
+  renderAdminCiclo();
+  mostrarConfirmacao('Cliente desativado.');
+}
+
+async function cicloReativar(corretor, cliente) {
+  const dados = JSON.stringify({ corretor: corretor, cliente: cliente });
+  try { await fetch(API_URL + '?acao=reativar_real&dados=' + encodeURIComponent(dados)); } catch(e) {}
+  _setCicloAcionado(corretor, cliente, 'S');
+  renderAdminCiclo();
+  mostrarConfirmacao('Cliente reativado!');
+}
+
+async function cicloVendido(corretor, cliente) {
+  if (!confirm('Marcar "' + cliente + '" como VENDIDO?')) return;
+  const dados = JSON.stringify({ corretor: corretor, cliente: cliente });
+  try { await fetch(API_URL + '?acao=marcar_vendido_real&dados=' + encodeURIComponent(dados)); } catch(e) {}
+  _setCicloAcionado(corretor, cliente, 'VENDIDO');
+  renderAdminCiclo();
+  mostrarConfirmacao('Marcado como vendido!');
+}
+
+function _setCicloAcionado(corretor, cliente, valor) {
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
   const item = realData.find(c =>
     (c.corretor || c.CORRETOR || '').trim() === corretor &&
     (c.nome || c.CLIENTE || '').trim() === cliente
   );
-  if (!item) return;
-  const novoValor = (item.acionado || item.ACIONADO || 'S') === 'S' ? 'N' : 'S';
-  item.acionado = novoValor;
-  item.ACIONADO = novoValor;
-
-  // Atualizar no REAL_CLIENTS também
+  if (item) { item.acionado = valor; item.ACIONADO = valor; }
   const rc = REAL_CLIENTS.find(c =>
     (c.corretor || c.CORRETOR || '').trim() === corretor &&
     (c.nome || c.CLIENTE || '').trim() === cliente
   );
-  if (rc) { rc.acionado = novoValor; rc.ACIONADO = novoValor; }
+  if (rc) { rc.acionado = valor; rc.ACIONADO = valor; }
+}
 
-  // POST para API
-  const payload = JSON.stringify({ acao: 'atualizar_real', corretor, cliente, campos: { ACIONADO: novoValor } });
-  fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: payload,
-    mode: 'no-cors'
-  }).catch(() => {});
-
-  renderAdminCiclo();
+async function sincronizarAprovados() {
+  const btn = document.getElementById('btn-sync-aprovados');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sincronizando...'; }
+  try {
+    await fetch(API_URL + '?acao=sincronizar_aprovados_real');
+    mostrarConfirmacao('Aprovados sincronizados!');
+    // Recarregar dados do Real
+    setTimeout(() => {
+      renderAdminCiclo();
+      renderReal();
+    }, 1500);
+  } catch(e) {
+    alert('Erro ao sincronizar.');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Sincronizar Aprovados'; }
 }
 
 function sortCiclo(col) {
@@ -5678,7 +5423,7 @@ function cicloPage(dir) {
 function exportarCicloCSV() {
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
   const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
-  const linhas = [['Corretor','Cliente','VGV','Empreendimento','Construtora','Status','Dias','Pendência']];
+  const linhas = [['Corretor','Cliente','VGV','Empreendimento','Construtora','Status','Dias','Acionado','Pendencia']];
   teamReal.forEach(c => {
     linhas.push([
       c.corretor || c.CORRETOR || '',
@@ -5688,6 +5433,7 @@ function exportarCicloCSV() {
       c.construtora || c.CONSTRUTORA || '',
       c.status || c.STATUS || '',
       calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || ''),
+      c.acionado || c.ACIONADO || 'S',
       c.pendencia || c.PENDENCIA || ''
     ]);
   });
