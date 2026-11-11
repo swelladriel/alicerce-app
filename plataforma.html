@@ -976,6 +976,16 @@ async function carregarDados() {
 
     CORRETORES.forEach(c => { CORRETORES_MAP[c.NOME] = c.EQUIPE; });
 
+    // Carregar Swell em paralelo (não bloqueia o resto)
+    fetch(API_URL + '?acao=swell').then(r => r.json()).then(json => {
+      if (json.dados) {
+        SWELL_DATA = json.dados;
+        const info = document.getElementById('swell-sync-info');
+        if (info) info.textContent = 'Última sync: ' + (json.atualizado_em || '—');
+        renderSwell();
+      }
+    }).catch(() => {});
+
     const renders = [
       ['Vendas', renderVendas],
       ['AgendaPlat', renderAgendaPlat],
