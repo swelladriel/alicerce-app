@@ -2659,17 +2659,19 @@ function renderCalendario() {
   const hoje = new Date();
   const hojeStr = hoje.toISOString().split('T')[0];
 
-  // Dias com agendamento
-  const diasComAgenda = new Set();
+  // Contar agendamentos por dia
+  const agendaPorDia = {};
   AGENDA.forEach(a => {
     const dt = String(a.DATA || '').substring(0, 10);
     if (dt.startsWith(`${AGENDA_ANO}-${String(AGENDA_MES + 1).padStart(2, '0')}`)) {
       if (AGENDA_FILTRO === 'meus') {
         const corrUpper = (a.CORRETOR || '').toUpperCase();
         const nomeUpper = USUARIO.NOME.toUpperCase();
-        if (corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper)) diasComAgenda.add(dt);
+        if (corrUpper.includes(nomeUpper) || nomeUpper.includes(corrUpper)) {
+          agendaPorDia[dt] = (agendaPorDia[dt] || 0) + 1;
+        }
       } else {
-        diasComAgenda.add(dt);
+        agendaPorDia[dt] = (agendaPorDia[dt] || 0) + 1;
       }
     }
   });
@@ -2683,10 +2685,10 @@ function renderCalendario() {
   for (let d = 1; d <= diasNoMes; d++) {
     const dataStr = `${AGENDA_ANO}-${String(AGENDA_MES + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const isHoje = dataStr === hojeStr;
-    const temAgenda = diasComAgenda.has(dataStr);
+    const qtd = agendaPorDia[dataStr] || 0;
     html += `<div class="cal-day ${isHoje ? 'hoje' : ''}" onclick="selecionarDia('${dataStr}')">
       <span class="cal-day-num">${d}</span>
-      ${temAgenda ? '<div class="cal-dot"></div>' : ''}
+      ${qtd > 0 ? `<div style="display:flex;align-items:center;gap:3px;margin-top:3px;"><div class="cal-dot"></div><span style="font-size:.55rem;color:var(--gold);font-weight:800;">${qtd}</span></div>` : ''}
     </div>`;
   }
 
@@ -2788,8 +2790,25 @@ function renderDiaDetalhe(dataStr) {
     <div style="margin-left:auto;font-size:1.4rem;font-weight:900;color:#a78bfa;">${corujaoCount}</div>
   </div>` : '';
 
+  const totalAg = agendamentos.length;
+  const atendidos = agendamentos.filter(a => (a.ATENDIDO || '').toUpperCase() === 'SIM').length;
+  const contador = `<div style="display:flex;gap:12px;margin-bottom:12px;">
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;flex:1;">
+      <div style="font-size:1.2rem;font-weight:900;color:var(--gold);">${totalAg}</div>
+      <div style="font-size:.58rem;color:var(--textL);text-transform:uppercase;">Agendamentos</div>
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;flex:1;">
+      <div style="font-size:1.2rem;font-weight:900;color:var(--success);">${atendidos}</div>
+      <div style="font-size:.58rem;color:var(--textL);text-transform:uppercase;">Atendidos</div>
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;flex:1;">
+      <div style="font-size:1.2rem;font-weight:900;color:${totalAg - atendidos > 0 ? 'var(--warning)' : 'var(--textL)'};">${totalAg - atendidos}</div>
+      <div style="font-size:.58rem;color:var(--textL);text-transform:uppercase;">Pendentes</div>
+    </div>
+  </div>`;
+
   let html = `<div class="cal-day-view">
-    <div class="cal-day-title">${titulo}</div>${corujaoBanner}`;
+    <div class="cal-day-title">${titulo}</div>${contador}${corujaoBanner}`;
 
   if (horasOrdenadas.length === 0) {
     html += '<div class="cal-vazio">Nenhum agendamento neste dia.</div>';
