@@ -6415,7 +6415,6 @@ function crmOpenCardModal(card, defaultColName) {
       if (!c) return;
       crmShowConfirm('Excluir cliente', 'Excluir "' + c.NOME + '" permanentemente?', function() {
         crmDeleteCard(crmEditingCardId);
-        crmCloseCardModal();
       });
     });
   }
@@ -6519,8 +6518,13 @@ async function crmSaveCard() {
 
 // ---- DELETE CARD ----
 async function crmDeleteCard(cardId) {
-  await crmApiSave('deletar_crm_card', {id: cardId});
+  var result = await crmApiSave('deletar_crm_card', {id: cardId});
+  if (result && result.erro) {
+    crmShowToast('Erro ao excluir: ' + result.erro);
+    return;
+  }
   CRM_ALL_CARDS = CRM_ALL_CARDS.filter(function(c) { return c.ID !== cardId; });
+  crmCloseCardModal();
   crmRenderBoard();
   crmShowToast('Cliente excluido.');
 }
@@ -6650,7 +6654,9 @@ function crmShowConfirm(title, msg, onOk) {
   document.body.appendChild(overlay);
   crmConfirmCb = onOk;
   document.getElementById('crm-confirmOk').addEventListener('click', function() {
-    crmCloseConfirm(); if (crmConfirmCb) crmConfirmCb(); crmConfirmCb = null;
+    var cb = crmConfirmCb;
+    crmCloseConfirm();
+    if (cb) cb();
   });
   document.getElementById('crm-confirmCancel').addEventListener('click', function() {
     crmCloseConfirm(); crmConfirmCb = null;
