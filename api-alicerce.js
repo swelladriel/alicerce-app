@@ -2773,6 +2773,7 @@ function sincronizarAprovadosReal() {
   const clientes = lerAba('Clientes');
   const real = lerAba('Real');
   const swellVendas = lerAba('SwellVendas');
+  const vendas = lerAba('Vendas'); // Aba Vendas (OneDrive sync) — tem TODOS os meses do ano
 
   // --- Montar set de nomes já no Real (case-insensitive) ---
   const nomesNoReal = new Set();
@@ -2780,13 +2781,40 @@ function sincronizarAprovadosReal() {
     if (r.CLIENTE) nomesNoReal.add(String(r.CLIENTE).trim().toLowerCase());
   });
 
-  // --- Montar set de CPFs com venda validada no Swell ---
-  const cpfsVendidos = new Set();
+  // --- FONTE 1: CPFs com venda validada no SwellVendas (competência atual) ---
+  const cpfsVendidosSwell = new Set();
   swellVendas.forEach(function(v) {
     const validacao = String(v.VALIDACAO || '').trim().toLowerCase();
     if (validacao === 'validada') {
       const cpf = String(v.CPF || '').replace(/\D/g, '');
-      if (cpf) cpfsVendidos.add(cpf);
+      if (cpf) cpfsVendidosSwell.add(cpf);
+    }
+  });
+
+  // --- FONTE 2: Nomes de clientes na aba Vendas (todos os meses, sem distratos) ---
+  // Aba Vendas tem colunas: MES_COMERCIAL, DATA_VENDA, CLIENTE, CPF, STATUS_VENDA, ...
+  const nomesVendidosHistorico = new Set();
+  const cpfsVendidosHistorico = new Set();
+  vendas.forEach(function(v) {
+    const statusVenda = String(v.STATUS_VENDA || '').trim().toLowerCase();
+    // Excluir distratos
+    if (statusVenda.indexOf('distrato') !== -1) return;
+    const nomeV = String(v.CLIENTE || '').trim().toLowerCase();
+    if (nomeV) nomesVendidosHistorico.add(nomeV);
+    const cpfV = String(v.CPF || '').replace(/\D/g, '');
+    if (cpfV) cpfsVendidosHistorico.add(cpfV);
+  });
+
+  // --- FONTE 3: Clientes com STATUS contendo "COMPROU" na aba Clientes ---
+  const cpfsComprou = new Set();
+  const nomesComprou = new Set();
+  clientes.forEach(function(c) {
+    const statusC = String(c.STATUS || '').trim().toUpperCase();
+    if (statusC.indexOf('COMPROU') !== -1) {
+      const cpfC = String(c.CPF || '').replace(/\D/g, '');
+      if (cpfC) cpfsComprou.add(cpfC);
+      const nomeC = String(c.CLIENTE || '').trim().toLowerCase();
+      if (nomeC) nomesComprou.add(nomeC);
     }
   });
 
@@ -2800,6 +2828,9 @@ function sincronizarAprovadosReal() {
   let adicionados = 0;
   let jaExistiam = 0;
   let marcadosVendido = 0;
+  let fonteSwell = 0;
+  let fonteVendasHistorico = 0;
+  let fonteComprou = 0;
 
   clientes.forEach(function(c) {
     const status = String(c.STATUS || '').trim().toUpperCase();
@@ -2814,9 +2845,20 @@ function sincronizarAprovadosReal() {
       return;
     }
 
-    // Determinar se já tem venda validada no Swell por CPF
     const cpfLimpo = String(c.CPF || '').replace(/\D/g, '');
-    const temVendaValidada = cpfLimpo && cpfsVendidos.has(cpfLimpo);
+
+    // Checar todas as 3 fontes para determinar se cliente já vendeu
+    const vendidoSwell = cpfLimpo && cpfsVendidosSwell.has(cpfLimpo);
+    const vendidoHistorico = (cpfLimpo && cpfsVendidosHistorico.has(cpfLimpo)) || nomesVendidosHistorico.has(nomeCliente);
+    const vendidoComprou = (cpfLimpo && cpfsComprou.has(cpfLimpo)) || nomesComprou.has(nomeCliente);
+
+    const temVendaValidada = vendidoSwell || vendidoHistorico || vendidoComprou;
+
+    if (temVendaValidada) {
+      if (vendidoSwell) fonteSwell++;
+      else if (vendidoHistorico) fonteVendasHistorico++;
+      else fonteComprou++;
+    }
 
     const novaLinha = {
       'DATA': hojeStr,
@@ -2842,13 +2884,16 @@ function sincronizarAprovadosReal() {
     if (temVendaValidada) marcadosVendido++;
   });
 
-  const msg = 'Sincronizacao concluida: ' + adicionados + ' adicionados (' + marcadosVendido + ' ja vendidos), ' + jaExistiam + ' ja existiam no Real.';
+  const msg = 'Sincronizacao concluida: ' + adicionados + ' adicionados (' + marcadosVendido + ' ja vendidos: ' + fonteSwell + ' Swell, ' + fonteVendasHistorico + ' historico Vendas, ' + fonteComprou + ' STATUS COMPROU), ' + jaExistiam + ' ja existiam no Real.';
   Logger.log(msg);
   return {
     sucesso: true,
     adicionados: adicionados,
     ja_existiam: jaExistiam,
     marcados_vendido: marcadosVendido,
+    vendidos_swell: fonteSwell,
+    vendidos_historico: fonteVendasHistorico,
+    vendidos_comprou: fonteComprou,
     msg: msg
   };
 }

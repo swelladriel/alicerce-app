@@ -1643,7 +1643,7 @@ async function carregarTudo() {
     dataEntrada: String(r.DATA_ENTRADA || r.DATA || '').substring(0, 10),
     corretor: r.CORRETOR || USUARIO.NOME,
     comissaoStatus: r.COMISSAO_STATUS || 'NÃO PAGO',
-    acionado: r.ACIONADO === 'N' ? 'N' : 'S'
+    acionado: r.ACIONADO === 'N' ? 'N' : r.ACIONADO === 'VENDIDO' ? 'VENDIDO' : (r.ACIONADO || 'S')
   });
   // ALL_REAL_DATA = todos (pra views admin)
   ALL_REAL_DATA = realAPI.map(mapReal);
@@ -4476,7 +4476,8 @@ function renderReal() {
       ${c.pendencia ? '<div style="font-size:.7rem;color:var(--warning);margin-bottom:6px;">⚠ ' + c.pendencia + '</div>' : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span class="tag" style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor};">${c.status}</span>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          ${acionado === 'VENDIDO' ? '<span style="background:var(--success);color:#000;border-radius:8px;padding:4px 10px;font-size:.64rem;font-weight:800;">Vendido</span>' : '<button onclick="desativarRealCorretor(\'' + idSafe + '\')" style="background:#444;color:#aaa;border:none;border-radius:8px;padding:4px 10px;font-size:.64rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Desativar</button>'}
           <button onclick="editarReal('${idSafe}')" style="background:none;border:none;color:var(--textL);font-size:1rem;cursor:pointer;">✏️</button>
         </div>
       </div>
@@ -4522,6 +4523,23 @@ async function salvarVgvReal(id) {
   renderReal();
   renderInicio();
   mostrarConfirmacao('VGV atualizado!');
+}
+
+async function desativarRealCorretor(id) {
+  if (!confirm('Desativar este cliente do pipeline?')) return;
+  const c = REAL_CLIENTS.find(x => x.id === id);
+  if (!c) return;
+  const dados = JSON.stringify({ corretor: c.corretor || USUARIO.NOME, cliente: c.nome });
+  try { await fetch(API_URL + '?acao=desativar_real&dados=' + encodeURIComponent(dados)); } catch(e) {}
+  c.acionado = 'N'; c.ACIONADO = 'N';
+  // Atualizar ALL_REAL_DATA tambem
+  if (typeof ALL_REAL_DATA !== 'undefined') {
+    const item = ALL_REAL_DATA.find(x => x.id === id);
+    if (item) { item.acionado = 'N'; item.ACIONADO = 'N'; }
+  }
+  renderReal();
+  renderInicio();
+  mostrarConfirmacao('Cliente desativado');
 }
 
 function setRealFiltro(f) {
