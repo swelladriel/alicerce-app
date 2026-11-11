@@ -614,7 +614,6 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div class="snav-item snav-admin" data-tab="tab-admin-corretores" onclick="navigateTo('tab-admin-corretores')" style="display:none;"><span class="si">&#128100;</span><span class="sl">Corretores</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-presenca" onclick="navigateTo('tab-admin-presenca')" style="display:none;"><span class="si">&#9201;</span><span class="sl">Presença</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-ciclo" onclick="navigateTo('tab-admin-ciclo')" style="display:none;"><span class="si">&#128178;</span><span class="sl">Ciclo Vendas</span></div>
-      <div class="snav-item snav-admin" data-tab="tab-swell" onclick="navigateTo('tab-swell')" style="display:none;"><span class="si">&#128202;</span><span class="sl">Portal Swell</span></div>
     </div>
     <div class="sidebar-ft">
       <div class="sidebar-ft-user" id="sidebar-ft-user">-</div>
@@ -1092,76 +1091,6 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 
   </div>
 
-    <!-- TAB: PORTAL SWELL -->
-    <div class="app-page" id="tab-swell">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div>
-          <div style="font-size:.7rem;color:var(--textL);" id="swell-sync-info">Dados do portal oficial da Swell</div>
-        </div>
-      </div>
-
-      <!-- KPIs -->
-      <div class="admin-kpi-row" id="kpi-swell">
-        <div class="admin-kpi gold"><div class="ak-val" id="sw-vendas">0</div><div class="ak-label">Vendas no Mês</div></div>
-        <div class="admin-kpi green"><div class="ak-val" id="sw-vgv">R$ 0</div><div class="ak-label">VGV Total</div></div>
-        <div class="admin-kpi blue"><div class="ak-val" id="sw-validadas">0</div><div class="ak-label">Validadas</div></div>
-        <div class="admin-kpi" style="border-bottom:3px solid #f59e0b;"><div class="ak-val" id="sw-lancadas">0</div><div class="ak-label">Lançadas</div></div>
-      </div>
-      <div class="admin-kpi-row" style="margin-top:-8px;">
-        <div class="admin-kpi red"><div class="ak-val" id="sw-devolvidas">0</div><div class="ak-label">Devolvidas</div></div>
-        <div class="admin-kpi blue"><div class="ak-val" id="sw-apuracoes">0</div><div class="ak-label">Apurações</div></div>
-        <div class="admin-kpi green"><div class="ak-val" id="sw-concluidas">0</div><div class="ak-label">Concluídas</div></div>
-        <div class="admin-kpi gold"><div class="ak-val" id="sw-consorcio">0</div><div class="ak-label">Consórcio (cotas)</div></div>
-      </div>
-
-      <!-- Tabela por corretor -->
-      <div class="admin-section">
-        <div class="admin-section-hdr">Vendas por Corretor</div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Corretor</th>
-                <th>Lanç.</th>
-                <th>Aguard.</th>
-                <th>Devol.</th>
-                <th>Valid.</th>
-                <th>Distr.</th>
-                <th>Total</th>
-                <th>VGV</th>
-              </tr>
-            </thead>
-            <tbody id="tb-swell-vendas">
-              <tr><td colspan="8" style="text-align:center;color:var(--textL);padding:20px;">Carregando...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Detalhamento -->
-      <div class="admin-section">
-        <div class="admin-section-hdr">Detalhamento das Vendas</div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Cliente</th>
-                <th>Empreend.</th>
-                <th>Construtora</th>
-                <th>VGV</th>
-                <th>Corretor</th>
-                <th>Situação</th>
-              </tr>
-            </thead>
-            <tbody id="tb-swell-detalhe">
-              <tr><td colspan="7" style="text-align:center;color:var(--textL);padding:20px;">Carregando...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
   </div><!-- fim desktop-main-wrap -->
 </div>
 
@@ -1367,7 +1296,6 @@ const PAGE_TITLES = {
   'tab-admin-corretores': ['Corretores', 'Gerenciar equipe'],
   'tab-admin-presenca': ['Presença', 'Check-in e 945 do time'],
   'tab-admin-ciclo': ['Ciclo de Vendas', 'Pipeline e comissões'],
-  'tab-swell': ['Portal Swell', 'Dados do portal oficial']
 };
 
 let CORRETORES = [];
@@ -1631,7 +1559,6 @@ function showTab(id, e) {
   if (id === 'tab-admin-corretores') renderAdminCorretores();
   if (id === 'tab-admin-presenca') renderAdminPresenca();
   if (id === 'tab-admin-ciclo') renderAdminCiclo();
-  if (id === 'tab-swell') renderSwell();
 }
 
 // Desktop sidebar navigation (calls showTab internally)
@@ -4095,7 +4022,6 @@ function abrirSideMenu() {
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-corretores')"><span class="smi-icon">👤</span> Corretores</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-presenca')"><span class="smi-icon">⏱</span> Presença</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-ciclo')"><span class="smi-icon">💲</span> Ciclo de Vendas</div>`;
-    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-swell')"><span class="smi-icon">📊</span> Portal Swell</div>`;
   }
   document.getElementById('side-menu-items').innerHTML = items;
   if (USUARIO) {
@@ -4271,6 +4197,27 @@ function renderInicioGestor() {
         <div style="font-size:.62rem;color:var(--textL);text-transform:uppercase;margin-top:4px;">Vendas no Mês</div>
       </div>
     </div>
+
+    <!-- Status Swell -->
+    ${SWELL_DATA ? `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:1.1rem;font-weight:900;color:#22c55e;">${SWELL_DATA.vendas_competencia?.total_geral?.validadas?.vendas || 0}</div>
+        <div style="font-size:.55rem;color:var(--textL);text-transform:uppercase;">Validadas</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:1.1rem;font-weight:900;color:#f59e0b;">${SWELL_DATA.vendas_competencia?.total_geral?.lancadas?.vendas || 0}</div>
+        <div style="font-size:.55rem;color:var(--textL);text-transform:uppercase;">Lançadas</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:1.1rem;font-weight:900;color:#ef4444;">${SWELL_DATA.vendas_competencia?.total_geral?.devolvidas?.vendas || 0}</div>
+        <div style="font-size:.55rem;color:var(--textL);text-transform:uppercase;">Devolvidas</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:1.1rem;font-weight:900;color:var(--accent);">${SWELL_DATA.apuracao?.concluidas || 0}/${SWELL_DATA.apuracao?.apuracoes || 0}</div>
+        <div style="font-size:.55rem;color:var(--textL);text-transform:uppercase;">Apurações</div>
+      </div>
+    </div>
+    <div style="text-align:right;margin:-10px 0 12px;font-size:.55rem;color:var(--textL);">Swell · ${SWELL_DATA.atualizado_em || ''}</div>` : ''}
 
     <!-- Agendamentos hoje -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
@@ -5719,89 +5666,9 @@ async function salvarNovoCorretor() {
 // ALL_REAL_DATA é populado dentro da carregarTudo() original (removida duplicata)
 
 // ============================================
-// PORTAL SWELL — Dados embutidos (atualizados via Claude Code)
+// DADOS SWELL — Embutidos (atualizados via Claude Code)
 // ============================================
 const SWELL_DATA = {"vendas_competencia":{"periodo":"Novembro/2026","grupos":[{"corretor":"Felipe Guimaraes","lancadas":{"vendas":1,"vgv":"R$ 219.900,00"},"aguardando_validacao":{"vendas":0,"vgv":"R$ 0,00"},"devolvidas":{"vendas":0,"vgv":"R$ 0,00"},"validadas":{"vendas":0,"vgv":"R$ 0,00"},"distratadas":{"vendas":0,"vgv":"R$ 0,00"},"total":{"vendas":1,"vgv":"R$ 219.900,00"}}],"total_geral":{"corretor":"Total","lancadas":{"vendas":1,"vgv":"R$ 219.900,00"},"aguardando_validacao":{"vendas":0,"vgv":"R$ 0,00"},"devolvidas":{"vendas":0,"vgv":"R$ 0,00"},"validadas":{"vendas":0,"vgv":"R$ 0,00"},"distratadas":{"vendas":0,"vgv":"R$ 0,00"},"total":{"vendas":1,"vgv":"R$ 219.900,00"}}},"vendas_lista":[{"cliente":"DERICK DOS SANTOS SOUZA MACIEL","tipo":"Empreendimento","construtora":"Cury","empreendimento":"My Jacarepaguá","vgv":"R$ 219.900,00","data_venda":"2026-11-09","situacao":"lançada (não enviada)","corretor":"Felipe Guimaraes","coordenador":"Sem Coordenador","gerente":"Adriel Duarte"}],"apuracao":{"mes":"2026-11","apuracoes":135,"aguardando":26,"concluidas":106,"com_erro":3,"renda_media":"R$ 2.316,86"},"consorcio":{"cotas":60,"vgv":"R$ 9.431.000,00","adimplente":59,"inadimplente":1,"magalu":48,"canopus":12},"atualizado_em":"11/11/2026 10:41"};
-
-function renderSwell() {
-  if (!SWELL_DATA) return;
-  const d = SWELL_DATA;
-  const vc = d.vendas_competencia || {};
-  const ap = d.apuracao || {};
-  const co = d.consorcio || {};
-  const vendas = d.vendas_lista || [];
-  const tg = vc.total_geral || {};
-
-  // Sync info
-  const info = document.getElementById('swell-sync-info');
-  if (info) info.textContent = 'Última sync: ' + (d.atualizado_em || '—');
-
-  // KPIs
-  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setVal('sw-vendas', tg.total?.vendas || 0);
-  setVal('sw-vgv', tg.total?.vgv || 'R$ 0');
-  setVal('sw-validadas', tg.validadas?.vendas || 0);
-  setVal('sw-lancadas', tg.lancadas?.vendas || 0);
-  setVal('sw-devolvidas', tg.devolvidas?.vendas || 0);
-  setVal('sw-apuracoes', ap.apuracoes || 0);
-  setVal('sw-concluidas', ap.concluidas || 0);
-  setVal('sw-consorcio', co.cotas || 0);
-
-  // Tabela por corretor
-  const grupos = vc.grupos || [];
-  const tbV = document.getElementById('tb-swell-vendas');
-  if (tbV) {
-    if (grupos.length === 0) {
-      tbV.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--textL);padding:20px;">Nenhuma venda no período</td></tr>';
-    } else {
-      tbV.innerHTML = grupos.map(g => `<tr>
-        <td><strong>${g.corretor}</strong></td>
-        <td>${g.lancadas?.vendas || 0}</td>
-        <td>${g.aguardando_validacao?.vendas || 0}</td>
-        <td>${g.devolvidas?.vendas || 0}</td>
-        <td style="color:#22c55e;font-weight:600;">${g.validadas?.vendas || 0}</td>
-        <td style="color:#ef4444;">${g.distratadas?.vendas || 0}</td>
-        <td><strong>${g.total?.vendas || 0}</strong></td>
-        <td><strong>${g.total?.vgv || 'R$ 0'}</strong></td>
-      </tr>`).join('') + `<tr style="background:rgba(255,255,255,.05);font-weight:700;">
-        <td>TOTAL</td>
-        <td>${tg.lancadas?.vendas || 0}</td>
-        <td>${tg.aguardando_validacao?.vendas || 0}</td>
-        <td>${tg.devolvidas?.vendas || 0}</td>
-        <td style="color:#22c55e;">${tg.validadas?.vendas || 0}</td>
-        <td style="color:#ef4444;">${tg.distratadas?.vendas || 0}</td>
-        <td>${tg.total?.vendas || 0}</td>
-        <td>${tg.total?.vgv || 'R$ 0'}</td>
-      </tr>`;
-    }
-  }
-
-  // Detalhamento
-  const tbD = document.getElementById('tb-swell-detalhe');
-  if (tbD) {
-    if (vendas.length === 0) {
-      tbD.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--textL);padding:20px;">Nenhuma venda</td></tr>';
-    } else {
-      const cor = s => {
-        if (!s) return '';
-        if (s.includes('validada') || s.includes('Validada')) return 'color:#22c55e;';
-        if (s.includes('lançada') || s.includes('Lanç')) return 'color:#f59e0b;';
-        if (s.includes('devolvida') || s.includes('Devol')) return 'color:#ef4444;';
-        if (s.includes('distrat')) return 'color:#ef4444;';
-        return '';
-      };
-      tbD.innerHTML = vendas.map(v => `<tr>
-        <td>${v.data_venda || '—'}</td>
-        <td>${v.cliente || '—'}</td>
-        <td>${v.empreendimento || '—'}</td>
-        <td>${v.construtora || '—'}</td>
-        <td><strong>${v.vgv || '—'}</strong></td>
-        <td>${v.corretor || '—'}</td>
-        <td style="${cor(v.situacao)}font-weight:600;">${v.situacao || '—'}</td>
-      </tr>`).join('');
-    }
-  }
-}
 
 // ============================================
 // INIT
@@ -5811,4 +5678,3 @@ init();
 
 </body>
 </html>
-<!-- deploy 1794412312 -->
