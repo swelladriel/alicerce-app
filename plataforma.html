@@ -959,15 +959,14 @@ async function carregarDados() {
 
     CORRETORES.forEach(c => { CORRETORES_MAP[c.NOME] = c.EQUIPE; });
 
-    // Carregar Swell em paralelo (não bloqueia o resto)
-    fetch(API_URL + '?acao=swell').then(r => r.json()).then(json => {
-      if (json.dados) {
-        SWELL_DATA = json.dados;
-        const info = document.getElementById('swell-sync-info');
-        if (info) info.textContent = 'Última sync: ' + (json.atualizado_em || '—');
+    // Renderizar dados do Swell (embutidos no HTML, atualizados via Claude Code)
+    if (SWELL_DATA) {
+      try {
+        const infoSw = document.getElementById('swell-sync-info');
+        if (infoSw) infoSw.textContent = 'Última sync: ' + (SWELL_DATA.atualizado_em || '—');
         renderSwell();
-      }
-    }).catch(() => {});
+      } catch(es) { console.error('Erro Swell:', es); }
+    }
 
     const renders = [
       ['Vendas', renderVendas],
