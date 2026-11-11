@@ -450,6 +450,65 @@ select.form-input{cursor:pointer;}
     <div style="margin-top:10px;font-size:.7rem;color:var(--textL);" id="count-vendas"></div>
   </div>
 
+  <!-- PAGE: PORTAL SWELL -->
+  <div class="page" id="pg-swell">
+    <div class="topbar">
+      <div>
+        <h2>Portal Swell</h2>
+        <span class="topbar-info" id="swell-sync-info">Dados do portal oficial da Swell</span>
+      </div>
+      <button class="btn-nova-venda" onclick="atualizarDoSwell()" id="btn-sync-swell">↻ Atualizar</button>
+    </div>
+
+    <!-- KPIs SWELL -->
+    <div class="kpi-grid" id="kpi-swell">
+      <div class="loading">Carregando dados do Swell...</div>
+    </div>
+
+    <!-- VENDAS POR CORRETOR -->
+    <h3 style="margin:20px 0 10px;color:var(--text);font-size:.95rem;">Vendas Novembro — Por Corretor</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Corretor</th>
+            <th>Lançadas</th>
+            <th>Aguardando</th>
+            <th>Devolvidas</th>
+            <th>Validadas</th>
+            <th>Distratadas</th>
+            <th>Total</th>
+            <th>VGV Total</th>
+          </tr>
+        </thead>
+        <tbody id="tb-swell-vendas">
+          <tr><td colspan="8" class="loading">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- LISTA DE VENDAS DETALHADA -->
+    <h3 style="margin:20px 0 10px;color:var(--text);font-size:.95rem;">Detalhamento das Vendas</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Cliente</th>
+            <th>Empreendimento</th>
+            <th>Construtora</th>
+            <th>VGV</th>
+            <th>Corretor</th>
+            <th>Situação</th>
+          </tr>
+        </thead>
+        <tbody id="tb-swell-detalhe">
+          <tr><td colspan="7" class="loading">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- PAGE: CORRETORES -->
   <div class="page" id="pg-corretores">
     <div class="topbar">
