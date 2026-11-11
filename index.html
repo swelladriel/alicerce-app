@@ -1490,13 +1490,7 @@ async function fazerLogin() {
   }
 
   if (isMaster) carregarEquipe();
-  if (isMobile) {
-    iniciarRelogio();
-    carregarCheckins();
-    carregarHistorico945();
-    inicializarAudio945();
-    verificarLembretes();
-  }
+  // Check-in e 945 desativados — obsoletos, futuro via portal Swell
 }
 
 async function atualizarTudo() {
@@ -2302,8 +2296,7 @@ function toggleMaisMenu() {
     menu.style.cssText = `position:fixed;top:${rect.bottom + 4}px;right:${window.innerWidth - rect.right}px;background:#111820;border:1px solid #1e2a3a;border-radius:10px;padding:8px;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.6);z-index:200;`;
     let items = '';
     if (isMaster) items += `<div onclick="showTab('tab-equipe');fecharMaisMenu()" style="padding:12px 16px;font-size:.82rem;color:#e6f1ff;cursor:pointer;border-radius:6px;border-bottom:1px solid rgba(255,255,255,.06);">Minha Equipe</div>`;
-    items += `<div onclick="showTab('tab-pipeline');fecharMaisMenu()" style="padding:12px 16px;font-size:.82rem;color:#e6f1ff;cursor:pointer;border-radius:6px;border-bottom:1px solid rgba(255,255,255,.06);">Meus Clientes</div>`;
-    items += `<div onclick="showTab('tab-registro');fecharMaisMenu()" style="padding:12px 16px;font-size:.82rem;color:#e6f1ff;cursor:pointer;border-radius:6px;">Registro</div>`;
+    items += `<div onclick="showTab('tab-pipeline');fecharMaisMenu()" style="padding:12px 16px;font-size:.82rem;color:#e6f1ff;cursor:pointer;border-radius:6px;">Meus Clientes</div>`;
     menu.innerHTML = items;
     document.body.appendChild(menu);
   }
@@ -4004,7 +3997,6 @@ function abrirSideMenu() {
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-unica')"><span class="smi-icon">🎯</span> Foco do Dia</div>`;
   if (isMaster) items += `<div class="side-menu-item" onclick="sideMenuNav('tab-equipe')"><span class="smi-icon">👥</span> Minha Equipe</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-pipeline')"><span class="smi-icon">📋</span> Meus Clientes</div>`;
-  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-registro')"><span class="smi-icon">📝</span> Registro</div>`;
   if (isMaster) {
     items += `<div style="margin:10px 0 6px;padding:0 16px;font-size:.62rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;">Administração</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-corretores')"><span class="smi-icon">👤</span> Corretores</div>`;
