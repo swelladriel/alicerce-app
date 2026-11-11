@@ -4108,23 +4108,23 @@ function renderInicioGestor() {
   const vendasAdmin = getAdminVendas();
   const vendasMes = vendasAdmin.filter(v =>
     String(v.MES_COMERCIAL || '').substring(0, 7) === mesAtual &&
-    !(v.STATUS_VENDA || '').includes('Distrato')
+    !(v.STATUS_VENDA || '').includes('Distrato') &&
+    !(v.STATUS_VENDA || '').includes('Removida')
   );
   const vgvVendido = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
   const qtdVendas = vendasMes.length;
 
   const realData = ALL_REAL_DATA.length ? ALL_REAL_DATA : REAL_CLIENTS;
   const teamReal = realData.filter(c => isMyTeam(c.corretor || c.CORRETOR));
-  const vgvPipeline = teamReal.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
 
   const hoje = new Date().toISOString().split('T')[0];
-  const agHoje = AGENDA.filter(a => a.DATA === hoje && isMyTeam(a.CORRETOR || a.corretor));
+  const agHoje = AGENDA.filter(a => String(a.DATA || '').substring(0,10) === hoje && isMyTeam(a.CORRETOR || a.corretor));
   const agHojeCount = agHoje.length;
+  const agAtendidos = agHoje.filter(a => (a.ATENDIDO || '').toUpperCase() === 'SIM').length;
 
   // Semana quarta-terça
   const agora = new Date();
-  const diaSemana = agora.getDay(); // 0=dom,1=seg,...,6=sab
-  // Dias desde quarta: qua=0, qui=1, sex=2, sab=3, dom=4, seg=5, ter=6
+  const diaSemana = agora.getDay();
   const diasDesdeQua = (diaSemana + 4) % 7;
   const inicioSemana = new Date(agora);
   inicioSemana.setDate(agora.getDate() - diasDesdeQua);
@@ -4149,45 +4149,103 @@ function renderInicioGestor() {
   // Alertas: pipeline parado 15+ dias
   const paradosAlerta = teamReal.filter(c => {
     const dias = calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '');
-    return dias >= 15 && (c.status || c.STATUS) === 'GERANDO';
+    return dias >= 15 && ((c.status || c.STATUS || '') === 'GERANDO' || (c.status || c.STATUS || '') === 'N GERADO');
   });
 
   // Alertas: agendamentos de hoje não atendidos
-  const agNaoAtendidos = agHoje.filter(a => !(a.ATENDIDO || '').toUpperCase().includes('S'));
+  const agNaoAtendidos = agHoje.filter(a => !(a.ATENDIDO || '').toUpperCase().includes('SIM'));
 
-  document.getElementById('inicio-kpis').innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
-      <div class="inicio-kpi ik-green"><div class="ik-val">${fmtMoney(vgvVendido)}</div><div class="ik-label">VGV Vendido (mês)</div></div>
-      <div class="inicio-kpi ik-gold"><div class="ik-val">${qtdVendas}</div><div class="ik-label">Vendas no mês</div></div>
-      <div class="inicio-kpi ik-blue"><div class="ik-val">${fmtMoney(vgvPipeline)}</div><div class="ik-label">Pipeline Acionado</div></div>
-      <div class="inicio-kpi ik-purple" style="background:rgba(171,71,188,0.15);border:1px solid rgba(171,71,188,0.3);"><div class="ik-val">${agHojeCount}</div><div class="ik-label">Agendamentos Hoje</div></div>
+  // Lista de clientes agendados hoje
+  let agendaHojeHtml = '';
+  if (agHoje.length > 0) {
+    const agOrdenada = [...agHoje].sort((a, b) => {
+      const ha = String(a.HORA || '00:00').substring(0,5);
+      const hb = String(b.HORA || '00:00').substring(0,5);
+      return ha.localeCompare(hb);
+    });
+    agendaHojeHtml = agOrdenada.map(a => {
+      let hora = String(a.HORA || '');
+      if (hora.includes('T')) { const m = hora.match(/T(\d{2}):(\d{2})/); if (m) { let h = parseInt(m[1])-3; if(h<0)h+=24; hora = String(h).padStart(2,'0')+':'+m[2]; } }
+      else hora = hora.substring(0,5);
+      const atendido = (a.ATENDIDO || '').toUpperCase() === 'SIM';
+      const bolo = (a.ATENDIDO || '').toUpperCase() === 'BOLO';
+      const statusIcon = atendido ? '<span style="color:var(--success);font-weight:900;">✓</span>' : bolo ? '<span style="color:var(--danger);font-weight:900;">✗</span>' : '<span style="color:var(--warning);">●</span>';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+        <span style="font-size:.75rem;color:var(--accent);font-weight:700;min-width:40px;">${hora || '--:--'}</span>
+        ${statusIcon}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.78rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.CLIENTE || a.TIPO || '-'}</div>
+          <div style="font-size:.62rem;color:var(--textL);">${a.CORRETOR || '-'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    agendaHojeHtml = '<div style="text-align:center;padding:16px;color:var(--textL);font-size:.78rem;">Nenhum agendamento hoje.</div>';
+  }
+
+  const el = document.getElementById('tab-inicio');
+  el.innerHTML = `
+    <!-- KPIs principais -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;border-bottom:3px solid var(--success);">
+        <div style="font-size:1.6rem;font-weight:900;color:var(--success);">${fmtMoney(vgvVendido)}</div>
+        <div style="font-size:.62rem;color:var(--textL);text-transform:uppercase;margin-top:4px;">VGV Vendido no Mês</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;border-bottom:3px solid var(--gold);">
+        <div style="font-size:1.6rem;font-weight:900;color:var(--gold);">${qtdVendas}</div>
+        <div style="font-size:.62rem;color:var(--textL);text-transform:uppercase;margin-top:4px;">Vendas no Mês</div>
+      </div>
     </div>
+
+    <!-- Agendamentos hoje -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:.82rem;font-weight:800;color:#fff;">Agenda de Hoje</div>
+        <div style="display:flex;gap:10px;">
+          <span style="font-size:.7rem;color:var(--gold);font-weight:700;">${agHojeCount} agendados</span>
+          <span style="font-size:.7rem;color:var(--success);font-weight:700;">${agAtendidos} atendidos</span>
+          ${agHojeCount - agAtendidos > 0 ? `<span style="font-size:.7rem;color:var(--warning);font-weight:700;">${agHojeCount - agAtendidos} pendentes</span>` : ''}
+        </div>
+      </div>
+      ${agendaHojeHtml}
+      <button onclick="showTab('tab-agenda')" style="width:100%;margin-top:10px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.25);color:var(--gold);border-radius:8px;padding:8px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Ver Agenda Completa</button>
+    </div>
+
     ${(paradosAlerta.length > 0 || agNaoAtendidos.length > 0) ? `
-    <div style="background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,0,0.3);border-radius:12px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:.72rem;font-weight:800;color:var(--gold);margin-bottom:8px;">⚠ Alertas</div>
-      ${paradosAlerta.length > 0 ? `<div style="font-size:.75rem;color:#ffd;margin-bottom:5px;">• ${paradosAlerta.length} cliente${paradosAlerta.length > 1 ? 's' : ''} parado${paradosAlerta.length > 1 ? 's' : ''} há 15+ dias no pipeline: ${paradosAlerta.slice(0,3).map(c => (c.nome || c.CLIENTE || '').split(' ')[0]).join(', ')}${paradosAlerta.length > 3 ? '…' : ''}</div>` : ''}
-      ${agNaoAtendidos.length > 0 ? `<div style="font-size:.75rem;color:#ffd;">• ${agNaoAtendidos.length} agendamento${agNaoAtendidos.length > 1 ? 's' : ''} de hoje sem atendimento confirmado</div>` : ''}
+    <!-- Alertas -->
+    <div style="background:rgba(239,83,80,.08);border:1px solid rgba(239,83,80,.25);border-radius:14px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:.75rem;font-weight:800;color:var(--danger);margin-bottom:8px;">Atenção</div>
+      ${paradosAlerta.length > 0 ? `<div style="font-size:.75rem;color:var(--text);margin-bottom:6px;line-height:1.4;">
+        <strong>${paradosAlerta.length}</strong> cliente${paradosAlerta.length > 1 ? 's' : ''} parado${paradosAlerta.length > 1 ? 's' : ''} há 15+ dias no pipeline:
+        ${paradosAlerta.slice(0,5).map(c => `<span style="color:var(--warning);">${(c.nome || c.CLIENTE || '').split(' ').slice(0,2).join(' ')}</span> <span style="color:var(--textL);font-size:.65rem;">(${c.corretor || c.CORRETOR || ''})</span>`).join(', ')}${paradosAlerta.length > 5 ? ` <span style="color:var(--textL);">+${paradosAlerta.length-5} mais</span>` : ''}
+      </div>` : ''}
+      ${agNaoAtendidos.length > 0 ? `<div style="font-size:.75rem;color:var(--text);line-height:1.4;">
+        <strong>${agNaoAtendidos.length}</strong> agendamento${agNaoAtendidos.length > 1 ? 's' : ''} de hoje ainda não atendido${agNaoAtendidos.length > 1 ? 's' : ''}
+      </div>` : ''}
     </div>` : ''}
+
     ${rankingSem.length > 0 ? `
-    <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:.72rem;font-weight:800;color:var(--gold);margin-bottom:10px;">🏆 Ranking Semanal — Top 5 (VGV)</div>
+    <!-- Ranking Semanal -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:.82rem;font-weight:800;color:var(--gold);margin-bottom:12px;">Ranking Semanal — Top 5</div>
       ${rankingSem.map(([nome, vgv], i) => {
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <span style="font-size:.78rem;color:#fff;">${medal} ${nome.split(' ')[0]}</span>
-          <span style="font-size:.78rem;color:var(--gold);font-weight:700;">${fmtMoney(vgv)}</span>
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="color:var(--textL);font-size:.72rem;min-width:22px;display:inline-block;">${i+1}.</span>`;
+        const bg = i === 0 ? 'rgba(255,215,0,.08)' : i === 1 ? 'rgba(192,192,192,.06)' : i === 2 ? 'rgba(205,127,50,.06)' : 'transparent';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:${bg};margin-bottom:4px;">
+          <span style="font-size:.82rem;color:#fff;font-weight:${i<3?'800':'600'};">${medal} ${nome}</span>
+          <span style="font-size:.82rem;color:var(--gold);font-weight:800;">${fmtMoney(vgv)}</span>
         </div>`;
       }).join('')}
     </div>` : ''}
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;">
-      <button onclick="showTab('tab-admin-ciclo')" style="background:rgba(100,255,218,0.1);border:1px solid rgba(100,255,218,0.3);color:var(--accent);border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Pipeline</button>
-      <button onclick="showTab('tab-vendas')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Vendas</button>
-      <button onclick="showTab('tab-admin-pres')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Presença</button>
-      <button onclick="abrirModalNovaVenda()" style="background:rgba(255,180,0,0.15);border:1px solid rgba(255,180,0,0.35);color:var(--gold);border-radius:10px;padding:10px;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation;">+ Venda</button>
+
+    <!-- Atalhos -->
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+      <button onclick="showTab('tab-admin-ciclo')" style="background:var(--card);border:1px solid var(--border);color:var(--accent);border-radius:12px;padding:14px;font-size:.78rem;font-weight:700;cursor:pointer;touch-action:manipulation;transition:all .15s;">Ciclo de Vendas</button>
+      <button onclick="showTab('tab-vendas')" style="background:var(--card);border:1px solid var(--border);color:#fff;border-radius:12px;padding:14px;font-size:.78rem;font-weight:700;cursor:pointer;touch-action:manipulation;transition:all .15s;">Vendas</button>
+      <button onclick="showTab('tab-admin-presenca')" style="background:var(--card);border:1px solid var(--border);color:#fff;border-radius:12px;padding:14px;font-size:.78rem;font-weight:700;cursor:pointer;touch-action:manipulation;transition:all .15s;">Presença</button>
+      <button onclick="abrirModalNovaVenda()" style="background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);color:var(--gold);border-radius:12px;padding:14px;font-size:.78rem;font-weight:700;cursor:pointer;touch-action:manipulation;transition:all .15s;">+ Nova Venda</button>
     </div>
   `;
-
-  renderInicioDemandas();
 }
 
 function renderInicioDemandas() {
