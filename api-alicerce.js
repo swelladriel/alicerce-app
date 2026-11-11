@@ -174,6 +174,23 @@ function doGet(e) {
     case 'real':
       resultado = lerAba('Real');
       break;
+    case 'swell': {
+      // Lê dados do Swell armazenados na aba SwellSync
+      const ss = SpreadsheetApp.openById(PLANILHA_ID);
+      const abaSwell = ss.getSheetByName('SwellSync');
+      if (!abaSwell) {
+        resultado = { erro: 'Aba SwellSync não existe ainda', dados: null, atualizado_em: null };
+      } else {
+        const json = abaSwell.getRange('A2').getValue();
+        const dt = abaSwell.getRange('B2').getValue();
+        try {
+          resultado = { dados: JSON.parse(json), atualizado_em: dt };
+        } catch(pe) {
+          resultado = { erro: 'JSON inválido na aba SwellSync', dados: null, atualizado_em: dt };
+        }
+      }
+      break;
+    }
     case 'diagnostico_vipcred': {
       // Busca emails recentes da VipCred com resultado de análise
       // Retorna o HTML bruto pra saber se é texto ou imagem
@@ -347,6 +364,20 @@ function doPost(e) {
       case 'deletar_real':
         resultado = deletarReal(dados.corretor, dados.cliente);
         break;
+      case 'atualizar_swell': {
+        // Grava dados do Swell na aba SwellSync (JSON + timestamp)
+        const ss2 = SpreadsheetApp.openById(PLANILHA_ID);
+        let abaSw = ss2.getSheetByName('SwellSync');
+        if (!abaSw) {
+          abaSw = ss2.insertSheet('SwellSync');
+          abaSw.getRange('A1').setValue('DADOS_JSON');
+          abaSw.getRange('B1').setValue('ATUALIZADO_EM');
+        }
+        abaSw.getRange('A2').setValue(JSON.stringify(dados.swell));
+        abaSw.getRange('B2').setValue(new Date().toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'}));
+        resultado = { ok: true, atualizado_em: abaSw.getRange('B2').getValue() };
+        break;
+      }
       default:
         resultado = { erro: 'Ação POST não reconhecida.' };
     }
