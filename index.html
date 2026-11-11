@@ -1607,13 +1607,9 @@ async function carregarTudo() {
   UNICA_COISA = dados.unicaCoisa || [];
   AGENDA = dados.agenda || [];
 
-  // Carregar Real da API e popular REAL_CLIENTS
+  // Carregar Real da API — TODOS os dados + filtro pro corretor logado
   const realAPI = dados.real || [];
-  const nomeUpperReal = USUARIO.NOME.toUpperCase();
-  REAL_CLIENTS = realAPI.filter(r => {
-    const corr = (r.CORRETOR || '').toUpperCase();
-    return corr === nomeUpperReal || corr.includes(nomeUpperReal) || nomeUpperReal.includes(corr);
-  }).map(r => ({
+  const mapReal = r => ({
     id: 'r_' + (r.CLIENTE || '').replace(/\s+/g, '_') + '_' + (r.DATA_ENTRADA || ''),
     nome: r.CLIENTE || '',
     telefone: r.TELEFONE || '',
@@ -1625,7 +1621,15 @@ async function carregarTudo() {
     dataEntrada: String(r.DATA_ENTRADA || r.DATA || '').substring(0, 10),
     corretor: r.CORRETOR || USUARIO.NOME,
     comissaoStatus: r.COMISSAO_STATUS || 'NÃO PAGO'
-  }));
+  });
+  // ALL_REAL_DATA = todos (pra views admin)
+  ALL_REAL_DATA = realAPI.map(mapReal);
+  // REAL_CLIENTS = só do corretor logado
+  const nomeUpperReal = USUARIO.NOME.toUpperCase();
+  REAL_CLIENTS = realAPI.filter(r => {
+    const corr = (r.CORRETOR || '').toUpperCase();
+    return corr === nomeUpperReal || corr.includes(nomeUpperReal) || nomeUpperReal.includes(corr);
+  }).map(mapReal);
 
   // Filtrar meus clientes
   const nomeUpper = USUARIO.NOME.toUpperCase();
@@ -1640,6 +1644,7 @@ async function carregarTudo() {
   const NOMES_EQUIV = {
     'DANDARA CAMPUS': 'DANDARA CAMPOS',
     'WILIAN BUENO': 'WILLIAM BUENO',
+    'EDVAM SILVA': 'EDVAN SILVA',
   };
   MINHAS_VENDAS = VENDAS.filter(v => {
     if (!v.CORRETOR) return false;
@@ -5288,32 +5293,7 @@ async function salvarNovoCorretor() {
   }
 }
 
-// Estender carregarTudo para popular ALL_REAL_DATA com todos os corretores
-const _carregarTudoOriginal = carregarTudo;
-async function carregarTudo() {
-  await _carregarTudoOriginal();
-  // ALL_REAL_DATA: todos os dados do real (já vêm em dados.real, sem filtro de corretor)
-  const res2 = await fetch(API_URL + '?acao=tudo').catch(() => null);
-  if (res2) {
-    try {
-      const d2 = await res2.json();
-      const realAPI = d2.real || [];
-      ALL_REAL_DATA = realAPI.map(r => ({
-        id: 'r_' + (r.CLIENTE || '').replace(/\s+/g, '_') + '_' + (r.DATA_ENTRADA || ''),
-        nome: r.CLIENTE || '',
-        telefone: r.TELEFONE || '',
-        vgv: parseFloat(r.VGV_ESTIMADO) || 0,
-        empreendimento: r.EMPREENDIMENTO || '',
-        construtora: r.CONSTRUTORA || '',
-        status: r.STATUS || 'GERANDO',
-        pendencia: r.PENDENCIA || '',
-        dataEntrada: String(r.DATA_ENTRADA || r.DATA || '').substring(0, 10),
-        corretor: r.CORRETOR || '',
-        comissaoStatus: r.COMISSAO_STATUS || 'NÃO PAGO'
-      }));
-    } catch(e) {}
-  }
-}
+// ALL_REAL_DATA é populado dentro da carregarTudo() original (removida duplicata)
 
 // ============================================
 // INIT
