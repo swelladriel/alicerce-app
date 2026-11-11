@@ -174,21 +174,9 @@ function doGet(e) {
     case 'real':
       resultado = lerAba('Real');
       break;
-    case 'swell': {
-      // Lê dados do Swell armazenados na aba SwellSync
-      const ss = SpreadsheetApp.openById(PLANILHA_ID);
-      const abaSwell = ss.getSheetByName('SwellSync');
-      if (!abaSwell) {
-        resultado = { erro: 'Aba SwellSync não existe ainda', dados: null, atualizado_em: null };
-      } else {
-        const json = abaSwell.getRange('A2').getValue();
-        const dt = abaSwell.getRange('B2').getValue();
-        try {
-          resultado = { dados: JSON.parse(json), atualizado_em: dt };
-        } catch(pe) {
-          resultado = { erro: 'JSON inválido na aba SwellSync', dados: null, atualizado_em: dt };
-        }
-      }
+    case 'swell_vendas': {
+      // Lê vendas do Swell da aba SwellVendas
+      resultado = lerAba('SwellVendas');
       break;
     }
     case 'diagnostico_vipcred': {
@@ -364,20 +352,6 @@ function doPost(e) {
       case 'deletar_real':
         resultado = deletarReal(dados.corretor, dados.cliente);
         break;
-      case 'atualizar_swell': {
-        // Grava dados do Swell na aba SwellSync (JSON + timestamp)
-        const ss2 = SpreadsheetApp.openById(PLANILHA_ID);
-        let abaSw = ss2.getSheetByName('SwellSync');
-        if (!abaSw) {
-          abaSw = ss2.insertSheet('SwellSync');
-          abaSw.getRange('A1').setValue('DADOS_JSON');
-          abaSw.getRange('B1').setValue('ATUALIZADO_EM');
-        }
-        abaSw.getRange('A2').setValue(JSON.stringify(dados.swell));
-        abaSw.getRange('B2').setValue(new Date().toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'}));
-        resultado = { ok: true, atualizado_em: abaSw.getRange('B2').getValue() };
-        break;
-      }
       default:
         resultado = { erro: 'Ação POST não reconhecida.' };
     }
@@ -2273,4 +2247,135 @@ function salvarFotoAtendimento(dados) {
   } catch(e) {
     return { erro: e.message };
   }
+}
+
+// ============================================
+// SYNC SWELL — Puxa vendas do portal automaticamente
+// ============================================
+function sincronizarVendasSwell() {
+  const EMAIL_SWELL = 'swell.adriel@gmail.com';
+  const SENHA_SWELL = '29071998*Aj';
+  const ACTION_ID = '60bc76ace87e3d4436a5ac54c7b1e5ea397be9ff08';
+
+  try {
+    // Passo 1: Login no portal Swell
+    const boundary = '----FormBoundary7MA';
+    const loginBody = [
+      '------FormBoundary7MA\r\nContent-Disposition: form-data; name="1_$ACTION_ID_' + ACTION_ID + '"\r\n\r\n',
+      '------FormBoundary7MA\r\nContent-Disposition: form-data; name="0"\r\n\r\n[{"email":"' + EMAIL_SWELL + '","senha":"' + SENHA_SWELL + '"},{"portal":true}]',
+      '------FormBoundary7MA--\r\n'
+    ].join('\r\n');
+
+    const loginResp = UrlFetchApp.fetch('https://swellimobiliaria.com/portal/login', {
+      method: 'post',
+      contentType: 'multipart/form-data; boundary=----FormBoundary7MA',
+      payload: loginBody,
+      headers: {
+        'Next-Action': ACTION_ID,
+        'Accept': 'text/x-component',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      followRedirects: false,
+      muteHttpExceptions: true
+    });
+
+    // Extrair cookie de sessao
+    const setCookies = loginResp.getAllHeaders()['Set-Cookie'] || loginResp.getAllHeaders()['set-cookie'] || [];
+    const cookies = (Array.isArray(setCookies) ? setCookies : [setCookies])
+      .map(c => c.split(';')[0])
+      .filter(c => c.includes('sb-') || c.includes('auth'))
+      .join('; ');
+
+    if (!cookies) {
+      Logger.log('ERRO: Login falhou — sem cookie de sessao');
+      return { erro: 'Login falhou' };
+    }
+    Logger.log('Login OK. Cookie: ' + cookies.substring(0, 80) + '...');
+
+    // Passo 2: Buscar pagina de vendas autenticado
+    const vendasResp = UrlFetchApp.fetch('https://swellimobiliaria.com/portal/vendas', {
+      method: 'get',
+      headers: {
+        'Cookie': cookies,
+        'User-Agent': 'Mozilla/5.0'
+      },
+      muteHttpExceptions: true
+    });
+
+    const html = vendasResp.getContentText();
+    Logger.log('Pagina vendas: ' + html.length + ' chars');
+
+    // Passo 3: Extrair JSON de vendas do RSC payload
+    const rowsMatch = html.match(/"rows":\[(\{.*?\}(?:,\{.*?\})*)\]/);
+    if (!rowsMatch) {
+      Logger.log('ERRO: Nao encontrou rows na pagina');
+      return { erro: 'Sem dados de vendas na pagina' };
+    }
+
+    const vendas = JSON.parse('[' + rowsMatch[1] + ']');
+    Logger.log('Vendas encontradas: ' + vendas.length);
+
+    // Passo 4: Gravar na aba SwellVendas
+    const ss = SpreadsheetApp.openById(PLANILHA_ID);
+    let aba = ss.getSheetByName('SwellVendas');
+    if (!aba) {
+      aba = ss.insertSheet('SwellVendas');
+    }
+
+    // Cabecalho
+    const headers = ['ID', 'MES_REF', 'DATA_VENDA', 'CLIENTE', 'CPF', 'EMPREENDIMENTO', 'CONSTRUTORA', 'TIPO', 'VGV', 'UNIDADE', 'CORRETOR', 'COORDENADOR', 'GERENTE', 'VALIDACAO', 'STATUS', 'ARQUIVADA', 'ATUALIZADO_EM'];
+
+    // Limpar e reescrever
+    aba.clear();
+    aba.getRange(1, 1, 1, headers.length).setValues([headers]);
+
+    if (vendas.length > 0) {
+      const rows = vendas.map(v => [
+        v.id || '',
+        v.mes_ref || '',
+        v.data_venda || '',
+        v.cliente_nome || '',
+        v.cliente_cpf || '',
+        v.empreendimento || '',
+        v.construtora || '',
+        v.tipo || '',
+        v.vgv || 0,
+        v.unidade || '',
+        v.corretor || '',
+        v.coordenador || '',
+        v.gerente || '',
+        v.validacao || '',
+        v.status || '',
+        v.arquivada ? 'SIM' : 'NAO',
+        new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'})
+      ]);
+
+      aba.getRange(2, 1, rows.length, headers.length).setValues(rows);
+    }
+
+    Logger.log('SwellVendas atualizada: ' + vendas.length + ' vendas');
+    return { ok: true, vendas: vendas.length, atualizado: new Date().toISOString() };
+
+  } catch(e) {
+    Logger.log('ERRO sincronizarVendasSwell: ' + e.message);
+    return { erro: e.message };
+  }
+}
+
+// Configurar trigger diario para sync Swell
+function configurarTriggerSwell() {
+  // Remover triggers antigos
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === 'sincronizarVendasSwell') {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+  // Rodar todo dia as 8:30
+  ScriptApp.newTrigger('sincronizarVendasSwell')
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .nearMinute(30)
+    .create();
+  Logger.log('Trigger Swell configurado: diario as 8:30');
 }

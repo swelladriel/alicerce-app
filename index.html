@@ -1646,6 +1646,7 @@ async function carregarTudo() {
   renderCalendario();
   renderReal();
   renderInicio();
+  carregarSwellVendas(); // Puxa vendas do Swell (aba SwellVendas, async)
   iniciarMonitorMeiaNoite();
   salvarCache(); // salvar dados pra modo offline
 }
@@ -5662,9 +5663,67 @@ async function salvarNovoCorretor() {
 // ALL_REAL_DATA é populado dentro da carregarTudo() original (removida duplicata)
 
 // ============================================
-// DADOS SWELL — Embutidos (atualizados via Claude Code)
+// DADOS SWELL — Carregados da aba SwellVendas via API
 // ============================================
-const SWELL_DATA = {"vendas_competencia":{"periodo":"Novembro/2026","grupos":[{"corretor":"Felipe Guimaraes","lancadas":{"vendas":1,"vgv":"R$ 219.900,00"},"aguardando_validacao":{"vendas":0,"vgv":"R$ 0,00"},"devolvidas":{"vendas":0,"vgv":"R$ 0,00"},"validadas":{"vendas":0,"vgv":"R$ 0,00"},"distratadas":{"vendas":0,"vgv":"R$ 0,00"},"total":{"vendas":1,"vgv":"R$ 219.900,00"}},{"corretor":"Ricardo Braga","lancadas":{"vendas":1,"vgv":"R$ 185.000,00"},"aguardando_validacao":{"vendas":0,"vgv":"R$ 0,00"},"devolvidas":{"vendas":0,"vgv":"R$ 0,00"},"validadas":{"vendas":0,"vgv":"R$ 0,00"},"distratadas":{"vendas":0,"vgv":"R$ 0,00"},"total":{"vendas":1,"vgv":"R$ 185.000,00"}}],"total_geral":{"corretor":"Total","lancadas":{"vendas":2,"vgv":"R$ 404.900,00"},"aguardando_validacao":{"vendas":0,"vgv":"R$ 0,00"},"devolvidas":{"vendas":0,"vgv":"R$ 0,00"},"validadas":{"vendas":0,"vgv":"R$ 0,00"},"distratadas":{"vendas":0,"vgv":"R$ 0,00"},"total":{"vendas":2,"vgv":"R$ 404.900,00"}}},"vendas_lista":[{"cliente":"DERICK DOS SANTOS SOUZA MACIEL","tipo":"Empreendimento","construtora":"Cury","empreendimento":"My Jacarepaguá","vgv":"R$ 219.900,00","data_venda":"2026-11-09","situacao":"lançada (não enviada)","corretor":"Felipe Guimaraes","coordenador":"Sem Coordenador","gerente":"Adriel Duarte"},{"cliente":"ANA BEATRIZ ANDRADE GOMES","tipo":"Empreendimento","construtora":"Cury","empreendimento":"Unico Bonsucesso","vgv":"R$ 185.000,00","data_venda":"2026-11-10","situacao":"lançada (não enviada)","corretor":"Ricardo Braga","coordenador":"Glauco Ribeiro","gerente":"Adriel Duarte"}],"atualizado_em":"11/11/2026 13:12"};
+let SWELL_DATA = null;
+
+function carregarSwellVendas() {
+  fetch(API_URL + '?acao=swell_vendas').then(r => r.json()).then(vendas => {
+    if (!Array.isArray(vendas) || vendas.length === 0) return;
+    // Montar SWELL_DATA a partir dos dados da planilha
+    const mesAtual = new Date().toISOString().substring(0, 7);
+    const vendasMes = vendas.filter(v => (v.MES_REF || '').substring(0, 7) === mesAtual + '-01'.substring(0, 0) || (v.MES_REF || '').startsWith(mesAtual));
+
+    // Agrupar por corretor
+    const porCorretor = {};
+    let totLanc = 0, totAguard = 0, totDevol = 0, totValid = 0, totDistr = 0, totVendas = 0, totVGV = 0;
+
+    vendasMes.forEach(v => {
+      const corr = v.CORRETOR || 'Sem corretor';
+      if (!porCorretor[corr]) porCorretor[corr] = {lancadas: 0, aguardando: 0, devolvidas: 0, validadas: 0, distratadas: 0, total: 0, vgv: 0};
+      const val = v.VALIDACAO || '';
+      const vgv = parseFloat(v.VGV) || 0;
+      porCorretor[corr].total++;
+      porCorretor[corr].vgv += vgv;
+      totVendas++;
+      totVGV += vgv;
+      if (val === 'lancada') { porCorretor[corr].lancadas++; totLanc++; }
+      else if (val === 'aguardando_validacao') { porCorretor[corr].aguardando++; totAguard++; }
+      else if (val === 'devolvida') { porCorretor[corr].devolvidas++; totDevol++; }
+      else if (val === 'validada') { porCorretor[corr].validadas++; totValid++; }
+      else if (val === 'distratada') { porCorretor[corr].distratadas++; totDistr++; }
+    });
+
+    const fmtV = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+    const grupos = Object.entries(porCorretor).map(([corr, d]) => ({
+      corretor: corr,
+      lancadas: {vendas: d.lancadas, vgv: fmtV(d.vgv)},
+      aguardando_validacao: {vendas: d.aguardando, vgv: 'R$ 0,00'},
+      devolvidas: {vendas: d.devolvidas, vgv: 'R$ 0,00'},
+      validadas: {vendas: d.validadas, vgv: 'R$ 0,00'},
+      distratadas: {vendas: d.distratadas, vgv: 'R$ 0,00'},
+      total: {vendas: d.total, vgv: fmtV(d.vgv)}
+    }));
+
+    SWELL_DATA = {
+      vendas_competencia: {
+        periodo: mesAtual,
+        grupos: grupos,
+        total_geral: {
+          lancadas: {vendas: totLanc},
+          aguardando_validacao: {vendas: totAguard},
+          devolvidas: {vendas: totDevol},
+          validadas: {vendas: totValid},
+          distratadas: {vendas: totDistr},
+          total: {vendas: totVendas, vgv: fmtV(totVGV)}
+        }
+      },
+      atualizado_em: vendas[0]?.ATUALIZADO_EM || ''
+    };
+    // Re-renderizar inicio se ja carregou
+    try { renderInicio(); } catch(e) {}
+  }).catch(() => {});
+}
 
 // ============================================
 // INIT
