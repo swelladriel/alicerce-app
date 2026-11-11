@@ -242,6 +242,91 @@ function doGet(e) {
     case 'aprovados_pendentes':
       resultado = obterAprovadosPendentes();
       break;
+    case 'crm_cards':
+      resultado = lerAba('CRM');
+      break;
+    case 'crm_colunas':
+      resultado = lerAba('CRMColunas');
+      break;
+    case 'salvar_crm_card': {
+      const dadosCrm = JSON.parse(e.parameter.dados || '{}');
+      const ss_crm = SpreadsheetApp.openById(PLANILHA_ID);
+      let abaCRM = ss_crm.getSheetByName('CRM');
+      if (!abaCRM) {
+        abaCRM = ss_crm.insertSheet('CRM');
+        abaCRM.getRange(1, 1, 1, 10).setValues([['ID', 'CORRETOR', 'NOME', 'TELEFONE', 'EMAIL', 'OBS', 'COLUNA', 'ORDEM', 'CRIADO_EM', 'ATUALIZADO_EM']]);
+      }
+      const cardId = dadosCrm.id || '';
+      const cardData = dadosCrm.card || {};
+      const agoraCrm = new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'});
+      if (cardId) {
+        const allData = abaCRM.getDataRange().getValues();
+        for (let i = 1; i < allData.length; i++) {
+          if (String(allData[i][0]) === String(cardId)) {
+            abaCRM.getRange(i + 1, 2, 1, 9).setValues([[
+              cardData.CORRETOR !== undefined ? cardData.CORRETOR : allData[i][1],
+              cardData.NOME !== undefined ? cardData.NOME : allData[i][2],
+              cardData.TELEFONE !== undefined ? cardData.TELEFONE : allData[i][3],
+              cardData.EMAIL !== undefined ? cardData.EMAIL : allData[i][4],
+              cardData.OBS !== undefined ? cardData.OBS : allData[i][5],
+              cardData.COLUNA !== undefined ? cardData.COLUNA : allData[i][6],
+              cardData.ORDEM !== undefined ? cardData.ORDEM : allData[i][7],
+              allData[i][8],
+              agoraCrm
+            ]]);
+            resultado = { ok: true, acao: 'atualizado', id: cardId };
+            break;
+          }
+        }
+        if (!resultado) resultado = { erro: 'Card nao encontrado: ' + cardId };
+      } else {
+        const novoId = 'crm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+        abaCRM.appendRow([novoId, cardData.CORRETOR || '', cardData.NOME || '', cardData.TELEFONE || '', cardData.EMAIL || '', cardData.OBS || '', cardData.COLUNA || 'Agendamento', cardData.ORDEM || 0, agoraCrm, agoraCrm]);
+        resultado = { ok: true, acao: 'criado', id: novoId };
+      }
+      break;
+    }
+    case 'deletar_crm_card': {
+      const dadosDel = JSON.parse(e.parameter.dados || '{}');
+      const ss_crm2 = SpreadsheetApp.openById(PLANILHA_ID);
+      const abaCRM2 = ss_crm2.getSheetByName('CRM');
+      if (!abaCRM2) { resultado = { erro: 'Aba CRM nao existe' }; break; }
+      const allRows = abaCRM2.getDataRange().getValues();
+      let deleted = false;
+      for (let i = allRows.length - 1; i >= 1; i--) {
+        if (String(allRows[i][0]) === String(dadosDel.id)) {
+          abaCRM2.deleteRow(i + 1);
+          deleted = true;
+          break;
+        }
+      }
+      resultado = deleted ? { ok: true, deletado: dadosDel.id } : { erro: 'Card nao encontrado' };
+      break;
+    }
+    case 'salvar_crm_colunas': {
+      const dadosCol = JSON.parse(e.parameter.dados || '{}');
+      const ss_crm3 = SpreadsheetApp.openById(PLANILHA_ID);
+      let abaCol = ss_crm3.getSheetByName('CRMColunas');
+      if (!abaCol) {
+        abaCol = ss_crm3.insertSheet('CRMColunas');
+        abaCol.getRange(1, 1, 1, 3).setValues([['CORRETOR', 'COLUNAS_JSON', 'ATUALIZADO_EM']]);
+      }
+      const corrNome = dadosCol.corretor;
+      const colunasJson = JSON.stringify(dadosCol.colunas);
+      const agoraC = new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'});
+      const colData = abaCol.getDataRange().getValues();
+      let found = false;
+      for (let i = 1; i < colData.length; i++) {
+        if (String(colData[i][0]).trim().toLowerCase() === String(corrNome).trim().toLowerCase()) {
+          abaCol.getRange(i + 1, 2, 1, 2).setValues([[colunasJson, agoraC]]);
+          found = true;
+          break;
+        }
+      }
+      if (!found) abaCol.appendRow([corrNome, colunasJson, agoraC]);
+      resultado = { ok: true, corretor: corrNome };
+      break;
+    }
     default:
       resultado = { erro: 'Ação não reconhecida. Use: clientes, corretores, registros, demandas, unica, reunioes, empreendimentos, real, tudo' };
   }
@@ -361,6 +446,102 @@ function doPost(e) {
       case 'limpar_real_total':
         resultado = limparReal();
         break;
+      case 'salvar_crm_card': {
+        // Salva ou atualiza um card no CRM
+        const ss_crm = SpreadsheetApp.openById(PLANILHA_ID);
+        let abaCRM = ss_crm.getSheetByName('CRM');
+        if (!abaCRM) {
+          abaCRM = ss_crm.insertSheet('CRM');
+          abaCRM.getRange(1, 1, 1, 10).setValues([['ID', 'CORRETOR', 'NOME', 'TELEFONE', 'EMAIL', 'OBS', 'COLUNA', 'ORDEM', 'CRIADO_EM', 'ATUALIZADO_EM']]);
+        }
+        const cardId = dados.id || '';
+        const cardData = dados.card;
+        if (cardId) {
+          // Atualizar card existente — buscar pela coluna ID
+          const allData = abaCRM.getDataRange().getValues();
+          for (let i = 1; i < allData.length; i++) {
+            if (String(allData[i][0]) === String(cardId)) {
+              const row = i + 1;
+              abaCRM.getRange(row, 2, 1, 9).setValues([[
+                cardData.CORRETOR || allData[i][1],
+                cardData.NOME || allData[i][2],
+                cardData.TELEFONE !== undefined ? cardData.TELEFONE : allData[i][3],
+                cardData.EMAIL !== undefined ? cardData.EMAIL : allData[i][4],
+                cardData.OBS !== undefined ? cardData.OBS : allData[i][5],
+                cardData.COLUNA !== undefined ? cardData.COLUNA : allData[i][6],
+                cardData.ORDEM !== undefined ? cardData.ORDEM : allData[i][7],
+                allData[i][8],
+                new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'})
+              ]]);
+              resultado = { ok: true, acao: 'atualizado', id: cardId };
+              break;
+            }
+          }
+          if (!resultado) resultado = { erro: 'Card nao encontrado: ' + cardId };
+        } else {
+          // Novo card
+          const novoId = 'crm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+          const agora = new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'});
+          abaCRM.appendRow([
+            novoId,
+            cardData.CORRETOR || '',
+            cardData.NOME || '',
+            cardData.TELEFONE || '',
+            cardData.EMAIL || '',
+            cardData.OBS || '',
+            cardData.COLUNA || 'Agendamento',
+            cardData.ORDEM || 0,
+            agora,
+            agora
+          ]);
+          resultado = { ok: true, acao: 'criado', id: novoId };
+        }
+        break;
+      }
+      case 'deletar_crm_card': {
+        const ss_crm2 = SpreadsheetApp.openById(PLANILHA_ID);
+        const abaCRM2 = ss_crm2.getSheetByName('CRM');
+        if (!abaCRM2) { resultado = { erro: 'Aba CRM nao existe' }; break; }
+        const delId = dados.id;
+        const allRows = abaCRM2.getDataRange().getValues();
+        let deleted = false;
+        for (let i = allRows.length - 1; i >= 1; i--) {
+          if (String(allRows[i][0]) === String(delId)) {
+            abaCRM2.deleteRow(i + 1);
+            deleted = true;
+            break;
+          }
+        }
+        resultado = deleted ? { ok: true, deletado: delId } : { erro: 'Card nao encontrado' };
+        break;
+      }
+      case 'salvar_crm_colunas': {
+        // Salva colunas personalizadas de um corretor
+        const ss_crm3 = SpreadsheetApp.openById(PLANILHA_ID);
+        let abaCol = ss_crm3.getSheetByName('CRMColunas');
+        if (!abaCol) {
+          abaCol = ss_crm3.insertSheet('CRMColunas');
+          abaCol.getRange(1, 1, 1, 4).setValues([['CORRETOR', 'COLUNAS_JSON', 'ATUALIZADO_EM']]);
+        }
+        const corrNome = dados.corretor;
+        const colunasJson = JSON.stringify(dados.colunas);
+        const agoraCol = new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'});
+        // Buscar se ja tem registro desse corretor
+        const colData = abaCol.getDataRange().getValues();
+        let found = false;
+        for (let i = 1; i < colData.length; i++) {
+          if (String(colData[i][0]).trim().toLowerCase() === String(corrNome).trim().toLowerCase()) {
+            abaCol.getRange(i + 1, 2, 1, 2).setValues([[colunasJson, agoraCol]]);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          abaCol.appendRow([corrNome, colunasJson, agoraCol]);
+        }
+        resultado = { ok: true, corretor: corrNome };
+        break;
+      }
       default:
         resultado = { erro: 'Ação POST não reconhecida.' };
     }

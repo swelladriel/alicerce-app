@@ -5872,9 +5872,8 @@ function carregarSwellVendas() {
 }
 
 // ============================================
-// CRM KANBAN
+// CRM KANBAN — API-BASED (Google Sheets)
 // ============================================
-var CRM_STORAGE_KEY = 'alicerce-crm';
 var CRM_COL_COLORS = ['#FFD700','#00E5A0','#3b82f6','#ef4444','#f59e0b','#8b5cf6','#06b6d4','#22c55e','#ec4899','#f97316','#a78bfa','#14b8a6'];
 var CRM_AVATAR_COLORS = ['#4ECDC4','#FF6B6B','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7DC6F','#BB8FCE','#85C1E9','#F1948A','#82E0AA','#F8C471','#AED6F1','#D7BDE2','#A3E4D7'];
 var CRM_DEFAULT_COLS = [
@@ -5888,7 +5887,12 @@ var CRM_DEFAULT_COLS = [
   {name:'Venda',color:CRM_COL_COLORS[7]}
 ];
 
-var crmState = null;
+// Global CRM state
+var CRM_ALL_CARDS = [];
+var CRM_ALL_COLUNAS = {};
+var CRM_ACTIVE_PERSON = '';
+var CRM_LOADED = false;
+
 var crmActiveMenu = null;
 var crmDragCardId = null;
 var crmDragCardColId = null;
@@ -5898,111 +5902,153 @@ var crmEditingColId = null;
 var crmConfirmCb = null;
 var crmToastTimer = null;
 var crmInitialized = false;
+var crmSaving = false;
 
-function crmUid() {
-  return 'crm-' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+// ---- API HELPERS ----
+async function crmApiFetch(acao) {
+  try {
+    var res = await fetch(API_URL + '?acao=' + acao);
+    return await res.json();
+  } catch(e) {
+    console.error('CRM fetch error (' + acao + '):', e);
+    return null;
+  }
+}
+
+async function crmApiSave(action, data) {
+  try {
+    var params = new URLSearchParams();
+    params.set('acao', action);
+    params.set('dados', JSON.stringify(data));
+    var resp = await fetch(API_URL + '?' + params.toString());
+    return await resp.json();
+  } catch(e) {
+    console.error('CRM save error:', e);
+    return {erro: e.message};
+  }
+}
+
+// ---- DATA LOADING ----
+async function crmLoadData() {
+  try {
+    var results = await Promise.all([
+      crmApiFetch('crm_cards'),
+      crmApiFetch('crm_colunas')
+    ]);
+    var cardsData = results[0];
+    var colunasData = results[1];
+    if (Array.isArray(cardsData)) {
+      CRM_ALL_CARDS = cardsData;
+    } else if (cardsData && Array.isArray(cardsData.dados)) {
+      CRM_ALL_CARDS = cardsData.dados;
+    } else {
+      CRM_ALL_CARDS = [];
+    }
+    CRM_ALL_COLUNAS = {};
+    var colArr = Array.isArray(colunasData) ? colunasData : (colunasData && Array.isArray(colunasData.dados) ? colunasData.dados : []);
+    for (var i = 0; i < colArr.length; i++) {
+      var row = colArr[i];
+      if (row.CORRETOR && row.COLUNAS_JSON) {
+        try {
+          CRM_ALL_COLUNAS[row.CORRETOR] = JSON.parse(row.COLUNAS_JSON);
+        } catch(e) {
+          CRM_ALL_COLUNAS[row.CORRETOR] = null;
+        }
+      }
+    }
+    CRM_LOADED = true;
+  } catch(e) {
+    console.error('CRM load error:', e);
+    CRM_ALL_CARDS = [];
+    CRM_ALL_COLUNAS = {};
+  }
+}
+
+function crmGetPersonCards(nome) {
+  return CRM_ALL_CARDS.filter(function(c) { return c.CORRETOR === nome; });
+}
+
+function crmGetPersonColumns(nome) {
+  if (CRM_ALL_COLUNAS[nome] && Array.isArray(CRM_ALL_COLUNAS[nome]) && CRM_ALL_COLUNAS[nome].length > 0) {
+    return CRM_ALL_COLUNAS[nome];
+  }
+  return crmMakeDefaultColumns();
 }
 
 function crmMakeDefaultColumns() {
-  return CRM_DEFAULT_COLS.map(function(c,i) {
-    return {id:crmUid(),name:c.name,order:i,color:c.color};
+  return CRM_DEFAULT_COLS.map(function(c, i) {
+    return {id: 'col-' + i, name: c.name, order: i, color: c.color};
   });
 }
 
-function crmLoadData() {
-  try {
-    var raw = localStorage.getItem(CRM_STORAGE_KEY);
-    if (raw) {
-      var d = JSON.parse(raw);
-      if (d && d.boards) return d;
-    }
-  } catch(e) {}
-  return {boards:{},activePerson:''};
+function crmSortedColumns(cols) {
+  return [].concat(cols).sort(function(a, b) { return a.order - b.order; });
 }
 
-function crmSaveData() {
-  try { localStorage.setItem(CRM_STORAGE_KEY, JSON.stringify(crmState)); } catch(e) {}
-}
-
-function crmGetPersonKey() {
-  if (!USUARIO) return '';
-  return USUARIO.NOME || '';
-}
-
-function crmGetTeamMembers() {
-  if (!USUARIO) return [];
-  var active = CORRETORES.filter(function(c){return c.STATUS === 'Ativo';});
-  if (USUARIO.CARGO === 'Gerente') return active;
-  if (USUARIO.CARGO === 'Coordenador') return active.filter(function(c){return c.EQUIPE === USUARIO.EQUIPE;});
-  return [];
-}
-
-function crmGetActivePersonName() {
-  if (!crmState) return '';
-  return crmState.activePerson || crmGetPersonKey();
-}
-
-function crmGetBoard(personName) {
-  if (!crmState) return {columns:[],cards:[]};
-  var key = personName || crmGetActivePersonName();
-  if (!key) return {columns:[],cards:[]};
-  if (!crmState.boards[key]) {
-    crmState.boards[key] = {columns:crmMakeDefaultColumns(),cards:[]};
-    crmSaveData();
-  }
-  return crmState.boards[key];
-}
-
-function crmSortedColumns(brd) {
-  return [].concat(brd.columns).sort(function(a,b){return a.order - b.order;});
-}
-
-function crmCardsForCol(brd,colId) {
-  return brd.cards.filter(function(c){return c.columnId===colId;}).sort(function(a,b){return a.order-b.order;});
+function crmCardsForCol(cards, colName) {
+  return cards.filter(function(c) { return c.COLUNA === colName; }).sort(function(a, b) { return (a.ORDEM || 0) - (b.ORDEM || 0); });
 }
 
 function crmDaysSince(iso) {
+  if (!iso) return '';
   var d = new Date(iso);
   var now = new Date();
   var diff = Math.floor((now - d) / 86400000);
+  if (isNaN(diff) || diff < 0) return '';
   if (diff === 0) return 'hoje';
   if (diff === 1) return '1 dia';
   return diff + ' dias';
 }
 
 function crmInitials(name) {
-  var p = (name||'').trim().split(/\s+/);
-  if (p.length === 1) return p[0].substring(0,2).toUpperCase();
-  return (p[0][0] + p[p.length-1][0]).toUpperCase();
+  var p = (name || '').trim().split(/\s+/);
+  if (p.length === 0 || !p[0]) return '??';
+  if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
+  return (p[0][0] + p[p.length - 1][0]).toUpperCase();
 }
 
 function crmIsLight(hex) {
-  var c = (hex||'#888').replace('#','');
-  if (c.length===3) c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
-  var r=parseInt(c.substring(0,2),16),g=parseInt(c.substring(2,4),16),b=parseInt(c.substring(4,6),16);
-  return (r*299+g*587+b*114)/1000>150;
+  var c = (hex || '#888').replace('#', '');
+  if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+  var r = parseInt(c.substring(0, 2), 16), g = parseInt(c.substring(2, 4), 16), b = parseInt(c.substring(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150;
 }
 
 function crmAvatarColor(name) {
   var hash = 0;
-  for (var i=0;i<name.length;i++) hash = name.charCodeAt(i) + ((hash<<5)-hash);
+  for (var i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return CRM_AVATAR_COLORS[Math.abs(hash) % CRM_AVATAR_COLORS.length];
 }
 
+function crmGetTeamMembers() {
+  if (!USUARIO) return [];
+  var active = CORRETORES.filter(function(c) { return c.STATUS === 'Ativo'; });
+  if (USUARIO.CARGO === 'Gerente') return active;
+  if (USUARIO.CARGO === 'Coordenador') return active.filter(function(c) { return c.EQUIPE === USUARIO.EQUIPE; });
+  return [];
+}
+
 // ---- INIT ----
-function crmInit() {
-  crmState = crmLoadData();
-  var personKey = crmGetPersonKey();
+async function crmInit() {
+  var personKey = (USUARIO && USUARIO.NOME) ? USUARIO.NOME : '';
   if (!personKey) return;
-  if (!crmState.activePerson) crmState.activePerson = personKey;
-  // For corretor, always show own board
-  if (USUARIO.CARGO === 'Corretor') crmState.activePerson = personKey;
+
+  // Show loading
+  var boardEl = document.getElementById('crm-board');
+  if (boardEl) boardEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--textL);font-size:.85rem;">Carregando CRM...</div>';
+
+  // Load data from API
+  await crmLoadData();
+
+  // Set active person
+  if (!CRM_ACTIVE_PERSON) CRM_ACTIVE_PERSON = personKey;
+  if (USUARIO.CARGO === 'Corretor') CRM_ACTIVE_PERSON = personKey;
+
   crmRenderAll();
+
   if (!crmInitialized) {
     crmInitialized = true;
-    // Close menus on click
     document.addEventListener('click', crmCloseActiveMenu);
-    // Escape key
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         crmCloseCardModal();
@@ -6027,12 +6073,11 @@ function crmRenderAvatarStrip() {
   if (!isMaster) { strip.classList.remove('visible'); return; }
   strip.classList.add('visible');
   var members = crmGetTeamMembers();
-  var activeName = crmGetActivePersonName();
-  // Put logged-in user first
-  var me = members.filter(function(m){return m.NOME === USUARIO.NOME;});
-  var others = members.filter(function(m){return m.NOME !== USUARIO.NOME;}).sort(function(a,b){return a.NOME.localeCompare(b.NOME);});
+  var activeName = CRM_ACTIVE_PERSON;
+  var me = members.filter(function(m) { return m.NOME === USUARIO.NOME; });
+  var others = members.filter(function(m) { return m.NOME !== USUARIO.NOME; }).sort(function(a, b) { return a.NOME.localeCompare(b.NOME); });
   var sorted = me.concat(others);
-  for (var i=0;i<sorted.length;i++) {
+  for (var i = 0; i < sorted.length; i++) {
     var m = sorted[i];
     var wrap = document.createElement('div');
     wrap.className = 'crm-avatar-wrap';
@@ -6045,10 +6090,7 @@ function crmRenderAvatarStrip() {
     btn.dataset.person = m.NOME;
     btn.addEventListener('click', function(e) {
       var name = e.currentTarget.dataset.person;
-      if (name === crmState.activePerson) return;
-      crmState.activePerson = name;
-      crmSaveData();
-      crmRenderAll();
+      crmSwitchPerson(name);
     });
     wrap.appendChild(btn);
     var label = document.createElement('div');
@@ -6059,20 +6101,26 @@ function crmRenderAvatarStrip() {
   }
 }
 
+function crmSwitchPerson(nome) {
+  if (nome === CRM_ACTIVE_PERSON) return;
+  CRM_ACTIVE_PERSON = nome;
+  crmRenderAll();
+}
+
 // ---- BOARD ----
 function crmRenderBoard() {
   var boardEl = document.getElementById('crm-board');
   if (!boardEl) return;
   var scrollLeft = boardEl.scrollLeft;
   boardEl.innerHTML = '';
-  var brd = crmGetBoard();
-  var cols = crmSortedColumns(brd);
-  for (var i=0;i<cols.length;i++) {
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var cols = crmSortedColumns(columns);
+  var cards = crmGetPersonCards(CRM_ACTIVE_PERSON);
+  for (var i = 0; i < cols.length; i++) {
     var col = cols[i];
-    var cards = crmCardsForCol(brd,col.id);
-    boardEl.appendChild(crmBuildColumn(col,cards,i,cols.length));
+    var colCards = crmCardsForCol(cards, col.name);
+    boardEl.appendChild(crmBuildColumn(col, colCards, i, cols.length, columns));
   }
-  // Add column button
   var addBtn = document.createElement('button');
   addBtn.className = 'crm-add-col-btn';
   addBtn.textContent = '+';
@@ -6082,10 +6130,10 @@ function crmRenderBoard() {
   boardEl.scrollLeft = scrollLeft;
 }
 
-function crmBuildColumn(col,cards,idx,total) {
+function crmBuildColumn(col, cards, idx, total, allColumns) {
   var wrap = document.createElement('div');
   wrap.className = 'crm-column';
-  wrap.dataset.colId = col.id;
+  wrap.dataset.colName = col.name;
 
   var headerWrap = document.createElement('div');
   headerWrap.className = 'crm-col-header-wrap';
@@ -6094,16 +6142,16 @@ function crmBuildColumn(col,cards,idx,total) {
 
   var dot = document.createElement('span');
   dot.className = 'crm-col-dot';
-  dot.style.background = col.color;
+  dot.style.background = col.color || CRM_COL_COLORS[idx % CRM_COL_COLORS.length];
 
   var nameEl = document.createElement('span');
   nameEl.className = 'crm-col-name';
   nameEl.textContent = col.name;
   nameEl.title = 'Clique para renomear';
-  nameEl.addEventListener('click', (function(colId){
-    return function(e){
+  nameEl.addEventListener('click', (function(colId) {
+    return function(e) {
       e.stopPropagation();
-      crmStartRename(colId,e.currentTarget,e.currentTarget.closest('.crm-col-header'));
+      crmStartRename(colId, e.currentTarget, e.currentTarget.closest('.crm-col-header'));
     };
   })(col.id));
 
@@ -6114,10 +6162,10 @@ function crmBuildColumn(col,cards,idx,total) {
   var menuBtn = document.createElement('button');
   menuBtn.className = 'crm-col-menu-btn';
   menuBtn.innerHTML = '&#x22EF;';
-  menuBtn.addEventListener('click',(function(colId){
-    return function(e){
+  menuBtn.addEventListener('click', (function(colId) {
+    return function(e) {
       e.stopPropagation();
-      crmToggleColMenu(colId,e.currentTarget,e.currentTarget.closest('.crm-col-header-wrap'));
+      crmToggleColMenu(colId, e.currentTarget, e.currentTarget.closest('.crm-col-header-wrap'));
     };
   })(col.id));
 
@@ -6130,48 +6178,48 @@ function crmBuildColumn(col,cards,idx,total) {
 
   var cardsArea = document.createElement('div');
   cardsArea.className = 'crm-col-cards';
-  cardsArea.dataset.colId = col.id;
-  for (var ci=0;ci<cards.length;ci++) {
-    cardsArea.appendChild(crmBuildCard(cards[ci],col,idx,total));
+  cardsArea.dataset.colName = col.name;
+  for (var ci = 0; ci < cards.length; ci++) {
+    cardsArea.appendChild(crmBuildCard(cards[ci], col, idx, total));
   }
-  cardsArea.addEventListener('dragover',crmOnCardDragOver);
-  cardsArea.addEventListener('dragleave',crmOnCardDragLeave);
-  cardsArea.addEventListener('drop',crmOnCardDrop);
+  cardsArea.addEventListener('dragover', crmOnCardDragOver);
+  cardsArea.addEventListener('dragleave', crmOnCardDragLeave);
+  cardsArea.addEventListener('drop', crmOnCardDrop);
   wrap.appendChild(cardsArea);
 
   var addBtn = document.createElement('button');
   addBtn.className = 'crm-col-add-btn';
   addBtn.innerHTML = '<span style="font-size:15px;line-height:1">+</span> Adicionar cliente';
-  addBtn.addEventListener('click',(function(colId){
-    return function(){crmOpenCardModal(null,colId);};
-  })(col.id));
+  addBtn.addEventListener('click', (function(colName) {
+    return function() { crmOpenCardModal(null, colName); };
+  })(col.name));
   wrap.appendChild(addBtn);
   return wrap;
 }
 
-function crmBuildCard(card,col,colIdx,totalCols) {
+function crmBuildCard(card, col, colIdx, totalCols) {
   var el = document.createElement('div');
   el.className = 'crm-card';
   el.draggable = true;
-  el.dataset.cardId = card.id;
-  el.dataset.colId = col.id;
-  el.style.borderLeftColor = col.color;
+  el.dataset.cardId = card.ID;
+  el.dataset.colName = col.name;
+  el.style.borderLeftColor = col.color || CRM_COL_COLORS[colIdx % CRM_COL_COLORS.length];
 
   var name = document.createElement('div');
   name.className = 'crm-card-name';
-  name.textContent = card.name;
+  name.textContent = card.NOME;
   el.appendChild(name);
 
-  if (card.phone) {
+  if (card.TELEFONE) {
     var phone = document.createElement('div');
     phone.className = 'crm-card-phone';
-    phone.textContent = card.phone;
+    phone.textContent = card.TELEFONE;
     el.appendChild(phone);
   }
 
   var meta = document.createElement('div');
   meta.className = 'crm-card-meta';
-  meta.textContent = crmDaysSince(card.createdAt);
+  meta.textContent = crmDaysSince(card.CRIADO_EM);
   el.appendChild(meta);
 
   // Mobile move buttons
@@ -6182,35 +6230,36 @@ function crmBuildCard(card,col,colIdx,totalCols) {
     prevBtn.className = 'crm-card-move-btn';
     prevBtn.innerHTML = '&#x25C4;';
     prevBtn.disabled = colIdx === 0;
-    prevBtn.addEventListener('click',(function(cardId,colId){
-      return function(e){e.stopPropagation();crmMoveCardAdjacent(cardId,colId,-1);};
-    })(card.id,col.id));
+    prevBtn.addEventListener('click', (function(cardId, dir) {
+      return function(e) { e.stopPropagation(); crmMoveCardAdjacent(cardId, dir); };
+    })(card.ID, -1));
     var nextBtn = document.createElement('button');
     nextBtn.className = 'crm-card-move-btn';
     nextBtn.innerHTML = '&#x25BA;';
     nextBtn.disabled = colIdx === totalCols - 1;
-    nextBtn.addEventListener('click',(function(cardId,colId){
-      return function(e){e.stopPropagation();crmMoveCardAdjacent(cardId,colId,1);};
-    })(card.id,col.id));
+    nextBtn.addEventListener('click', (function(cardId, dir) {
+      return function(e) { e.stopPropagation(); crmMoveCardAdjacent(cardId, dir); };
+    })(card.ID, 1));
     moveBtns.appendChild(prevBtn);
     moveBtns.appendChild(nextBtn);
     el.appendChild(moveBtns);
   }
 
-  el.addEventListener('click',(function(c,cid){
-    return function(){crmOpenCardModal(c,cid);};
-  })(card,col.id));
+  el.addEventListener('click', (function(c, colName) {
+    return function() { crmOpenCardModal(c, colName); };
+  })(card, col.name));
 
-  el.addEventListener('dragstart',crmOnCardDragStart);
-  el.addEventListener('dragend',crmOnCardDragEnd);
+  el.addEventListener('dragstart', crmOnCardDragStart);
+  el.addEventListener('dragend', crmOnCardDragEnd);
   return el;
 }
 
 // ---- COLUMN RENAME ----
-function crmStartRename(colId,nameEl,header) {
-  var brd = crmGetBoard();
-  var col = brd.columns.find(function(c){return c.id===colId;});
+function crmStartRename(colId, nameEl, header) {
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var col = columns.find(function(c) { return c.id === colId; });
   if (!col) return;
+  var oldName = col.name;
   var input = document.createElement('input');
   input.className = 'crm-col-name-input';
   input.value = col.name;
@@ -6219,40 +6268,52 @@ function crmStartRename(colId,nameEl,header) {
   input.select();
   function commit() {
     var val = input.value.trim();
-    if (val) {col.name = val; crmSaveData();}
+    if (val && val !== oldName) {
+      // Rename column and update all cards in that column
+      col.name = val;
+      crmSaveColumns(CRM_ACTIVE_PERSON, columns);
+      // Update cards that were in old column name
+      var personCards = crmGetPersonCards(CRM_ACTIVE_PERSON);
+      for (var i = 0; i < personCards.length; i++) {
+        if (personCards[i].COLUNA === oldName) {
+          personCards[i].COLUNA = val;
+          crmApiSave('salvar_crm_card', {id: personCards[i].ID, card: {COLUNA: val}});
+        }
+      }
+    }
     crmRenderBoard();
   }
-  input.addEventListener('blur',commit);
-  input.addEventListener('keydown',function(e){
-    if (e.key==='Enter'){e.preventDefault();commit();}
-    if (e.key==='Escape'){crmRenderBoard();}
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { crmRenderBoard(); }
   });
-  input.addEventListener('click',function(e){e.stopPropagation();});
+  input.addEventListener('click', function(e) { e.stopPropagation(); });
 }
 
 // ---- COLUMN MENU ----
 function crmCloseActiveMenu() {
-  if (crmActiveMenu) {crmActiveMenu.remove(); crmActiveMenu=null;}
+  if (crmActiveMenu) { crmActiveMenu.remove(); crmActiveMenu = null; }
 }
 
-function crmToggleColMenu(colId,btn,headerWrap) {
+function crmToggleColMenu(colId, btn, headerWrap) {
   crmCloseActiveMenu();
   var menu = document.createElement('div');
   menu.className = 'crm-col-menu';
-  menu.addEventListener('click',function(e){e.stopPropagation();});
+  menu.addEventListener('click', function(e) { e.stopPropagation(); });
   var rename = document.createElement('button');
   rename.className = 'crm-col-menu-item';
   rename.textContent = 'Renomear';
-  rename.addEventListener('click',function(){
+  rename.addEventListener('click', function() {
     crmCloseActiveMenu();
     var ne = headerWrap.querySelector('.crm-col-name');
     var hd = headerWrap.querySelector('.crm-col-header');
-    if (ne && hd) crmStartRename(colId,ne,hd);
+    if (ne && hd) crmStartRename(colId, ne, hd);
   });
   var del = document.createElement('button');
   del.className = 'crm-col-menu-item crm-danger';
   del.textContent = 'Excluir coluna';
-  del.addEventListener('click',function(){
+  del.addEventListener('click', function() {
     crmCloseActiveMenu();
     crmDeleteColumn(colId);
   });
@@ -6264,108 +6325,120 @@ function crmToggleColMenu(colId,btn,headerWrap) {
 
 // ---- ADD/DELETE COLUMN ----
 function crmAddColumn() {
-  var brd = crmGetBoard();
-  var cols = [].concat(brd.columns).sort(function(a,b){return a.order-b.order;});
-  var newCol = {id:crmUid(),name:'Nova Coluna',order:cols.length,color:CRM_COL_COLORS[cols.length % CRM_COL_COLORS.length]};
-  brd.columns.push(newCol);
-  crmSaveData();
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var sorted = crmSortedColumns(columns);
+  var newCol = {id: 'col-' + Date.now(), name: 'Nova Coluna', order: sorted.length, color: CRM_COL_COLORS[sorted.length % CRM_COL_COLORS.length]};
+  columns.push(newCol);
+  crmSaveColumns(CRM_ACTIVE_PERSON, columns);
   crmRenderBoard();
-  setTimeout(function(){
+  setTimeout(function() {
     var boardEl = document.getElementById('crm-board');
     if (boardEl) boardEl.scrollLeft = boardEl.scrollWidth;
-    var colEl = boardEl ? boardEl.querySelector('[data-col-id="'+newCol.id+'"]') : null;
+    var colEl = boardEl ? boardEl.querySelector('[data-col-name="Nova Coluna"]') : null;
     if (colEl) {
       var ne = colEl.querySelector('.crm-col-name');
       var hd = colEl.querySelector('.crm-col-header');
-      if (ne && hd) crmStartRename(newCol.id,ne,hd);
+      if (ne && hd) crmStartRename(newCol.id, ne, hd);
     }
-  },50);
+  }, 50);
 }
 
 function crmDeleteColumn(colId) {
-  var brd = crmGetBoard();
-  var col = brd.columns.find(function(c){return c.id===colId;});
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var col = columns.find(function(c) { return c.id === colId; });
   if (!col) return;
-  var cards = brd.cards.filter(function(c){return c.columnId===colId;});
-  var cols = [].concat(brd.columns).sort(function(a,b){return a.order-b.order;});
-  if (cols.length<=1){crmShowToast('Nao e possivel excluir a ultima coluna.');return;}
-  var target = cols.find(function(c){return c.id!==colId;});
-  var msg = cards.length>0
-    ? 'Excluir "'+col.name+'"? Os '+cards.length+' clientes serao movidos para "'+target.name+'".'
-    : 'Excluir a coluna "'+col.name+'"?';
-  crmShowConfirm('Excluir coluna',msg,function(){
-    if (cards.length>0){
-      var tc = brd.cards.filter(function(c){return c.columnId===target.id;});
-      var base = tc.length;
-      for (var i=0;i<cards.length;i++){cards[i].columnId=target.id;cards[i].order=base+i;}
+  var cards = crmGetPersonCards(CRM_ACTIVE_PERSON).filter(function(c) { return c.COLUNA === col.name; });
+  var sorted = crmSortedColumns(columns);
+  if (sorted.length <= 1) { crmShowToast('Nao e possivel excluir a ultima coluna.'); return; }
+  var target = sorted.find(function(c) { return c.id !== colId; });
+  var msg = cards.length > 0
+    ? 'Excluir "' + col.name + '"? Os ' + cards.length + ' clientes serao movidos para "' + target.name + '".'
+    : 'Excluir a coluna "' + col.name + '"?';
+  crmShowConfirm('Excluir coluna', msg, function() {
+    // Move cards to target column
+    if (cards.length > 0) {
+      var targetCards = crmGetPersonCards(CRM_ACTIVE_PERSON).filter(function(c) { return c.COLUNA === target.name; });
+      var base = targetCards.length;
+      for (var i = 0; i < cards.length; i++) {
+        cards[i].COLUNA = target.name;
+        cards[i].ORDEM = base + i;
+        crmApiSave('salvar_crm_card', {id: cards[i].ID, card: {COLUNA: target.name, ORDEM: base + i}});
+      }
     }
-    brd.columns = brd.columns.filter(function(c){return c.id!==colId;});
-    var sorted = [].concat(brd.columns).sort(function(a,b){return a.order-b.order;});
-    for (var j=0;j<sorted.length;j++) sorted[j].order=j;
-    crmSaveData();
+    // Remove column
+    var newCols = columns.filter(function(c) { return c.id !== colId; });
+    for (var j = 0; j < newCols.length; j++) newCols[j].order = j;
+    CRM_ALL_COLUNAS[CRM_ACTIVE_PERSON] = newCols;
+    crmSaveColumns(CRM_ACTIVE_PERSON, newCols);
     crmRenderBoard();
     crmShowToast('Coluna excluida.');
   });
 }
 
+// ---- SAVE COLUMNS CONFIG ----
+async function crmSaveColumns(nome, columns) {
+  CRM_ALL_COLUNAS[nome] = columns;
+  var colsData = columns.map(function(c) { return {id: c.id, name: c.name, order: c.order, color: c.color}; });
+  await crmApiSave('salvar_crm_colunas', {corretor: nome, colunas: colsData});
+}
+
 // ---- CARD MODAL ----
-function crmOpenCardModal(card,defaultColId) {
-  crmEditingCardId = card ? card.id : null;
-  crmEditingColId = defaultColId;
-  // Build modal if not exists
+function crmOpenCardModal(card, defaultColName) {
+  crmEditingCardId = card ? card.ID : null;
+  crmEditingColId = defaultColName;
   var overlay = document.getElementById('crm-card-modal');
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.className = 'crm-modal-overlay';
     overlay.id = 'crm-card-modal';
-    overlay.addEventListener('click',function(e){if(e.target===overlay)crmCloseCardModal();});
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) crmCloseCardModal(); });
     overlay.innerHTML =
-      '<div class="crm-modal">'+
-        '<div class="crm-modal-title" id="crm-card-modal-title">Novo Cliente</div>'+
-        '<div class="crm-field-wrap"><label class="crm-field-label">Nome *</label><input class="crm-field-input" id="crm-fName" type="text" placeholder="Nome completo" autocomplete="off"></div>'+
-        '<div class="crm-field-wrap"><label class="crm-field-label">Telefone</label><input class="crm-field-input" id="crm-fPhone" type="tel" placeholder="(21) 99999-0000" autocomplete="off"></div>'+
-        '<div class="crm-field-wrap"><label class="crm-field-label">E-mail</label><input class="crm-field-input" id="crm-fEmail" type="email" placeholder="email@exemplo.com" autocomplete="off"></div>'+
-        '<div class="crm-field-wrap"><label class="crm-field-label">Coluna</label><select class="crm-field-select" id="crm-fCol"></select></div>'+
-        '<div class="crm-field-wrap"><label class="crm-field-label">Observacao</label><textarea class="crm-field-textarea" id="crm-fObs" placeholder="Notas sobre este cliente..."></textarea></div>'+
-        '<div class="crm-modal-actions">'+
-          '<button class="crm-btn-save" id="crm-cardSave">Salvar</button>'+
-          '<button class="crm-btn-cancel" id="crm-cardCancel">Cancelar</button>'+
-          '<button class="crm-btn-delete" id="crm-cardDelete" style="display:none">Excluir</button>'+
-        '</div>'+
+      '<div class="crm-modal">' +
+        '<div class="crm-modal-title" id="crm-card-modal-title">Novo Cliente</div>' +
+        '<div class="crm-field-wrap"><label class="crm-field-label">Nome *</label><input class="crm-field-input" id="crm-fName" type="text" placeholder="Nome completo" autocomplete="off"></div>' +
+        '<div class="crm-field-wrap"><label class="crm-field-label">Telefone</label><input class="crm-field-input" id="crm-fPhone" type="tel" placeholder="(21) 99999-0000" autocomplete="off"></div>' +
+        '<div class="crm-field-wrap"><label class="crm-field-label">E-mail</label><input class="crm-field-input" id="crm-fEmail" type="email" placeholder="email@exemplo.com" autocomplete="off"></div>' +
+        '<div class="crm-field-wrap"><label class="crm-field-label">Coluna</label><select class="crm-field-select" id="crm-fCol"></select></div>' +
+        '<div class="crm-field-wrap"><label class="crm-field-label">Observacao</label><textarea class="crm-field-textarea" id="crm-fObs" placeholder="Notas sobre este cliente..."></textarea></div>' +
+        '<div class="crm-modal-actions">' +
+          '<button class="crm-btn-save" id="crm-cardSave">Salvar</button>' +
+          '<button class="crm-btn-cancel" id="crm-cardCancel">Cancelar</button>' +
+          '<button class="crm-btn-delete" id="crm-cardDelete" style="display:none">Excluir</button>' +
+        '</div>' +
       '</div>';
     document.body.appendChild(overlay);
-    document.getElementById('crm-cardSave').addEventListener('click',crmSaveCard);
-    document.getElementById('crm-cardCancel').addEventListener('click',crmCloseCardModal);
-    document.getElementById('crm-cardDelete').addEventListener('click',function(){
-      var brd = crmGetBoard();
-      var c = brd.cards.find(function(x){return x.id===crmEditingCardId;});
+    document.getElementById('crm-cardSave').addEventListener('click', crmSaveCard);
+    document.getElementById('crm-cardCancel').addEventListener('click', crmCloseCardModal);
+    document.getElementById('crm-cardDelete').addEventListener('click', function() {
+      if (!crmEditingCardId) return;
+      var c = CRM_ALL_CARDS.find(function(x) { return x.ID === crmEditingCardId; });
       if (!c) return;
-      crmShowConfirm('Excluir cliente','Excluir "'+c.name+'" permanentemente?',function(){
-        brd.cards = brd.cards.filter(function(x){return x.id!==crmEditingCardId;});
-        crmSaveData();crmRenderBoard();crmCloseCardModal();crmShowToast('Cliente excluido.');
+      crmShowConfirm('Excluir cliente', 'Excluir "' + c.NOME + '" permanentemente?', function() {
+        crmDeleteCard(crmEditingCardId);
+        crmCloseCardModal();
       });
     });
   }
   document.getElementById('crm-card-modal-title').textContent = card ? 'Editar Cliente' : 'Novo Cliente';
-  document.getElementById('crm-fName').value = card ? card.name : '';
-  document.getElementById('crm-fPhone').value = card ? (card.phone||'') : '';
-  document.getElementById('crm-fEmail').value = card ? (card.email||'') : '';
-  document.getElementById('crm-fObs').value = card ? (card.obs||'') : '';
+  document.getElementById('crm-fName').value = card ? card.NOME : '';
+  document.getElementById('crm-fPhone').value = card ? (card.TELEFONE || '') : '';
+  document.getElementById('crm-fEmail').value = card ? (card.EMAIL || '') : '';
+  document.getElementById('crm-fObs').value = card ? (card.OBS || '') : '';
   // Populate column select
   var fCol = document.getElementById('crm-fCol');
   fCol.innerHTML = '';
-  var brd = crmGetBoard();
-  var cols = crmSortedColumns(brd);
-  for (var i=0;i<cols.length;i++){
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var cols = crmSortedColumns(columns);
+  for (var i = 0; i < cols.length; i++) {
     var opt = document.createElement('option');
-    opt.value = cols[i].id;
+    opt.value = cols[i].name;
     opt.textContent = cols[i].name;
-    if (cols[i].id===(card?card.columnId:defaultColId)) opt.selected=true;
+    if (cols[i].name === (card ? card.COLUNA : defaultColName)) opt.selected = true;
     fCol.appendChild(opt);
   }
   document.getElementById('crm-cardDelete').style.display = card ? 'block' : 'none';
   overlay.classList.add('crm-open');
-  setTimeout(function(){document.getElementById('crm-fName').focus();},100);
+  setTimeout(function() { document.getElementById('crm-fName').focus(); }, 100);
 }
 
 function crmCloseCardModal() {
@@ -6375,174 +6448,232 @@ function crmCloseCardModal() {
   crmEditingColId = null;
 }
 
-function crmSaveCard() {
+async function crmSaveCard() {
+  if (crmSaving) return;
   var nameInput = document.getElementById('crm-fName');
   var name = nameInput.value.trim();
-  if (!name){
-    nameInput.style.borderColor='var(--danger)';
+  if (!name) {
+    nameInput.style.borderColor = 'var(--danger)';
     nameInput.focus();
-    setTimeout(function(){nameInput.style.borderColor='';},1500);
+    setTimeout(function() { nameInput.style.borderColor = ''; }, 1500);
     return;
   }
-  var brd = crmGetBoard();
-  var colId = document.getElementById('crm-fCol').value;
-  var colCards = brd.cards.filter(function(c){return c.columnId===colId;});
-  if (crmEditingCardId) {
-    var card = brd.cards.find(function(c){return c.id===crmEditingCardId;});
-    if (!card) return;
-    var oldColId = card.columnId;
-    card.name = name;
-    card.phone = document.getElementById('crm-fPhone').value.trim();
-    card.email = document.getElementById('crm-fEmail').value.trim();
-    card.obs = document.getElementById('crm-fObs').value.trim();
-    if (colId !== oldColId){card.columnId=colId;card.order=colCards.length;}
-  } else {
-    brd.cards.push({
-      id:crmUid(),name:name,
-      phone:document.getElementById('crm-fPhone').value.trim(),
-      email:document.getElementById('crm-fEmail').value.trim(),
-      obs:document.getElementById('crm-fObs').value.trim(),
-      columnId:colId,order:colCards.length,
-      createdAt:new Date().toISOString()
-    });
+  crmSaving = true;
+  var saveBtn = document.getElementById('crm-cardSave');
+  if (saveBtn) { saveBtn.textContent = 'Salvando...'; saveBtn.disabled = true; }
+
+  var colName = document.getElementById('crm-fCol').value;
+  var phone = document.getElementById('crm-fPhone').value.trim();
+  var email = document.getElementById('crm-fEmail').value.trim();
+  var obs = document.getElementById('crm-fObs').value.trim();
+  var isEdit = !!crmEditingCardId;
+
+  try {
+    if (isEdit) {
+      var cardData = {NOME: name, TELEFONE: phone, EMAIL: email, OBS: obs, COLUNA: colName};
+      var result = await crmApiSave('salvar_crm_card', {id: crmEditingCardId, card: cardData});
+      // Update local
+      var existing = CRM_ALL_CARDS.find(function(c) { return c.ID === crmEditingCardId; });
+      if (existing) {
+        existing.NOME = name;
+        existing.TELEFONE = phone;
+        existing.EMAIL = email;
+        existing.OBS = obs;
+        existing.COLUNA = colName;
+        existing.ATUALIZADO_EM = new Date().toISOString();
+      }
+    } else {
+      var personCards = crmGetPersonCards(CRM_ACTIVE_PERSON).filter(function(c) { return c.COLUNA === colName; });
+      var newCard = {
+        CORRETOR: CRM_ACTIVE_PERSON,
+        NOME: name,
+        TELEFONE: phone,
+        EMAIL: email,
+        OBS: obs,
+        COLUNA: colName,
+        ORDEM: personCards.length
+      };
+      var result = await crmApiSave('salvar_crm_card', {card: newCard});
+      // Add to local array with returned ID or temporary ID
+      var localCard = Object.assign({}, newCard);
+      localCard.CRIADO_EM = new Date().toISOString();
+      localCard.ATUALIZADO_EM = new Date().toISOString();
+      if (result && result.id) {
+        localCard.ID = result.id;
+      } else {
+        localCard.ID = 'temp-' + Date.now();
+      }
+      CRM_ALL_CARDS.push(localCard);
+    }
+    crmRenderBoard();
+    crmCloseCardModal();
+    crmShowToast(isEdit ? 'Cliente atualizado.' : 'Cliente adicionado.');
+  } catch(e) {
+    console.error('CRM save card error:', e);
+    crmShowToast('Erro ao salvar. Tente novamente.');
+  } finally {
+    crmSaving = false;
+    if (saveBtn) { saveBtn.textContent = 'Salvar'; saveBtn.disabled = false; }
   }
-  crmSaveData();crmRenderBoard();crmCloseCardModal();
-  crmShowToast(crmEditingCardId?'Cliente atualizado.':'Cliente adicionado.');
+}
+
+// ---- DELETE CARD ----
+async function crmDeleteCard(cardId) {
+  await crmApiSave('deletar_crm_card', {id: cardId});
+  CRM_ALL_CARDS = CRM_ALL_CARDS.filter(function(c) { return c.ID !== cardId; });
+  crmRenderBoard();
+  crmShowToast('Cliente excluido.');
+}
+
+// ---- MOVE CARD (adjacent columns) ----
+async function crmMoveCardAdjacent(cardId, direction) {
+  var card = CRM_ALL_CARDS.find(function(c) { return c.ID === cardId; });
+  if (!card) return;
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var cols = crmSortedColumns(columns);
+  var curIdx = -1;
+  for (var i = 0; i < cols.length; i++) {
+    if (cols[i].name === card.COLUNA) { curIdx = i; break; }
+  }
+  var newIdx = curIdx + direction;
+  if (newIdx < 0 || newIdx >= cols.length) return;
+  var targetCol = cols[newIdx];
+  var targetCards = crmGetPersonCards(CRM_ACTIVE_PERSON).filter(function(c) { return c.COLUNA === targetCol.name; });
+  card.COLUNA = targetCol.name;
+  card.ORDEM = targetCards.length;
+  crmApiSave('salvar_crm_card', {id: card.ID, card: {COLUNA: targetCol.name, ORDEM: targetCards.length}});
+  crmRenderBoard();
+  crmShowToast('Movido para ' + targetCol.name + '.');
 }
 
 // ---- CARD DRAG & DROP ----
 function crmOnCardDragStart(e) {
   crmDragCardId = e.currentTarget.dataset.cardId;
-  crmDragCardColId = e.currentTarget.dataset.colId;
+  crmDragCardColId = e.currentTarget.dataset.colName;
   e.currentTarget.classList.add('crm-dragging');
   e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain',crmDragCardId);
+  e.dataTransfer.setData('text/plain', crmDragCardId);
 }
 function crmOnCardDragEnd(e) {
   e.currentTarget.classList.remove('crm-dragging');
   crmRemovePlaceholder();
-  document.querySelectorAll('.crm-column').forEach(function(c){c.classList.remove('crm-drag-over');});
-  crmDragCardId=null;crmDragCardColId=null;
+  document.querySelectorAll('.crm-column').forEach(function(c) { c.classList.remove('crm-drag-over'); });
+  crmDragCardId = null;
+  crmDragCardColId = null;
 }
 function crmOnCardDragOver(e) {
   e.preventDefault();
   if (!crmDragCardId) return;
-  e.dataTransfer.dropEffect='move';
-  var colEl=e.currentTarget;
+  e.dataTransfer.dropEffect = 'move';
+  var colEl = e.currentTarget;
   colEl.closest('.crm-column').classList.add('crm-drag-over');
   crmRemovePlaceholder();
-  crmPlaceholder=document.createElement('div');
-  crmPlaceholder.className='crm-drop-placeholder';
-  var afterEl=crmGetDragAfter(colEl,e.clientY);
-  if(afterEl){colEl.insertBefore(crmPlaceholder,afterEl);}else{colEl.appendChild(crmPlaceholder);}
+  crmPlaceholder = document.createElement('div');
+  crmPlaceholder.className = 'crm-drop-placeholder';
+  var afterEl = crmGetDragAfter(colEl, e.clientY);
+  if (afterEl) { colEl.insertBefore(crmPlaceholder, afterEl); } else { colEl.appendChild(crmPlaceholder); }
 }
 function crmOnCardDragLeave(e) {
-  var colEl=e.currentTarget;
-  if(!colEl.contains(e.relatedTarget)){
+  var colEl = e.currentTarget;
+  if (!colEl.contains(e.relatedTarget)) {
     colEl.closest('.crm-column').classList.remove('crm-drag-over');
     crmRemovePlaceholder();
   }
 }
 function crmOnCardDrop(e) {
   e.preventDefault();
-  if(!crmDragCardId)return;
-  var colEl=e.currentTarget;
-  var targetColId=colEl.dataset.colId;
-  var brd=crmGetBoard();
-  var afterEl=crmPlaceholder?crmPlaceholder.previousElementSibling:null;
-  var colCards=brd.cards.filter(function(c){return c.columnId===targetColId;});
-  var newOrder=0;
-  if(afterEl&&afterEl.dataset&&afterEl.dataset.cardId){
-    var ac=brd.cards.find(function(c){return c.id===afterEl.dataset.cardId;});
-    newOrder=ac?ac.order+0.5:colCards.length;
-  }else if(crmPlaceholder&&!crmPlaceholder.previousElementSibling){newOrder=-1;}
-  else{newOrder=colCards.length;}
-  var card=brd.cards.find(function(c){return c.id===crmDragCardId;});
-  if(card){
-    card.columnId=targetColId;
-    var remaining=brd.cards.filter(function(c){return c.columnId===targetColId&&c.id!==crmDragCardId;}).sort(function(a,b){return a.order-b.order;});
-    remaining.splice(newOrder<0?0:Math.round(newOrder),0,card);
-    for(var i=0;i<remaining.length;i++)remaining[i].order=i;
+  if (!crmDragCardId) return;
+  var colEl = e.currentTarget;
+  var targetColName = colEl.dataset.colName;
+  var card = CRM_ALL_CARDS.find(function(c) { return c.ID === crmDragCardId; });
+  if (!card) return;
+
+  // Calculate new order
+  var afterEl = crmPlaceholder ? crmPlaceholder.previousElementSibling : null;
+  var personCards = crmGetPersonCards(CRM_ACTIVE_PERSON).filter(function(c) { return c.COLUNA === targetColName && c.ID !== crmDragCardId; });
+  var newOrder = 0;
+  if (afterEl && afterEl.dataset && afterEl.dataset.cardId) {
+    var ac = CRM_ALL_CARDS.find(function(c) { return c.ID === afterEl.dataset.cardId; });
+    newOrder = ac ? (ac.ORDEM || 0) + 0.5 : personCards.length;
+  } else if (crmPlaceholder && !crmPlaceholder.previousElementSibling) {
+    newOrder = -1;
+  } else {
+    newOrder = personCards.length;
   }
+
+  card.COLUNA = targetColName;
+  // Reorder all cards in this column
+  var colCards = crmGetPersonCards(CRM_ACTIVE_PERSON).filter(function(c) { return c.COLUNA === targetColName && c.ID !== crmDragCardId; }).sort(function(a, b) { return (a.ORDEM || 0) - (b.ORDEM || 0); });
+  colCards.splice(newOrder < 0 ? 0 : Math.round(newOrder), 0, card);
+  for (var i = 0; i < colCards.length; i++) {
+    colCards[i].ORDEM = i;
+  }
+
   crmRemovePlaceholder();
-  document.querySelectorAll('.crm-column').forEach(function(c){c.classList.remove('crm-drag-over');});
-  crmSaveData();crmRenderBoard();crmDragCardId=null;
+  document.querySelectorAll('.crm-column').forEach(function(c) { c.classList.remove('crm-drag-over'); });
+  // Save moved card to API
+  crmApiSave('salvar_crm_card', {id: card.ID, card: {COLUNA: targetColName, ORDEM: card.ORDEM}});
+  crmRenderBoard();
+  crmDragCardId = null;
 }
-function crmRemovePlaceholder(){
-  if(crmPlaceholder&&crmPlaceholder.parentNode)crmPlaceholder.parentNode.removeChild(crmPlaceholder);
-  crmPlaceholder=null;
+function crmRemovePlaceholder() {
+  if (crmPlaceholder && crmPlaceholder.parentNode) crmPlaceholder.parentNode.removeChild(crmPlaceholder);
+  crmPlaceholder = null;
 }
-function crmGetDragAfter(container,y){
-  var els=Array.from(container.querySelectorAll('.crm-card:not(.crm-dragging)'));
-  var closest={offset:Number.NEGATIVE_INFINITY,el:null};
-  for(var i=0;i<els.length;i++){
-    var box=els[i].getBoundingClientRect();
-    var offset=y-box.top-box.height/2;
-    if(offset<0&&offset>closest.offset)closest={offset:offset,el:els[i]};
+function crmGetDragAfter(container, y) {
+  var els = Array.from(container.querySelectorAll('.crm-card:not(.crm-dragging)'));
+  var closest = {offset: Number.NEGATIVE_INFINITY, el: null};
+  for (var i = 0; i < els.length; i++) {
+    var box = els[i].getBoundingClientRect();
+    var offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) closest = {offset: offset, el: els[i]};
   }
   return closest.el;
 }
 
-// ---- MOBILE MOVE ----
-function crmMoveCardAdjacent(cardId,currentColId,direction) {
-  var brd=crmGetBoard();
-  var cols=crmSortedColumns(brd);
-  var curIdx=-1;
-  for(var i=0;i<cols.length;i++){if(cols[i].id===currentColId){curIdx=i;break;}}
-  var newIdx=curIdx+direction;
-  if(newIdx<0||newIdx>=cols.length)return;
-  var targetCol=cols[newIdx];
-  var card=brd.cards.find(function(c){return c.id===cardId;});
-  if(!card)return;
-  var tc=brd.cards.filter(function(c){return c.columnId===targetCol.id;});
-  card.columnId=targetCol.id;card.order=tc.length;
-  crmSaveData();crmRenderBoard();
-  crmShowToast('Movido para '+targetCol.name+'.');
-}
-
 // ---- CONFIRM DIALOG ----
-function crmShowConfirm(title,msg,onOk) {
+function crmShowConfirm(title, msg, onOk) {
   var existing = document.getElementById('crm-confirm');
-  if(existing) existing.remove();
+  if (existing) existing.remove();
   var overlay = document.createElement('div');
-  overlay.className='crm-confirm-overlay';
-  overlay.id='crm-confirm';
-  overlay.innerHTML=
-    '<div class="crm-confirm-box">'+
-      '<div class="crm-confirm-title">'+title+'</div>'+
-      '<div class="crm-confirm-msg">'+msg+'</div>'+
-      '<div class="crm-confirm-actions">'+
-        '<button class="crm-btn-save" id="crm-confirmOk">Confirmar</button>'+
-        '<button class="crm-btn-cancel" id="crm-confirmCancel">Cancelar</button>'+
-      '</div>'+
+  overlay.className = 'crm-confirm-overlay';
+  overlay.id = 'crm-confirm';
+  overlay.innerHTML =
+    '<div class="crm-confirm-box">' +
+      '<div class="crm-confirm-title">' + title + '</div>' +
+      '<div class="crm-confirm-msg">' + msg + '</div>' +
+      '<div class="crm-confirm-actions">' +
+        '<button class="crm-btn-save" id="crm-confirmOk">Confirmar</button>' +
+        '<button class="crm-btn-cancel" id="crm-confirmCancel">Cancelar</button>' +
+      '</div>' +
     '</div>';
   document.body.appendChild(overlay);
-  crmConfirmCb=onOk;
-  document.getElementById('crm-confirmOk').addEventListener('click',function(){
-    crmCloseConfirm();if(crmConfirmCb)crmConfirmCb();crmConfirmCb=null;
+  crmConfirmCb = onOk;
+  document.getElementById('crm-confirmOk').addEventListener('click', function() {
+    crmCloseConfirm(); if (crmConfirmCb) crmConfirmCb(); crmConfirmCb = null;
   });
-  document.getElementById('crm-confirmCancel').addEventListener('click',function(){
-    crmCloseConfirm();crmConfirmCb=null;
+  document.getElementById('crm-confirmCancel').addEventListener('click', function() {
+    crmCloseConfirm(); crmConfirmCb = null;
   });
 }
-function crmCloseConfirm(){
-  var el=document.getElementById('crm-confirm');
-  if(el)el.remove();crmConfirmCb=null;
+function crmCloseConfirm() {
+  var el = document.getElementById('crm-confirm');
+  if (el) el.remove(); crmConfirmCb = null;
 }
 
 // ---- TOAST ----
-function crmShowToast(msg){
+function crmShowToast(msg) {
   var existing = document.getElementById('crm-toast');
-  if(!existing){
-    existing=document.createElement('div');
-    existing.className='crm-toast';
-    existing.id='crm-toast';
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.className = 'crm-toast';
+    existing.id = 'crm-toast';
     document.body.appendChild(existing);
   }
-  existing.textContent=msg;
+  existing.textContent = msg;
   existing.classList.add('crm-toast-show');
   clearTimeout(crmToastTimer);
-  crmToastTimer=setTimeout(function(){existing.classList.remove('crm-toast-show');},2200);
+  crmToastTimer = setTimeout(function() { existing.classList.remove('crm-toast-show'); }, 2200);
 }
 
 // ============================================
