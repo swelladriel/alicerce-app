@@ -610,7 +610,7 @@ textarea.modal-input{resize:vertical;min-height:60px;}
       <div class="snav-item" data-tab="tab-unica" onclick="navigateTo('tab-unica')"><span class="si">&#127919;</span><span class="sl">Foco do Dia</span></div>
       <div class="snav-item" data-tab="tab-pipeline" onclick="navigateTo('tab-pipeline')"><span class="si">&#128203;</span><span class="sl">Meus Clientes</span></div>
       <div class="snav-item" data-tab="tab-equipe" id="snav-equipe" style="display:none;" onclick="navigateTo('tab-equipe')"><span class="si">&#128101;</span><span class="sl">Minha Equipe</span></div>
-      <div class="snav-item snav-admin" data-tab="tab-admin-real" onclick="navigateTo('tab-admin-real')" style="display:none;"><span class="si">&#128200;</span><span class="sl">Pipeline (Admin)</span></div>
+      <!-- Pipeline Admin removido — usa Ciclo de Vendas -->
       <div class="snav-item snav-admin" data-tab="tab-admin-corretores" onclick="navigateTo('tab-admin-corretores')" style="display:none;"><span class="si">&#128100;</span><span class="sl">Corretores</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-presenca" onclick="navigateTo('tab-admin-presenca')" style="display:none;"><span class="si">&#9201;</span><span class="sl">Presença</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-ciclo" onclick="navigateTo('tab-admin-ciclo')" style="display:none;"><span class="si">&#128178;</span><span class="sl">Ciclo Vendas</span></div>
@@ -783,6 +783,11 @@ textarea.modal-input{resize:vertical;min-height:60px;}
     <!-- TAB: MEUS CLIENTES -->
     <div class="app-page" id="tab-pipeline">
       <div class="m-kpis" id="m-kpis"></div>
+      <div id="m-corretor-filter" style="display:none;margin-bottom:12px;">
+        <select id="m-corretor-sel" onchange="renderMeusClientes()" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.78rem;appearance:none;cursor:pointer;">
+          <option value="">Todos os corretores</option>
+        </select>
+      </div>
       <div class="m-filter" id="m-filter"></div>
       <div id="m-clientes-list"><div class="loading">Carregando clientes...</div></div>
     </div>
@@ -1675,20 +1680,60 @@ function classStatus(s) {
 }
 
 function renderMeusClientes() {
-  const lista = FILTRO_ATIVO ? MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === FILTRO_ATIVO) : MEUS_CLIENTES;
+  const isMaster = USUARIO && (USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente');
 
-  const total = MEUS_CLIENTES.length;
-  const aprovados = MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === 'aprovado').length;
-  const pendentes = MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === 'pendente').length;
+  // Admin: mostrar todos os clientes com pastas (CPF), filtrados por equipe
+  let baseClientes;
+  if (isMaster) {
+    // Só clientes com CPF = pastas reais (não agendamentos sem análise)
+    const todosComCPF = CLIENTES.filter(c => c.CPF && String(c.CPF).trim().length > 5);
+    // Filtrar por equipe (coord vê só a dele, gerente vê tudo)
+    baseClientes = todosComCPF.filter(c => {
+      if (!c.CORRETOR) return false;
+      if (USUARIO.CARGO === 'Gerente') return true;
+      const corr = CORRETORES.find(x => x.NOME === c.CORRETOR);
+      return corr && corr.EQUIPE === USUARIO.EQUIPE;
+    });
+
+    // Mostrar filtro de corretor
+    const filtroDiv = document.getElementById('m-corretor-filter');
+    if (filtroDiv) {
+      filtroDiv.style.display = 'block';
+      const sel = document.getElementById('m-corretor-sel');
+      const corrAtual = sel.value;
+      if (sel.options.length <= 1) {
+        const corrs = [...new Set(baseClientes.map(c => c.CORRETOR).filter(c => c))].sort();
+        corrs.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+      }
+      if (corrAtual) sel.value = corrAtual;
+      // Aplicar filtro de corretor
+      if (sel.value) baseClientes = baseClientes.filter(c => c.CORRETOR === sel.value);
+    }
+  } else {
+    baseClientes = MEUS_CLIENTES;
+    const filtroDiv = document.getElementById('m-corretor-filter');
+    if (filtroDiv) filtroDiv.style.display = 'none';
+  }
+
+  const lista = FILTRO_ATIVO ? baseClientes.filter(c => classStatus(c.STATUS).grupo === FILTRO_ATIVO) : baseClientes;
+
+  const total = baseClientes.length;
+  const aprovados = baseClientes.filter(c => classStatus(c.STATUS).grupo === 'aprovado').length;
+  const pendentes = baseClientes.filter(c => classStatus(c.STATUS).grupo === 'pendente').length;
+  const reprovados = baseClientes.filter(c => {
+    const s = (c.STATUS || '').toUpperCase();
+    return s.includes('REPROVADO') || s.includes('BLOQUEADO');
+  }).length;
 
   // KPIs
   document.getElementById('m-kpis').innerHTML = `
-    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Total</div></div>
+    <div class="m-kpi blue"><div class="v">${total}</div><div class="l">Total Pastas</div></div>
     <div class="m-kpi green"><div class="v">${aprovados}</div><div class="l">Aprovados</div></div>
     <div class="m-kpi yellow"><div class="v">${pendentes}</div><div class="l">Pendentes</div></div>
+    ${isMaster ? `<div class="m-kpi" style="border-bottom:3px solid var(--danger);"><div class="v" style="color:var(--danger);">${reprovados}</div><div class="l">Reprovados</div></div>` : ''}
   `;
 
-  // Filtros
+  // Filtros de status
   const grupos = ['', 'aprovado', 'pendente', 'bacen', 'divida', 'comprou'];
   const labels = ['Todos', 'Aprovados', 'Pendentes', 'BACEN', 'Dívida', 'Compraram'];
   document.getElementById('m-filter').innerHTML = grupos.map((g, i) =>
@@ -1701,6 +1746,9 @@ function renderMeusClientes() {
     return;
   }
 
+  // Guardar lista renderizada pra referência do modal
+  CLIENTES_RENDER = lista;
+
   let html = '';
   lista.forEach((c, idx) => {
     const st = classStatus(c.STATUS);
@@ -1712,6 +1760,7 @@ function renderMeusClientes() {
     html += `<div class="m-client" onclick='abrirModalCliente(${idx})' style="cursor:pointer;">
       <div class="m-client-name">${c.CLIENTE || '-'}</div>
       <div class="m-client-cpf">${c.CPF || 'Sem CPF'}</div>
+      ${isMaster && c.CORRETOR ? `<div style="font-size:.68rem;color:var(--accent);margin-bottom:4px;font-weight:600;">${c.CORRETOR}</div>` : ''}
       ${renda ? `<div class="m-client-renda">${renda}</div>` : ''}
       ${infos.telefone ? `<div style="font-size:.68rem;color:var(--textL);margin-bottom:4px;">Tel: ${infos.telefone}</div>` : ''}
       <div class="m-client-bottom">
@@ -1741,6 +1790,8 @@ function renderMeusClientes() {
   });
   document.getElementById('m-clientes-list').innerHTML = html;
 }
+
+let CLIENTES_RENDER = []; // lista renderizada pra referência do modal
 
 function setFiltro(grupo) {
   FILTRO_ATIVO = grupo;
@@ -2131,8 +2182,7 @@ function saveInfoLocal(cpf, dados) {
 // MODAL CLIENTE
 // ============================================
 function abrirModalCliente(idx) {
-  const lista = FILTRO_ATIVO ? MEUS_CLIENTES.filter(c => classStatus(c.STATUS).grupo === FILTRO_ATIVO) : MEUS_CLIENTES;
-  const c = lista[idx];
+  const c = (CLIENTES_RENDER && CLIENTES_RENDER.length > 0) ? CLIENTES_RENDER[idx] : MEUS_CLIENTES[idx];
   if (!c) return;
   CLIENTE_MODAL = c;
 
@@ -3957,7 +4007,6 @@ function abrirSideMenu() {
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-registro')"><span class="smi-icon">📝</span> Registro</div>`;
   if (isMaster) {
     items += `<div style="margin:10px 0 6px;padding:0 16px;font-size:.62rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;">Administração</div>`;
-    items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-real')"><span class="smi-icon">📈</span> Pipeline (Admin)</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-corretores')"><span class="smi-icon">👤</span> Corretores</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-presenca')"><span class="smi-icon">⏱</span> Presença</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-ciclo')"><span class="smi-icon">💲</span> Ciclo de Vendas</div>`;
