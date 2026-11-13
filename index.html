@@ -4503,14 +4503,16 @@ function renderInicioGestor() {
 
   // ---- RANKINGS ----
   // Filtrar corretores ativos (excluir coords e gerente)
-  const corrsAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO === 'Corretor');
+  // Incluir todos ativos (corretores + gerente + coordenadores)
+  const corrsAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo');
   const nomesCorrs = corrsAtivos.map(c => c.NOME);
+  function normNome(s) { return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 
   // VENDAS: por corretor no mês
   const vendasPorCorr = {};
   vendasMes.forEach(v => {
     const corr = (v.CORRETOR || '').trim();
-    if (!corr || !nomesCorrs.some(n => n.toUpperCase() === corr.toUpperCase())) return;
+    if (!corr || !nomesCorrs.some(n => normNome(n) === normNome(corr))) return;
     if (!vendasPorCorr[corr]) vendasPorCorr[corr] = { qtd: 0, vgv: 0 };
     vendasPorCorr[corr].qtd++;
     vendasPorCorr[corr].vgv += (parseFloat(v.VGV) || 0);
@@ -4521,7 +4523,7 @@ function renderInicioGestor() {
   const inicioMC = mesAtual + '-01';
   const agMes = AGENDA.filter(a => {
     const d = String(a.DATA || '').substring(0, 10);
-    return d >= inicioMC && nomesCorrs.some(n => n.toUpperCase() === (a.CORRETOR || '').toUpperCase());
+    return d >= inicioMC && nomesCorrs.some(n => normNome(n) === normNome(a.CORRETOR));
   });
   const agPorCorr = {};
   agMes.forEach(a => {
@@ -4533,7 +4535,7 @@ function renderInicioGestor() {
   // ATENDIMENTOS: mês comercial
   const atMes = AGENDA.filter(a => {
     const d = String(a.DATA || '').substring(0, 10);
-    return d >= inicioMC && (a.ATENDIDO || '').toUpperCase() === 'SIM' && nomesCorrs.some(n => n.toUpperCase() === (a.CORRETOR || '').toUpperCase());
+    return d >= inicioMC && (a.ATENDIDO || '').toUpperCase() === 'SIM' && nomesCorrs.some(n => normNome(n) === normNome(a.CORRETOR));
   });
   const atPorCorr = {};
   atMes.forEach(a => {
@@ -4547,7 +4549,7 @@ function renderInicioGestor() {
   CLIENTES.filter(c => {
     if (!c.CPF || String(c.CPF).trim().length < 6) return false;
     const d = String(c['DATA CRIAÇÃO'] || c.DATA_CRIACAO || c['DATA CRIACAO'] || '').substring(0, 10);
-    return d >= inicioMC && nomesCorrs.some(n => n.toUpperCase() === (c.CORRETOR || '').toUpperCase());
+    return d >= inicioMC && nomesCorrs.some(n => normNome(n) === normNome(c.CORRETOR));
   }).forEach(c => {
     const corr = (c.CORRETOR || '').trim();
     pastaPorCorr[corr] = (pastaPorCorr[corr] || 0) + 1;
