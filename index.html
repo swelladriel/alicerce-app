@@ -51,7 +51,8 @@ button,a,.tab,.m-filter-btn,.login-btn,.checkin-btn,.rec-enviar,.cal-day,.cal-na
 /* CONTENT */
 .app-content{flex:1;padding:16px;overflow-y:auto;}
 .app-page{display:none;animation:fadeIn .2s ease;}
-.app-page.active{display:block;}
+.app-page.active{display:flex;flex-direction:column;}
+.app-page.active.inicio-full{min-height:100%;}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 
 /* KPIs MOBILE */
@@ -347,7 +348,8 @@ textarea.modal-input{resize:vertical;min-height:60px;}
   /* Content area adapts */
   .desktop-main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;height:100vh;}
   .app-content{flex:1;overflow-y:auto;padding:28px;}
-  .app-content>.app-page{max-width:1200px;margin:0 auto;}
+  .app-content>.app-page{max-width:1400px;margin:0 auto;}
+  .app-content>#tab-inicio{max-width:none !important;}
 
   /* Desktop page animation */
   .app-page{animation:fadeSlide .25s ease;}
@@ -657,6 +659,101 @@ textarea.modal-input{resize:vertical;min-height:60px;}
   #tab-crm{max-width:none !important;}
   .crm-column{max-height:calc(100vh - 200px);}
 }
+/* Ciclo de Vendas — KPIs, Charts, Comissoes, Diagnostico */
+.ciclo-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.ciclo-kpi-card{background:var(--card);border-radius:10px;padding:14px 12px;border-left:3px solid var(--accent);backdrop-filter:blur(12px);}
+.ciclo-kpi-card .ck-label{font-size:.68rem;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.ciclo-kpi-card .ck-val{font-size:1.4rem;font-weight:900;color:var(--text);}
+.ciclo-kpi-card .ck-sub{font-size:.66rem;color:var(--textL);margin-top:2px;}
+.ciclo-kpi-card.ck-blue{border-left-color:#60a5fa;}
+.ciclo-kpi-card.ck-green{border-left-color:#34d399;}
+.ciclo-kpi-card.ck-gold{border-left-color:var(--gold);}
+.ciclo-kpi-card.ck-red{border-left-color:#f87171;}
+.ciclo-section{background:var(--card);border-radius:10px;padding:14px;margin-bottom:14px;backdrop-filter:blur(12px);border:1px solid var(--border);}
+.ciclo-section-title{font-size:.78rem;font-weight:800;color:var(--accent);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+.ciclo-charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px;}
+.ciclo-chart-card{background:var(--card);border-radius:10px;padding:12px;backdrop-filter:blur(12px);border:1px solid var(--border);}
+.ciclo-chart-card h4{font-size:.72rem;color:var(--textL);margin:0 0 8px;text-transform:uppercase;letter-spacing:.3px;}
+.ciclo-chart-wrap{position:relative;height:220px;}
+.ciclo-comissao-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+.ciclo-comissao-card{background:rgba(255,255,255,.03);border-radius:8px;padding:10px;text-align:center;}
+.ciclo-comissao-card .cc-nome{font-size:.68rem;color:var(--textL);margin-bottom:4px;}
+.ciclo-comissao-card .cc-val{font-size:1.1rem;font-weight:900;color:var(--gold);}
+.ciclo-comissao-card .cc-detail{font-size:.6rem;color:var(--textL);margin-top:2px;}
+.ciclo-diag{margin-bottom:14px;}
+.ciclo-diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ciclo-diag-card{background:var(--card);border-radius:10px;padding:14px;border:1px solid var(--border);backdrop-filter:blur(12px);}
+.ciclo-diag-card h4{font-size:.74rem;font-weight:800;color:var(--accent);margin:0 0 8px;text-transform:uppercase;}
+.ciclo-diag-card p{font-size:.72rem;color:var(--textL);line-height:1.5;margin:0;}
+@media(max-width:768px){
+  .ciclo-kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .ciclo-charts-grid{grid-template-columns:1fr;}
+  .ciclo-diag-grid{grid-template-columns:1fr;}
+  .ciclo-chart-wrap{height:180px;}
+  .ciclo-kpi-card .ck-val{font-size:1.1rem;}
+}
+
+/* INICIO CORRETOR — LAYOUT 2 COLUNAS FULLSCREEN */
+.inicio-kpi-row:has(.inicio-wrap){display:block !important;margin-bottom:0;}
+.inicio-wrap{display:grid;grid-template-columns:1fr 1fr;gap:28px;min-height:calc(100vh - 100px);width:100%;}
+.inicio-left{display:flex;flex-direction:column;}
+.inicio-right{display:flex;flex-direction:column;gap:16px;min-height:0;}
+.inicio-profile{display:flex;align-items:center;gap:18px;margin-bottom:24px;}
+.inicio-avatar{width:80px;height:80px;border-radius:50%;border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#333,#555);cursor:pointer;overflow:hidden;position:relative;flex-shrink:0;transition:all .2s;}
+.inicio-avatar:hover{transform:scale(1.05);box-shadow:0 0 16px rgba(255,215,0,.3);}
+.inicio-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.inicio-avatar-edit{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);font-size:.5rem;color:#fff;text-align:center;padding:2px 0;opacity:0;transition:opacity .2s;}
+.inicio-avatar:hover .inicio-avatar-edit{opacity:1;}
+.inicio-profile-info{flex:1;}
+.inicio-greeting{font-size:1.5rem;font-weight:900;color:#fff;margin:0 0 4px;}
+.inicio-profile-sub{font-size:.8rem;color:var(--textL);}
+.inicio-comissoes{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;}
+.inicio-com-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:30px 26px;backdrop-filter:blur(12px);position:relative;overflow:hidden;}
+.inicio-com-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
+.inicio-com-card.ic-gold::before{background:linear-gradient(90deg,var(--gold),#ffb300);}
+.inicio-com-card.ic-green::before{background:linear-gradient(90deg,var(--success),#00e676);}
+.inicio-com-label{font-size:.74rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.inicio-com-val{font-size:2.4rem;font-weight:900;letter-spacing:-1px;line-height:1;}
+.inicio-com-sub{font-size:.7rem;color:var(--textL);margin-top:12px;display:flex;align-items:center;gap:6px;}
+.inicio-kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.inicio-kpi-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 14px;text-align:center;backdrop-filter:blur(12px);}
+.inicio-kpi-icon{font-size:1.6rem;margin-bottom:8px;}
+.inicio-kpi-val{font-size:1.3rem;font-weight:900;color:#fff;}
+.inicio-kpi-label{font-size:.64rem;color:var(--textL);margin-top:5px;text-transform:uppercase;letter-spacing:.3px;}
+.inicio-pipeline-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;flex:1;}
+.inicio-pipeline-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 16px;text-align:center;backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.inicio-pipeline-val{font-size:1.6rem;font-weight:900;color:#fff;margin-bottom:4px;}
+.inicio-pipeline-label{font-size:.64rem;color:var(--textL);text-transform:uppercase;}
+.inicio-section{display:flex;flex-direction:column;flex:1;min-height:0;}
+.inicio-section-agenda{flex:3;}
+.inicio-section-vendas{flex:2;}
+.inicio-section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.inicio-section-title2{font-size:.8rem;font-weight:800;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;}
+.inicio-section-badge{font-size:.64rem;background:var(--gold);color:#000;padding:3px 12px;border-radius:10px;font-weight:800;}
+.inicio-section-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;backdrop-filter:blur(12px);flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:120px;}
+.inicio-ag-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:transform .1s;}
+.inicio-ag-card:last-child{margin-bottom:0;}
+.inicio-ag-card:active{transform:scale(.98);}
+.inicio-ag-hora{font-size:.9rem;font-weight:900;color:var(--gold);min-width:48px;}
+.inicio-ag-info{flex:1;}
+.inicio-ag-nome{font-size:.82rem;font-weight:700;color:#fff;}
+.inicio-ag-tipo{font-size:.6rem;padding:3px 10px;border-radius:12px;font-weight:800;letter-spacing:.3px;}
+.inicio-vendas-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.inicio-vendas-card:last-child{margin-bottom:0;}
+.inicio-venda-info{flex:1;}
+.inicio-venda-nome{font-size:.82rem;font-weight:700;color:#fff;}
+.inicio-venda-emp{font-size:.68rem;color:var(--textL);}
+.inicio-venda-vgv{font-size:.9rem;font-weight:900;color:var(--success);}
+.inicio-empty{color:var(--textL);font-size:.78rem;padding:20px 0;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;}
+@media(max-width:768px){
+  .inicio-wrap{display:flex;flex-direction:column;min-height:auto;gap:16px;}
+  .inicio-comissoes{grid-template-columns:1fr;}
+  .inicio-kpi-strip{grid-template-columns:1fr 1fr;}
+  .inicio-pipeline-grid{grid-template-columns:1fr 1fr 1fr;}
+  .inicio-avatar{width:56px;height:56px;font-size:1.1rem;}
+  .inicio-com-val{font-size:1.8rem;}
+  .inicio-com-card{padding:20px 18px;}
+}
 </style>
 </head>
 <body>
@@ -707,14 +804,14 @@ textarea.modal-input{resize:vertical;min-height:60px;}
     </div>
     <div class="sidebar-nav-list" id="sidebar-nav-list">
       <div class="snav-item active" data-tab="tab-inicio" onclick="navigateTo('tab-inicio')"><span class="si">&#127968;</span><span class="sl">Início</span></div>
+      <div class="snav-item" data-tab="tab-crm" onclick="navigateTo('tab-crm')"><span class="si">🔫</span><span class="sl">CRM</span></div>
       <div class="snav-item" data-tab="tab-real" onclick="navigateTo('tab-real')"><span class="si">&#128293;</span><span class="sl">Real</span></div>
-      <div class="snav-item" data-tab="tab-demandas" onclick="navigateTo('tab-demandas')" style="display:none;"><span class="si">&#9889;</span><span class="sl">Demandas</span></div>
       <div class="snav-item" data-tab="tab-agenda" onclick="navigateTo('tab-agenda')"><span class="si">&#128197;</span><span class="sl">Agenda</span></div>
       <div class="snav-item" data-tab="tab-vendas" onclick="navigateTo('tab-vendas')"><span class="si">&#128176;</span><span class="sl">Vendas</span></div>
-      <div class="snav-item" data-tab="tab-unica" onclick="navigateTo('tab-unica')" style="display:none;"><span class="si">&#127919;</span><span class="sl">Foco do Dia</span></div>
       <div class="snav-item" data-tab="tab-pipeline" onclick="navigateTo('tab-pipeline')"><span class="si">&#128203;</span><span class="sl">Meus Clientes</span></div>
       <div class="snav-item" data-tab="tab-equipe" id="snav-equipe" style="display:none;" onclick="navigateTo('tab-equipe')"><span class="si">&#128101;</span><span class="sl">Minha Equipe</span></div>
-      <div class="snav-item" data-tab="tab-crm" onclick="navigateTo('tab-crm')"><span class="si">&#128203;</span><span class="sl">CRM</span></div>
+      <div class="snav-item" data-tab="tab-demandas" onclick="navigateTo('tab-demandas')" style="display:none;"><span class="si">&#9889;</span><span class="sl">Demandas</span></div>
+      <div class="snav-item" data-tab="tab-unica" onclick="navigateTo('tab-unica')" style="display:none;"><span class="si">&#127919;</span><span class="sl">Foco do Dia</span></div>
       <!-- Pipeline Admin removido — usa Ciclo de Vendas -->
       <div class="snav-item snav-admin" data-tab="tab-admin-corretores" onclick="navigateTo('tab-admin-corretores')" style="display:none;"><span class="si">&#128100;</span><span class="sl">Corretores</span></div>
       <div class="snav-item snav-admin" data-tab="tab-admin-presenca" onclick="navigateTo('tab-admin-presenca')" style="display:none;"><span class="si">&#9201;</span><span class="sl">Presença</span></div>
@@ -791,8 +888,8 @@ textarea.modal-input{resize:vertical;min-height:60px;}
         <div class="desktop-ql" onclick="navigateTo('tab-agenda')"><div class="ql-icon">&#128197;</div><div class="ql-label">Agenda</div><div class="ql-value" id="ql-agenda">0</div></div>
         <div class="desktop-ql" onclick="navigateTo('tab-pipeline')"><div class="ql-icon">&#128203;</div><div class="ql-label">Meus Clientes</div><div class="ql-value" id="ql-clientes">0</div></div>
       </div>
-      <div class="inicio-section-title">Demandas do Dia</div>
-      <div id="inicio-dem-list"><div class="loading">Carregando demandas...</div></div>
+      <div class="inicio-section-title" id="inicio-dem-title" style="display:none;">Demandas do Dia</div>
+      <div id="inicio-dem-list" style="display:none;"></div>
     </div>
 
     <!-- TAB: REAL (pipeline quente) -->
@@ -1087,9 +1184,10 @@ textarea.modal-input{resize:vertical;min-height:60px;}
 
     <!-- TAB: ADMIN CICLO DE VENDAS (redesenhado) -->
     <div class="app-page" id="tab-admin-ciclo">
+      <!-- Filtros -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <select id="ciclo-filtro-corretor" onchange="renderCicloTabela()" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.75rem;">
+          <select id="ciclo-filtro-corretor" onchange="renderAdminCiclo()" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.75rem;">
             <option value="">Todos os corretores</option>
           </select>
           <select id="ciclo-filtro-status" onchange="renderCicloTabela()" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.75rem;">
@@ -1099,9 +1197,38 @@ textarea.modal-input{resize:vertical;min-height:60px;}
             <option value="VENDIDO">Vendidos</option>
           </select>
         </div>
-        <button onclick="sincronizarAprovados()" id="btn-sync-aprovados" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:.72rem;font-weight:700;cursor:pointer;">Sincronizar Aprovados</button>
+        <div style="display:flex;gap:8px;">
+          <button onclick="exportarCicloCSV()" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:.72rem;font-weight:700;cursor:pointer;">Exportar CSV</button>
+          <button onclick="sincronizarAprovados()" id="btn-sync-aprovados" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:.72rem;font-weight:700;cursor:pointer;">Sincronizar Aprovados</button>
+        </div>
       </div>
-      <div class="admin-kpi-row" id="ciclo-kpis"></div>
+      <!-- KPIs -->
+      <div class="ciclo-kpi-grid" id="ciclo-kpis"></div>
+      <!-- Comissoes Negociadas -->
+      <div class="ciclo-section" id="ciclo-comissoes-neg" style="display:none;">
+        <div class="ciclo-section-title">Comiss&otilde;es Negociadas (Pipeline)</div>
+        <div class="ciclo-comissao-grid" id="ciclo-comissao-neg-grid"></div>
+      </div>
+      <!-- Charts -->
+      <div class="ciclo-charts-grid" id="ciclo-charts-area">
+        <div class="ciclo-chart-card"><h4>VGV por Corretor</h4><div class="ciclo-chart-wrap"><canvas id="cicloChartCorr"></canvas></div></div>
+        <div class="ciclo-chart-card"><h4>Distribui&ccedil;&atilde;o de Status</h4><div class="ciclo-chart-wrap"><canvas id="cicloChartStatus"></canvas></div></div>
+        <div class="ciclo-chart-card"><h4>Evolu&ccedil;&atilde;o Mensal</h4><div class="ciclo-chart-wrap"><canvas id="cicloChartMensal"></canvas></div></div>
+        <div class="ciclo-chart-card"><h4>Top Empreendimentos</h4><div class="ciclo-chart-wrap"><canvas id="cicloChartEmpre"></canvas></div></div>
+      </div>
+      <!-- Comissoes Efetivadas -->
+      <div class="ciclo-section" id="ciclo-comissoes-efe" style="display:none;">
+        <div class="ciclo-section-title">Comiss&otilde;es Efetivadas (Vendas do M&ecirc;s)</div>
+        <div class="ciclo-comissao-grid" id="ciclo-comissao-efe-grid"></div>
+      </div>
+      <!-- Diagnostico -->
+      <div class="ciclo-diag" id="ciclo-diag-area">
+        <div class="ciclo-diag-grid">
+          <div class="ciclo-diag-card" id="ciclo-diag-gargalo"><h4>Gargalo</h4><p>Carregando...</p></div>
+          <div class="ciclo-diag-card" id="ciclo-diag-perf"><h4>Performance</h4><p>Carregando...</p></div>
+        </div>
+      </div>
+      <!-- Tabela -->
       <div id="ciclo-tabela-wrap"></div>
     </div>
 
@@ -3574,7 +3701,7 @@ function registrarCheckin(lat, lng) {
   document.getElementById('checkin-status').textContent = `Check-in às ${hora} — ${localTag}${distTxt}`;
 
   mostrarConfirmacao('CHECK-IN REGISTRADO');
-  verificarLembretes();
+  // verificarLembretes(); // removido — check-in/945 desativados
 
   carregarCheckins();
 
@@ -3867,7 +3994,7 @@ async function enviar945() {
 
     btn.textContent = 'ENVIADO!';
     mostrarConfirmacao('945 ENVIADO');
-    verificarLembretes();
+    // verificarLembretes(); // removido — check-in/945 desativados
 
     // Atualizar dados pra demandas aparecerem na hora
     carregarTudo();
@@ -3935,55 +4062,10 @@ function mostrarConfirmacao(mensagem) {
 // ============================================
 // LEMBRETES (check-in e 945)
 // ============================================
-function verificarLembretes() {
-  if (!USUARIO) return;
-  // Coordenadores e gerente NÃO recebem cobrança de check-in/945
-  if (USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente') {
-    document.getElementById('lembretes-container').innerHTML = '';
-    return;
-  }
-  const agora = new Date();
-  const hora = agora.getHours();
-  const minuto = agora.getMinutes();
-  const hoje = agora.toISOString().split('T')[0];
-  let html = '';
+// verificarLembretes DESATIVADO — check-in/945 removidos do app
+function verificarLembretes() { return; }
 
-  // Só mostrar lembretes em horário comercial (8h-19h) e dias úteis
-  const diaSemana = agora.getDay();
-  if (diaSemana === 0 || diaSemana === 6 || hora < 8 || hora >= 19) {
-    document.getElementById('lembretes-container').innerHTML = '';
-    return;
-  }
-
-  // Verificar check-in
-  const checkins = JSON.parse(localStorage.getItem('alicerce-checkins-' + USUARIO.NOME) || '[]');
-  const fezCheckin = checkins.find(c => c.data === hoje);
-
-  if (!fezCheckin && hora >= 9) {
-    const urgente = hora >= 10;
-    html += `<div class="lembrete ${urgente ? 'lembrete-danger' : ''}">
-      <span>${urgente ? 'Você ainda não fez check-in hoje!' : 'Lembrete: faça seu check-in'}</span>
-      <button onclick="showTab('tab-checkin')">Fazer agora</button>
-    </div>`;
-  }
-
-  // Verificar 945
-  const hist945 = JSON.parse(localStorage.getItem('alicerce-945-' + USUARIO.NOME) || '[]');
-  const fez945 = hist945.find(h => h.data === hoje);
-
-  if (!fez945 && hora >= 9 && (hora > 9 || minuto >= 30)) {
-    const urgente = hora >= 11;
-    html += `<div class="lembrete ${urgente ? 'lembrete-danger' : ''}">
-      <span>${urgente ? 'Você ainda não fez o 945 hoje!' : 'Lembrete: registre seu 945'}</span>
-      <button onclick="showTab('tab-945')">Fazer agora</button>
-    </div>`;
-  }
-
-  document.getElementById('lembretes-container').innerHTML = html;
-}
-
-// Verificar lembretes a cada 60 segundos
-setInterval(verificarLembretes, 60000);
+// setInterval(verificarLembretes, 60000); // desativado
 
 // ============================================
 // MODO OFFLINE (mostra dados salvos se sem internet)
@@ -4050,12 +4132,12 @@ function abrirSideMenu() {
   const isMaster = USUARIO && (USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente');
   let items = '';
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-inicio')"><span class="smi-icon">🏠</span> Início</div>`;
+  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-crm')"><span class="smi-icon">🔫</span> CRM</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-real')"><span class="smi-icon">🔥</span> Real</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-agenda')"><span class="smi-icon">📅</span> Agenda</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-vendas')"><span class="smi-icon">💰</span> Vendas</div>`;
-  if (isMaster) items += `<div class="side-menu-item" onclick="sideMenuNav('tab-equipe')"><span class="smi-icon">👥</span> Minha Equipe</div>`;
   items += `<div class="side-menu-item" onclick="sideMenuNav('tab-pipeline')"><span class="smi-icon">📋</span> Meus Clientes</div>`;
-  items += `<div class="side-menu-item" onclick="sideMenuNav('tab-crm')"><span class="smi-icon">&#128203;</span> CRM</div>`;
+  if (isMaster) items += `<div class="side-menu-item" onclick="sideMenuNav('tab-equipe')"><span class="smi-icon">👥</span> Minha Equipe</div>`;
   if (isMaster) {
     items += `<div style="margin:10px 0 6px;padding:0 16px;font-size:.62rem;font-weight:700;color:var(--textL);text-transform:uppercase;letter-spacing:.5px;">Administração</div>`;
     items += `<div class="side-menu-item" onclick="sideMenuNav('tab-admin-corretores')"><span class="smi-icon">👤</span> Corretores</div>`;
@@ -4105,45 +4187,227 @@ function renderInicio() {
 }
 
 function renderInicioCorretor() {
-  // KPIs do corretor
-  const vgvReal = REAL_CLIENTS.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
-  const comEstimada = vgvReal * 0.017 * 0.86;
-  const clientesQuentes = REAL_CLIENTS.length;
+  const agora = new Date();
+  const h = agora.getHours();
+  const saudacao = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  const primeiroNome = USUARIO.NOME.split(' ')[0];
+  const iniciais = USUARIO.NOME.split(' ').filter(Boolean).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+
+  // Foto de perfil (localStorage)
+  const fotoKey = 'alicerce-foto-' + USUARIO.NOME.replace(/\s+/g, '_');
+  const fotoSalva = localStorage.getItem(fotoKey) || '';
+
+  // Dados
   const mesStr = getMesComercialAtualStr();
+  const acionados = REAL_CLIENTS.filter(c => (c.acionado || c.ACIONADO || 'S').toUpperCase() === 'S');
+  const vgvReal = acionados.reduce((s, c) => s + (parseFloat(c.vgv || c.VGV_ESTIMADO) || 0), 0);
+  const comEstimada = vgvReal * 0.017 * 0.86;
+  const clientesAtivos = acionados.length;
+
   const vendasMes = MINHAS_VENDAS.filter(v => String(v.MES_COMERCIAL || '').substring(0, 7) === mesStr);
   const comReal = vendasMes.reduce((s, v) => s + ((parseFloat(v.VGV) || 0) * 0.017 * 0.86), 0);
+  const vgvVendido = vendasMes.reduce((s, v) => s + (parseFloat(v.VGV) || 0), 0);
 
-  document.getElementById('inicio-kpis').innerHTML = `
-    <div class="inicio-kpi ik-gold"><div class="ik-val">${fmtMoney(comEstimada)}</div><div class="ik-label">Comissão Estimada</div></div>
-    <div class="inicio-kpi ik-green"><div class="ik-val">${fmtMoney(comReal)}</div><div class="ik-label">Comissão Real</div></div>
-    <div class="inicio-kpi ik-blue"><div class="ik-val">${clientesQuentes}</div><div class="ik-label">Clientes Quentes</div></div>
-  `;
+  const pastasNoMes = MEUS_CLIENTES.filter(c => {
+    const dt = String(c.DATA_CRIACAO || c['DATA CRIAÇÃO'] || c['DATA CRIACAO'] || '').substring(0, 7);
+    return dt === mesStr;
+  }).length;
 
-  // Desktop: comissão cards
-  const dcr = document.getElementById('desk-comissao-real');
-  if (dcr) {
-    dcr.textContent = fmtMoney(comEstimada);
-    document.getElementById('desk-comissao-real-sub').textContent = 'Baseado em ' + clientesQuentes + ' clientes quentes';
-    document.getElementById('desk-comissao-vendas').textContent = fmtMoney(comReal);
-    document.getElementById('desk-comissao-vendas-sub').textContent = vendasMes.length + ' vendas no mês';
+  const hoje = agora.toISOString().split('T')[0];
+  const nomeUpper = USUARIO.NOME.toUpperCase();
+  const agendaHoje = AGENDA.filter(a => {
+    const dataAg = String(a.DATA || '').substring(0, 10);
+    const corrAg = (a.CORRETOR || '').toUpperCase();
+    return dataAg === hoje && (corrAg === nomeUpper || corrAg.includes(nomeUpper) || nomeUpper.includes(corrAg));
+  }).sort((a, b) => String(a.HORA || '').localeCompare(String(b.HORA || '')));
+
+  // Pipeline data
+  const gerandoCount = acionados.filter(c => (c.status || c.STATUS || '') === 'GERANDO').length;
+  const nGeradoCount = acionados.filter(c => (c.status || c.STATUS || '') === 'N GERADO').length;
+  const diasMedio = clientesAtivos > 0 ? Math.round(acionados.reduce((s, c) => s + calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || ''), 0) / clientesAtivos) : 0;
+
+  const avatarContent = fotoSalva ? `<img src="${fotoSalva}" alt="Foto">` : iniciais;
+
+  // Agenda do mês (próximos agendamentos, não só hoje)
+  const agendaMes = AGENDA.filter(a => {
+    const corrAg = (a.CORRETOR || '').toUpperCase();
+    const dataAg = String(a.DATA || '').substring(0, 10);
+    return dataAg >= hoje && (corrAg === nomeUpper || corrAg.includes(nomeUpper) || nomeUpper.includes(corrAg));
+  }).sort((a, b) => {
+    const da = (a.DATA || '') + (a.HORA || '');
+    const db = (b.DATA || '') + (b.HORA || '');
+    return da.localeCompare(db);
+  }).slice(0, 10);
+
+  let html = `<div class="inicio-wrap">`;
+
+  // ===== COLUNA ESQUERDA =====
+  html += `<div class="inicio-left">`;
+
+  // PERFIL
+  html += `<div class="inicio-profile">
+    <div class="inicio-avatar" onclick="document.getElementById('input-foto-perfil').click();" title="Alterar foto">
+      ${avatarContent}
+      <div class="inicio-avatar-edit">Trocar</div>
+    </div>
+    <input type="file" id="input-foto-perfil" accept="image/*" style="display:none;" onchange="salvarFotoPerfil(this)">
+    <div class="inicio-profile-info">
+      <div class="inicio-greeting">${saudacao}, ${primeiroNome}!</div>
+      <div class="inicio-profile-sub">${USUARIO.CARGO} &bull; Equipe ${USUARIO.EQUIPE}</div>
+    </div>
+  </div>`;
+
+  // COMISSÕES
+  html += `<div class="inicio-comissoes">
+    <div class="inicio-com-card ic-gold">
+      <div class="inicio-com-label">Comissão Estimada</div>
+      <div class="inicio-com-val" style="color:var(--gold);">${fmtMoneyFull(comEstimada)}</div>
+      <div class="inicio-com-sub"><span style="background:rgba(255,215,0,.15);color:var(--gold);padding:2px 8px;border-radius:8px;font-size:.62rem;font-weight:800;">${clientesAtivos} clientes ativos</span></div>
+    </div>
+    <div class="inicio-com-card ic-green">
+      <div class="inicio-com-label">Comissão Real</div>
+      <div class="inicio-com-val" style="color:var(--success);">${fmtMoneyFull(comReal)}</div>
+      <div class="inicio-com-sub"><span style="background:rgba(0,230,118,.15);color:var(--success);padding:2px 8px;border-radius:8px;font-size:.62rem;font-weight:800;">${vendasMes.length} venda${vendasMes.length !== 1 ? 's' : ''} no mês</span></div>
+    </div>
+  </div>`;
+
+  // KPIs
+  html += `<div class="inicio-kpi-strip">
+    <div class="inicio-kpi-item"><div class="inicio-kpi-icon">📁</div><div class="inicio-kpi-val">${pastasNoMes}</div><div class="inicio-kpi-label">Pastas</div></div>
+    <div class="inicio-kpi-item"><div class="inicio-kpi-icon">✅</div><div class="inicio-kpi-val">${clientesAtivos}</div><div class="inicio-kpi-label">Aprovados</div></div>
+    <div class="inicio-kpi-item"><div class="inicio-kpi-icon">🏆</div><div class="inicio-kpi-val">${vendasMes.length}</div><div class="inicio-kpi-label">Vendas</div></div>
+    <div class="inicio-kpi-item"><div class="inicio-kpi-icon">💰</div><div class="inicio-kpi-val" style="font-size:.86rem;">${fmtMoneyFull(vgvVendido)}</div><div class="inicio-kpi-label">VGV Vendido</div></div>
+  </div>`;
+
+  // PIPELINE (3 cards em grid)
+  html += `<div class="inicio-section-hdr"><div class="inicio-section-title2">🔥 Meu Pipeline</div></div>
+  <div class="inicio-pipeline-grid">
+    <div class="inicio-pipeline-card"><div class="inicio-pipeline-val" style="color:var(--gold);">${clientesAtivos}</div><div class="inicio-pipeline-label">Ativos</div></div>
+    <div class="inicio-pipeline-card"><div class="inicio-pipeline-val" style="color:var(--warning);">${gerandoCount}</div><div class="inicio-pipeline-label">Gerando</div></div>
+    <div class="inicio-pipeline-card"><div class="inicio-pipeline-val" style="color:var(--textL);">${diasMedio}d</div><div class="inicio-pipeline-label">Dias Médio</div></div>
+  </div>`;
+
+  html += `</div>`; // fecha inicio-left
+
+  // ===== COLUNA DIREITA =====
+  html += `<div class="inicio-right">`;
+
+  // AGENDA (hoje + próximos)
+  html += `<div class="inicio-section inicio-section-agenda">
+    <div class="inicio-section-hdr">
+      <div class="inicio-section-title2">📅 Agenda</div>
+      ${agendaMes.length > 0 ? `<div class="inicio-section-badge">${agendaMes.length}</div>` : ''}
+    </div>
+    <div class="inicio-section-box">`;
+  if (agendaMes.length === 0) {
+    html += `<div class="inicio-empty">Nenhum agendamento</div>`;
+  } else {
+    agendaMes.forEach(a => {
+      const tipo = a.TIPO || 'Cliente';
+      let tipoCor = 'var(--gold)', tipoBg = 'rgba(255,215,0,.15)';
+      if (tipo === 'Reunião Semanal') { tipoCor = '#42a5f5'; tipoBg = 'rgba(66,165,245,.15)'; }
+      else if (tipo === 'Alinhamento Mensal') { tipoCor = '#ab47bc'; tipoBg = 'rgba(171,71,188,.15)'; }
+      else if (tipo === 'Meeting Empresa') { tipoCor = 'var(--success)'; tipoBg = 'rgba(0,230,118,.15)'; }
+      const dataStr = String(a.DATA || '').substring(0, 10);
+      const isHoje = dataStr === hoje;
+      let dataLabel = 'Hoje';
+      if (!isHoje && dataStr.length >= 10) {
+        const pp = dataStr.split('-');
+        dataLabel = pp.length === 3 ? pp[2] + '/' + pp[1] : dataStr;
+      }
+      html += `<div class="inicio-ag-card" ${isHoje ? 'style="border-left:3px solid var(--gold);"' : ''}>
+        <div class="inicio-ag-hora"><div>${a.HORA || '--:--'}</div><div style="font-size:.58rem;color:var(--textL);margin-top:2px;">${dataLabel}</div></div>
+        <div class="inicio-ag-info"><div class="inicio-ag-nome">${a.CLIENTE || '-'}</div></div>
+        <span class="inicio-ag-tipo" style="color:${tipoCor};background:${tipoBg};">${tipo}</span>
+      </div>`;
+    });
   }
+  html += `</div></div>`;
 
-  // Desktop: quick links
-  const qlr = document.getElementById('ql-real');
-  if (qlr) {
-    qlr.textContent = clientesQuentes;
-    const demHoje = getMinhasDemandas();
-    document.getElementById('ql-demandas').textContent = demHoje.length;
-    const hoje = new Date().toISOString().split('T')[0];
-    const agHoje = AGENDA.filter(a => a.DATA === hoje);
-    document.getElementById('ql-agenda').textContent = agHoje.length;
-    document.getElementById('ql-clientes').textContent = MEUS_CLIENTES.length;
+  // VENDAS DO MÊS
+  html += `<div class="inicio-section inicio-section-vendas">
+    <div class="inicio-section-hdr">
+      <div class="inicio-section-title2">🏆 Vendas do Mês</div>
+      ${vendasMes.length > 0 ? `<div class="inicio-section-badge">${vendasMes.length}</div>` : ''}
+    </div>
+    <div class="inicio-section-box">`;
+  if (vendasMes.length === 0) {
+    html += `<div class="inicio-empty">Nenhuma venda este mês</div>`;
+  } else {
+    vendasMes.forEach(v => {
+      const emp = v.EMPREENDIMENTO || v.CONSTRUTORA || '-';
+      const vgv = parseFloat(v.VGV) || 0;
+      html += `<div class="inicio-vendas-card">
+        <div class="inicio-venda-info">
+          <div class="inicio-venda-nome">${v.CLIENTE || '-'}</div>
+          <div class="inicio-venda-emp">${emp}</div>
+        </div>
+        <div class="inicio-venda-vgv">${fmtMoneyFull(vgv)}</div>
+      </div>`;
+    });
   }
+  html += `</div></div>`;
 
-  renderInicioDemandas();
+  html += `</div>`; // fecha inicio-right
+  html += `</div>`; // fecha inicio-wrap
+
+  document.getElementById('inicio-kpis').innerHTML = html;
+
+  // Adicionar classe fullscreen no tab-inicio
+  document.getElementById('tab-inicio').classList.add('inicio-full');
+
+  // Esconder blocos desktop duplicados
+  const dw = document.getElementById('desk-welcome');
+  if (dw) dw.style.display = 'none';
+  const dcRow = document.getElementById('desk-comissao-row');
+  if (dcRow) dcRow.style.display = 'none';
+  const dql = document.getElementById('desk-quick-links');
+  if (dql) dql.style.display = 'none';
+}
+
+// Foto de perfil: salvar em localStorage como base64
+function salvarFotoPerfil(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if (file.size > 2 * 1024 * 1024) { alert('Foto muito grande. Máximo 2MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // Redimensionar pra 200x200 pra economizar espaço
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const size = 200;
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2, sy = (img.height - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      const fotoKey = 'alicerce-foto-' + USUARIO.NOME.replace(/\s+/g, '_');
+      localStorage.setItem(fotoKey, dataUrl);
+      renderInicio();
+      mostrarConfirmacao('Foto atualizada!');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Buscar foto de perfil de qualquer corretor (pra CRM e outros)
+function getFotoPerfil(nome) {
+  const key = 'alicerce-foto-' + (nome || '').replace(/\s+/g, '_');
+  return localStorage.getItem(key) || '';
 }
 
 function renderInicioGestor() {
+  // Restaurar blocos desktop (caso corretor tenha escondido antes)
+  const dw = document.getElementById('desk-welcome');
+  if (dw) dw.style.display = '';
+  const dcRow = document.getElementById('desk-comissao-row');
+  if (dcRow) dcRow.style.display = '';
+  const dql = document.getElementById('desk-quick-links');
+  if (dql) dql.style.display = '';
+
   const mesAtual = getMesComercialAtualStr();
   const vendasAdmin = getAdminVendas();
   const vendasMes = vendasAdmin.filter(v =>
@@ -4419,10 +4683,10 @@ function parseVgvInput(str) {
 
 function renderReal() {
   loadReal();
-  // Filtrar: corretor so ve ACIONADO=S ou VENDIDO (esconde desativados)
+  // Filtrar: corretor so ve ACIONADO=S (esconde desativados e vendidos)
   const visiveis = REAL_CLIENTS.filter(c => {
     const ac = (c.acionado || c.ACIONADO || 'S').toUpperCase();
-    return ac === 'S' || ac === 'VENDIDO';
+    return ac === 'S';
   });
   const ativos = visiveis.filter(c => c.status !== 'GERADO');
   const vgvTotal = visiveis.reduce((s, c) => s + (c.vgv || 0), 0);
@@ -4679,9 +4943,7 @@ function getMesComercialAtualStr() {
 }
 
 function fmtMoney(v) {
-  if (v >= 1000000) return 'R$ ' + (v / 1000000).toFixed(1) + 'M';
-  if (v >= 1000) return 'R$ ' + (v / 1000).toFixed(0) + 'k';
-  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function fmtMoneyFull(v) {
@@ -5216,6 +5478,18 @@ function renderAdminPresenca() {
 let cicloSortCol = 'VGV_ESTIMADO', cicloSortDir = -1, cicloPagina = 0;
 const CICLO_POR_PAGINA = 20;
 
+// Chart instances (destroy before re-creating)
+let cicloChartCorr = null, cicloChartStatus = null, cicloChartMensal = null, cicloChartEmpre = null;
+
+function fmtMoeda(v) {
+  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtMoedaShort(v) {
+  if (v >= 1000000) return 'R$ ' + (v / 1000000).toFixed(2) + 'M';
+  if (v >= 1000) return 'R$ ' + (v / 1000).toFixed(1) + 'k';
+  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 function renderAdminCiclo() {
   if (!USUARIO) return;
 
@@ -5232,23 +5506,377 @@ function renderAdminCiclo() {
     if (selCorr.innerHTML !== opts) selCorr.innerHTML = opts;
   }
 
-  // Calcular KPIs
-  const totalReal = teamReal.length;
-  const ativos = teamReal.filter(c => (c.acionado || c.ACIONADO || 'S').toUpperCase() === 'S').length;
-  const vendidos = teamReal.filter(c => (c.acionado || c.ACIONADO || '').toUpperCase() === 'VENDIDO').length;
-  const desativados = teamReal.filter(c => (c.acionado || c.ACIONADO || '').toUpperCase() === 'N').length;
+  // Classificar por ACIONADO + status
+  const ativos = teamReal.filter(c => (c.acionado || 'S').toUpperCase() === 'S');
+  const vendidosReal = teamReal.filter(c => (c.acionado || '').toUpperCase() === 'VENDIDO');
+  const desativados = teamReal.filter(c => (c.acionado || '').toUpperCase() === 'N');
 
+  const vgvTotal = teamReal.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
+  const vgvGerado = vendidosReal.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
+  const vgvPipeline = ativos.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
+  const vgvPerda = desativados.reduce((s, c) => s + (parseFloat(c.vgv) || 0), 0);
+
+  // KPIs
   const kpisEl = document.getElementById('ciclo-kpis');
   if (kpisEl) {
     kpisEl.innerHTML = `
-      <div class="admin-kpi blue"><div class="ak-val">${totalReal}</div><div class="ak-label">Total no Real</div></div>
-      <div class="admin-kpi gold"><div class="ak-val">${ativos}</div><div class="ak-label">Ativos</div></div>
-      <div class="admin-kpi green"><div class="ak-val">${vendidos}</div><div class="ak-label">Vendidos</div></div>
-      <div class="admin-kpi" style="border-color:#666;"><div class="ak-val" style="color:#999;">${desativados}</div><div class="ak-label">Desativados</div></div>
+      <div class="ciclo-kpi-card ck-blue">
+        <div class="ck-label">VGV Total Negociado</div>
+        <div class="ck-val">${fmtMoedaShort(vgvTotal)}</div>
+        <div class="ck-sub">${teamReal.length} clientes no pipeline</div>
+      </div>
+      <div class="ciclo-kpi-card ck-green">
+        <div class="ck-label">VGV Gerado / Vendas</div>
+        <div class="ck-val">${fmtMoedaShort(vgvGerado)}</div>
+        <div class="ck-sub">${vendidosReal.length} vendidos</div>
+      </div>
+      <div class="ciclo-kpi-card ck-gold">
+        <div class="ck-label">VGV Pipeline</div>
+        <div class="ck-val">${fmtMoedaShort(vgvPipeline)}</div>
+        <div class="ck-sub">${ativos.length} ativos</div>
+      </div>
+      <div class="ciclo-kpi-card ck-red">
+        <div class="ck-label">Perda / Descarte</div>
+        <div class="ck-val">${fmtMoedaShort(vgvPerda)}</div>
+        <div class="ck-sub">${desativados.length} desativados</div>
+      </div>
     `;
   }
 
+  // --- Comissoes Negociadas (pipeline) ---
+  renderCicloComissoesNeg(teamReal);
+
+  // --- Charts ---
+  renderCicloCharts(teamReal);
+
+  // --- Comissoes Efetivadas (vendas) ---
+  renderCicloComissoesEfe();
+
+  // --- Diagnostico ---
+  renderCicloDiagnostico(teamReal, ativos, vendidosReal, desativados);
+
+  // --- Tabela ---
   renderCicloTabela();
+}
+
+function renderCicloComissoesNeg(teamReal) {
+  const secEl = document.getElementById('ciclo-comissoes-neg');
+  const gridEl = document.getElementById('ciclo-comissao-neg-grid');
+  if (!secEl || !gridEl) return;
+
+  const ativosComVgv = teamReal.filter(c => (c.acionado || 'S').toUpperCase() !== 'N' && (parseFloat(c.vgv) || 0) > 0);
+  if (!ativosComVgv.length) { secEl.style.display = 'none'; return; }
+  secEl.style.display = '';
+
+  // Agrupar por corretor
+  const porCorretor = {};
+  ativosComVgv.forEach(c => {
+    const nome = (c.corretor || '').trim();
+    if (!porCorretor[nome]) porCorretor[nome] = { vgv: 0, count: 0 };
+    porCorretor[nome].vgv += parseFloat(c.vgv) || 0;
+    porCorretor[nome].count++;
+  });
+
+  const cargo = USUARIO.CARGO || '';
+  const nomeUsuario = (USUARIO.NOME || '').toUpperCase().trim();
+  let html = '';
+
+  // Card geral do usuario
+  let totalComissao = 0;
+  let detalhe = '';
+  Object.entries(porCorretor).forEach(([nome, d]) => {
+    const nomeUp = nome.toUpperCase().trim();
+    const ehPropria = nomeUp === nomeUsuario;
+    const com = calcComissaoAdmin(d.vgv, cargo, ehPropria);
+    totalComissao += com;
+  });
+
+  html += `<div class="ciclo-comissao-card" style="border:1px solid var(--gold);background:rgba(212,168,83,.08);">
+    <div class="cc-nome" style="color:var(--accent);font-weight:800;">${USUARIO.NOME}</div>
+    <div class="cc-val">${fmtMoeda(totalComissao)}</div>
+    <div class="cc-detail">Projecao pipeline total</div>
+  </div>`;
+
+  // Cards por corretor
+  Object.entries(porCorretor).sort((a, b) => b[1].vgv - a[1].vgv).forEach(([nome, d]) => {
+    const com = d.vgv * 0.017 * 0.86;
+    html += `<div class="ciclo-comissao-card">
+      <div class="cc-nome">${nome.split(' ')[0]}</div>
+      <div class="cc-val">${fmtMoedaShort(com)}</div>
+      <div class="cc-detail">${d.count} clientes - VGV ${fmtMoedaShort(d.vgv)}</div>
+    </div>`;
+  });
+
+  gridEl.innerHTML = html;
+}
+
+function renderCicloCharts(teamReal) {
+  if (typeof Chart === 'undefined') return;
+
+  const ativos = teamReal.filter(c => (c.acionado || 'S').toUpperCase() === 'S');
+
+  // Destroy old charts
+  if (cicloChartCorr) { cicloChartCorr.destroy(); cicloChartCorr = null; }
+  if (cicloChartStatus) { cicloChartStatus.destroy(); cicloChartStatus = null; }
+  if (cicloChartMensal) { cicloChartMensal.destroy(); cicloChartMensal = null; }
+  if (cicloChartEmpre) { cicloChartEmpre.destroy(); cicloChartEmpre = null; }
+
+  const chartDefaults = { color: '#aaa', borderColor: 'rgba(255,255,255,0.1)' };
+
+  // 1) VGV por Corretor (bar)
+  const porCorr = {};
+  ativos.forEach(c => {
+    const nome = (c.corretor || '').split(' ')[0];
+    porCorr[nome] = (porCorr[nome] || 0) + (parseFloat(c.vgv) || 0);
+  });
+  const corrLabels = Object.keys(porCorr).sort((a, b) => porCorr[b] - porCorr[a]).slice(0, 10);
+  const corrValues = corrLabels.map(n => porCorr[n]);
+
+  const ctxCorr = document.getElementById('cicloChartCorr');
+  if (ctxCorr) {
+    cicloChartCorr = new Chart(ctxCorr, {
+      type: 'bar',
+      data: {
+        labels: corrLabels,
+        datasets: [{ label: 'VGV', data: corrValues, backgroundColor: '#60a5fa', borderRadius: 4 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#aaa', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: '#aaa', font: { size: 10 }, callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  }
+
+  // 2) Distribuicao de Status (doughnut)
+  const statusCount = { GERANDO: 0, GERADO: 0, 'N GERADO': 0 };
+  teamReal.forEach(c => {
+    const ac = (c.acionado || 'S').toUpperCase();
+    if (ac === 'VENDIDO') statusCount['GERADO']++;
+    else if (ac === 'N') statusCount['N GERADO']++;
+    else {
+      const st = (c.status || 'GERANDO').toUpperCase();
+      if (statusCount[st] !== undefined) statusCount[st]++;
+      else statusCount['GERANDO']++;
+    }
+  });
+
+  const ctxStatus = document.getElementById('cicloChartStatus');
+  if (ctxStatus) {
+    cicloChartStatus = new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: ['Gerando', 'Gerado/Vendido', 'N Gerado/Desativado'],
+        datasets: [{ data: [statusCount['GERANDO'], statusCount['GERADO'], statusCount['N GERADO']], backgroundColor: ['#d4a853', '#34d399', '#f87171'], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '60%',
+        plugins: { legend: { position: 'bottom', labels: { color: '#aaa', font: { size: 10 }, padding: 12 } } }
+      }
+    });
+  }
+
+  // 3) Evolucao Mensal (line)
+  const porMes = {};
+  teamReal.forEach(c => {
+    const dt = c.dataEntrada || '';
+    if (!dt || dt.length < 7) return;
+    const mes = dt.substring(0, 7);
+    if (!porMes[mes]) porMes[mes] = { vgv: 0, count: 0 };
+    porMes[mes].vgv += parseFloat(c.vgv) || 0;
+    porMes[mes].count++;
+  });
+  const mesesSorted = Object.keys(porMes).sort();
+  const mesLabels = mesesSorted.map(m => { const p = m.split('-'); return p[1] + '/' + p[0].substring(2); });
+  const mesValues = mesesSorted.map(m => porMes[m].vgv);
+
+  const ctxMensal = document.getElementById('cicloChartMensal');
+  if (ctxMensal) {
+    cicloChartMensal = new Chart(ctxMensal, {
+      type: 'line',
+      data: {
+        labels: mesLabels,
+        datasets: [{
+          label: 'VGV', data: mesValues, borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.1)',
+          fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#60a5fa'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#aaa', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: '#aaa', font: { size: 10 }, callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  }
+
+  // 4) Top Empreendimentos (horizontal bar)
+  const porEmp = {};
+  ativos.forEach(c => {
+    const emp = (c.empreendimento || 'Sem info').trim();
+    porEmp[emp] = (porEmp[emp] || 0) + (parseFloat(c.vgv) || 0);
+  });
+  const empEntries = Object.entries(porEmp).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const empLabels = empEntries.map(e => e[0].length > 18 ? e[0].substring(0, 16) + '..' : e[0]);
+  const empValues = empEntries.map(e => e[1]);
+
+  const ctxEmpre = document.getElementById('cicloChartEmpre');
+  if (ctxEmpre) {
+    cicloChartEmpre = new Chart(ctxEmpre, {
+      type: 'bar',
+      data: {
+        labels: empLabels,
+        datasets: [{ label: 'VGV', data: empValues, backgroundColor: '#d4a853', borderRadius: 4 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#aaa', font: { size: 10 }, callback: v => fmtMoedaShort(v) }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#aaa', font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+function renderCicloComissoesEfe() {
+  const secEl = document.getElementById('ciclo-comissoes-efe');
+  const gridEl = document.getElementById('ciclo-comissao-efe-grid');
+  if (!secEl || !gridEl) return;
+
+  const vendasAdmin = getAdminVendas();
+  const mesStr = getMesComercialAtualStr();
+  const vendasMes = vendasAdmin.filter(v =>
+    String(v.MES_COMERCIAL || '').substring(0, 7) === mesStr &&
+    !(v.STATUS_VENDA || '').includes('Distrato')
+  );
+
+  if (!vendasMes.length) { secEl.style.display = 'none'; return; }
+  secEl.style.display = '';
+
+  const cargo = USUARIO.CARGO || '';
+  const nomeUsuario = (USUARIO.NOME || '').toUpperCase().trim();
+
+  // Agrupar por corretor
+  const porCorretor = {};
+  vendasMes.forEach(v => {
+    let corr = (v.CORRETOR || '').trim();
+    let corrUp = corr.toUpperCase();
+    if (NOMES_EQUIV_ADMIN[corrUp]) corrUp = NOMES_EQUIV_ADMIN[corrUp];
+    if (!porCorretor[corrUp]) porCorretor[corrUp] = { nome: corr, vgv: 0, count: 0 };
+    porCorretor[corrUp].vgv += parseFloat(v.VGV) || 0;
+    porCorretor[corrUp].count++;
+  });
+
+  let totalComissao = 0;
+  let vendasProprias = 0, vendasEquipe = 0;
+  Object.entries(porCorretor).forEach(([nomeUp, d]) => {
+    const ehPropria = nomeUp === nomeUsuario || (NOMES_EQUIV_ADMIN[nomeUp] || nomeUp) === nomeUsuario;
+    const com = calcComissaoAdmin(d.vgv, cargo, ehPropria);
+    totalComissao += com;
+    if (ehPropria) vendasProprias += d.count;
+    else vendasEquipe += d.count;
+  });
+
+  let html = `<div class="ciclo-comissao-card" style="border:1px solid var(--success);background:rgba(52,211,153,.08);">
+    <div class="cc-nome" style="color:var(--success);font-weight:800;">${USUARIO.NOME}</div>
+    <div class="cc-val" style="color:var(--success);">${fmtMoeda(totalComissao)}</div>
+    <div class="cc-detail">${vendasMes.length} vendas no mes</div>
+  </div>`;
+
+  Object.entries(porCorretor).sort((a, b) => b[1].vgv - a[1].vgv).forEach(([nomeUp, d]) => {
+    const com = d.vgv * 0.017 * 0.86;
+    html += `<div class="ciclo-comissao-card">
+      <div class="cc-nome">${d.nome.split(' ')[0]}</div>
+      <div class="cc-val">${fmtMoedaShort(com)}</div>
+      <div class="cc-detail">${d.count} vendas - VGV ${fmtMoedaShort(d.vgv)}</div>
+    </div>`;
+  });
+
+  gridEl.innerHTML = html;
+}
+
+function renderCicloDiagnostico(teamReal, ativos, vendidosReal, desativados) {
+  const gargaloEl = document.getElementById('ciclo-diag-gargalo');
+  const perfEl = document.getElementById('ciclo-diag-perf');
+  if (!gargaloEl || !perfEl) return;
+
+  // Gargalo analysis
+  const totalPipeline = ativos.length;
+  const totalVendido = vendidosReal.length;
+  const totalDesativado = desativados.length;
+  const totalGeral = teamReal.length || 1;
+  const taxaConversao = Math.round((totalVendido / totalGeral) * 100);
+  const taxaPerda = Math.round((totalDesativado / totalGeral) * 100);
+
+  // Dias medios
+  const diasAtivos = ativos.map(c => calcDiasReal(c.dataEntrada || ''));
+  const diasMedio = diasAtivos.length ? Math.round(diasAtivos.reduce((s, d) => s + d, 0) / diasAtivos.length) : 0;
+  const parados30 = diasAtivos.filter(d => d >= 30).length;
+
+  let gargaloTexto = '';
+  if (taxaPerda > 40) {
+    gargaloTexto = `Taxa de perda alta (${taxaPerda}%). Revisar qualificacao dos leads antes de entrar no pipeline.`;
+  } else if (parados30 > 3) {
+    gargaloTexto = `${parados30} clientes parados ha 30+ dias. Priorizar resolucao de pendencias ou desativar.`;
+  } else if (diasMedio > 20) {
+    gargaloTexto = `Tempo medio no pipeline: ${diasMedio} dias. Pipeline lento — acelerar fechamentos.`;
+  } else if (totalPipeline < 3) {
+    gargaloTexto = `Apenas ${totalPipeline} clientes ativos. Pipeline fraco — aumentar captacao.`;
+  } else {
+    gargaloTexto = `Pipeline saudavel: ${totalPipeline} ativos, ${diasMedio} dias em media, ${taxaConversao}% conversao.`;
+  }
+
+  gargaloEl.innerHTML = `<h4>Gargalo</h4><p>${gargaloTexto}</p>
+    <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="font-size:.66rem;color:var(--textL);">Conversao: <strong style="color:var(--success);">${taxaConversao}%</strong></div>
+      <div style="font-size:.66rem;color:var(--textL);">Perda: <strong style="color:var(--danger);">${taxaPerda}%</strong></div>
+      <div style="font-size:.66rem;color:var(--textL);">Dias medio: <strong style="color:var(--warning);">${diasMedio}d</strong></div>
+      <div style="font-size:.66rem;color:var(--textL);">Parados 30d+: <strong style="color:${parados30 > 0 ? 'var(--danger)' : 'var(--success)'};">${parados30}</strong></div>
+    </div>`;
+
+  // Performance por corretor
+  const porCorretor = {};
+  teamReal.forEach(c => {
+    const nome = (c.corretor || '').trim();
+    if (!porCorretor[nome]) porCorretor[nome] = { total: 0, vendidos: 0, ativos: 0, vgv: 0 };
+    porCorretor[nome].total++;
+    porCorretor[nome].vgv += parseFloat(c.vgv) || 0;
+    const ac = (c.acionado || 'S').toUpperCase();
+    if (ac === 'VENDIDO') porCorretor[nome].vendidos++;
+    else if (ac === 'S') porCorretor[nome].ativos++;
+  });
+
+  const ranking = Object.entries(porCorretor)
+    .map(([nome, d]) => ({ nome, ...d, taxa: d.total ? Math.round((d.vendidos / d.total) * 100) : 0 }))
+    .sort((a, b) => b.taxa - a.taxa || b.vgv - a.vgv);
+
+  let perfHtml = '<h4>Performance</h4>';
+  if (ranking.length) {
+    perfHtml += '<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">';
+    ranking.slice(0, 8).forEach(r => {
+      const barW = Math.max(r.taxa, 5);
+      const barColor = r.taxa >= 50 ? '#34d399' : r.taxa >= 25 ? '#d4a853' : '#f87171';
+      perfHtml += `<div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:70px;font-size:.68rem;color:var(--text);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.nome.split(' ')[0]}</div>
+        <div style="flex:1;background:rgba(255,255,255,.05);border-radius:4px;height:14px;overflow:hidden;">
+          <div style="width:${barW}%;background:${barColor};height:100%;border-radius:4px;transition:width .3s;"></div>
+        </div>
+        <div style="font-size:.64rem;color:var(--textL);width:80px;text-align:right;">${r.taxa}% (${r.vendidos}/${r.total})</div>
+      </div>`;
+    });
+    perfHtml += '</div>';
+  } else {
+    perfHtml += '<p>Sem dados suficientes.</p>';
+  }
+
+  perfEl.innerHTML = perfHtml;
 }
 
 function renderCicloTabela() {
@@ -5867,9 +6495,15 @@ function crmRenderAvatarStrip() {
     var btn = document.createElement('div');
     var col = crmAvatarColor(m.NOME);
     btn.className = 'crm-avatar' + (m.NOME === activeName ? ' crm-avatar-active' : '');
-    btn.style.background = col;
-    btn.style.color = crmIsLight(col) ? '#000' : '#fff';
-    btn.textContent = crmInitials(m.NOME);
+    var fotoCorr = typeof getFotoPerfil === 'function' ? getFotoPerfil(m.NOME) : '';
+    if (fotoCorr) {
+      btn.style.background = 'transparent';
+      btn.innerHTML = '<img src="' + fotoCorr + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+    } else {
+      btn.style.background = col;
+      btn.style.color = crmIsLight(col) ? '#000' : '#fff';
+      btn.textContent = crmInitials(m.NOME);
+    }
     btn.dataset.person = m.NOME;
     btn.addEventListener('click', function(e) {
       var name = e.currentTarget.dataset.person;
