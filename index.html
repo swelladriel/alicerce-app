@@ -4515,7 +4515,7 @@ function renderInicioGestor() {
     vendasPorCorr[corr].qtd++;
     vendasPorCorr[corr].vgv += (parseFloat(v.VGV) || 0);
   });
-  const rankVendas = Object.entries(vendasPorCorr).map(([n, d]) => ({ nome: n, valor: d.qtd, detalhe: fmtMoney(d.vgv) })).sort((a, b) => b.valor - a.valor);
+  const rankVendas = Object.entries(vendasPorCorr).map(([n, d]) => ({ nome: n, valor: d.qtd, vgv: d.vgv, detalhe: fmtMoney(d.vgv) })).sort((a, b) => b.valor - a.valor || b.vgv - a.vgv);
 
   // AGENDAMENTOS: mês comercial
   const inicioMC = mesAtual + '-01';
