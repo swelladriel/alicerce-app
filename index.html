@@ -4407,8 +4407,12 @@ async function carregarFotosPerfil() {
     const fotoAPI = FOTOS_PERFIL_CACHE[USUARIO.NOME.toLowerCase()];
     if (fotoLocal && !fotoAPI) {
       FOTOS_PERFIL_CACHE[USUARIO.NOME.toLowerCase()] = fotoLocal;
-      const dados = JSON.stringify({ corretor: USUARIO.NOME, foto: fotoLocal });
-      fetch(API_URL + '?acao=salvar_foto_perfil&dados=' + encodeURIComponent(dados)).catch(function(){});
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ acao: 'salvar_foto_perfil', corretor: USUARIO.NOME, foto: fotoLocal }),
+        mode: 'no-cors'
+      }).catch(function(){});
       console.log('Foto migrada para API: ' + USUARIO.NOME);
     }
   }
@@ -4435,9 +4439,13 @@ function salvarFotoPerfil(input) {
       const fotoKey = 'alicerce-foto-' + USUARIO.NOME.replace(/\s+/g, '_');
       localStorage.setItem(fotoKey, dataUrl);
       FOTOS_PERFIL_CACHE[USUARIO.NOME.toLowerCase()] = dataUrl;
-      // Salvar na API (pra outros verem)
-      const dados = JSON.stringify({ corretor: USUARIO.NOME, foto: dataUrl });
-      fetch(API_URL + '?acao=salvar_foto_perfil&dados=' + encodeURIComponent(dados)).catch(function(){});
+      // Salvar na API via POST (foto é grande demais pra GET)
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ acao: 'salvar_foto_perfil', corretor: USUARIO.NOME, foto: dataUrl }),
+        mode: 'no-cors'
+      }).catch(function(){});
       renderInicio();
       mostrarConfirmacao('Foto atualizada!');
     };
