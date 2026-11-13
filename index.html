@@ -4400,6 +4400,18 @@ async function carregarFotosPerfil() {
       });
     }
   } catch(e) { console.error('Erro ao carregar fotos:', e); }
+
+  // Migração automática: se o corretor tem foto no localStorage mas não na API, sobe agora
+  if (typeof USUARIO !== 'undefined' && USUARIO && USUARIO.NOME) {
+    const fotoLocal = localStorage.getItem('alicerce-foto-' + USUARIO.NOME.replace(/\s+/g, '_'));
+    const fotoAPI = FOTOS_PERFIL_CACHE[USUARIO.NOME.toLowerCase()];
+    if (fotoLocal && !fotoAPI) {
+      FOTOS_PERFIL_CACHE[USUARIO.NOME.toLowerCase()] = fotoLocal;
+      const dados = JSON.stringify({ corretor: USUARIO.NOME, foto: fotoLocal });
+      fetch(API_URL + '?acao=salvar_foto_perfil&dados=' + encodeURIComponent(dados)).catch(function(){});
+      console.log('Foto migrada para API: ' + USUARIO.NOME);
+    }
+  }
 }
 
 // Foto de perfil: salvar na API + localStorage
