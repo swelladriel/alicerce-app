@@ -900,11 +900,20 @@ textarea.modal-input{resize:vertical;min-height:60px;}
         <div class="m-kpi blue"><div class="v" id="realKpiDias">0</div><div class="l">Dias Médio</div></div>
       </div>
       <button onclick="abrirModalReal()" id="btn-novo-real" style="display:none;width:100%;background:var(--gold);color:#000;border:none;border-radius:var(--rad);padding:14px;font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:14px;">NOVO CLIENTE QUENTE</button>
+      <input type="text" id="real-search" placeholder="Pesquisar cliente..." oninput="renderReal()" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.78rem;margin-bottom:10px;outline:none;box-sizing:border-box;" autocomplete="off">
       <div class="m-filter" id="real-filter">
         <div class="m-filter-btn active" onclick="setRealFiltro('todos')">Todos</div>
         <div class="m-filter-btn" onclick="setRealFiltro('GERANDO')">Gerando</div>
         <div class="m-filter-btn" onclick="setRealFiltro('N GERADO')">N Gerado</div>
         <div class="m-filter-btn" onclick="setRealFiltro('GERADO')">Gerado</div>
+      </div>
+      <div id="real-lote-bar" style="display:none;margin-bottom:10px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--textL);cursor:pointer;"><input type="checkbox" id="real-select-all" onchange="realToggleSelectAll(this.checked)"> Selecionar todos</label>
+        <span id="real-sel-count" style="font-size:.72rem;color:var(--accent);font-weight:700;">0 selecionados</span>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button onclick="realLoteAcao('desativar')" style="background:#444;color:#aaa;border:none;border-radius:8px;padding:6px 12px;font-size:.68rem;font-weight:700;cursor:pointer;">Desativar</button>
+          <button onclick="realLoteAcao('ativar')" style="background:var(--success);color:#000;border:none;border-radius:8px;padding:6px 12px;font-size:.68rem;font-weight:700;cursor:pointer;">Ativar</button>
+        </div>
       </div>
       <div id="real-list"><div class="m-empty">Nenhum cliente quente cadastrado</div></div>
     </div>
@@ -990,6 +999,7 @@ textarea.modal-input{resize:vertical;min-height:60px;}
           <option value="">Todos os corretores</option>
         </select>
       </div>
+      <input type="text" id="m-clientes-search" placeholder="Pesquisar cliente..." oninput="renderMeusClientes()" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.78rem;margin-bottom:10px;outline:none;box-sizing:border-box;" autocomplete="off">
       <div class="m-filter" id="m-filter"></div>
       <div id="m-clientes-list"><div class="loading">Carregando clientes...</div></div>
     </div>
@@ -1812,6 +1822,7 @@ async function carregarTudo() {
   renderReal();
   renderInicio();
   carregarSwellVendas(); // Puxa vendas do Swell (aba SwellVendas, async)
+  carregarFotosPerfil().then(function() { renderInicio(); }); // Fotos compartilhadas
   iniciarMonitorMeiaNoite();
   salvarCache(); // salvar dados pra modo offline
 }
@@ -1875,6 +1886,11 @@ function renderMeusClientes() {
     const filtroDiv = document.getElementById('m-corretor-filter');
     if (filtroDiv) filtroDiv.style.display = 'none';
   }
+
+  // Pesquisa
+  const mcSearchEl = document.getElementById('m-clientes-search');
+  const mcSearchTerm = mcSearchEl ? mcSearchEl.value.trim().toLowerCase() : '';
+  if (mcSearchTerm) baseClientes = baseClientes.filter(c => (c.CLIENTE || '').toLowerCase().includes(mcSearchTerm) || (c.CPF || '').includes(mcSearchTerm) || (c.CORRETOR || '').toLowerCase().includes(mcSearchTerm));
 
   const lista = FILTRO_ATIVO ? baseClientes.filter(c => classStatus(c.STATUS).grupo === FILTRO_ATIVO) : baseClientes;
 
@@ -4365,14 +4381,34 @@ function renderInicioCorretor() {
   if (dql) dql.style.display = 'none';
 }
 
-// Foto de perfil: salvar em localStorage como base64
+// Cache de fotos de perfil carregadas da API
+var FOTOS_PERFIL_CACHE = {};
+
+// Carregar todas as fotos de perfil da API (chamado no login)
+async function carregarFotosPerfil() {
+  try {
+    const resp = await fetch(API_URL + '?acao=fotos_perfil');
+    const data = await resp.json();
+    if (data && Array.isArray(data.dados)) {
+      data.dados.forEach(function(f) {
+        if (f.CORRETOR && f.FOTO) {
+          FOTOS_PERFIL_CACHE[f.CORRETOR.toLowerCase()] = f.FOTO;
+          // Salvar tambem no localStorage como cache local
+          const key = 'alicerce-foto-' + f.CORRETOR.replace(/\s+/g, '_');
+          localStorage.setItem(key, f.FOTO);
+        }
+      });
+    }
+  } catch(e) { console.error('Erro ao carregar fotos:', e); }
+}
+
+// Foto de perfil: salvar na API + localStorage
 function salvarFotoPerfil(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  if (file.size > 2 * 1024 * 1024) { alert('Foto muito grande. Máximo 2MB.'); return; }
+  if (file.size > 2 * 1024 * 1024) { alert('Foto muito grande. Maximo 2MB.'); return; }
   const reader = new FileReader();
   reader.onload = function(e) {
-    // Redimensionar pra 200x200 pra economizar espaço
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
@@ -4383,8 +4419,13 @@ function salvarFotoPerfil(input) {
       const sx = (img.width - min) / 2, sy = (img.height - min) / 2;
       ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      // Salvar localmente
       const fotoKey = 'alicerce-foto-' + USUARIO.NOME.replace(/\s+/g, '_');
       localStorage.setItem(fotoKey, dataUrl);
+      FOTOS_PERFIL_CACHE[USUARIO.NOME.toLowerCase()] = dataUrl;
+      // Salvar na API (pra outros verem)
+      const dados = JSON.stringify({ corretor: USUARIO.NOME, foto: dataUrl });
+      fetch(API_URL + '?acao=salvar_foto_perfil&dados=' + encodeURIComponent(dados)).catch(function(){});
       renderInicio();
       mostrarConfirmacao('Foto atualizada!');
     };
@@ -4393,9 +4434,14 @@ function salvarFotoPerfil(input) {
   reader.readAsDataURL(file);
 }
 
-// Buscar foto de perfil de qualquer corretor (pra CRM e outros)
+// Buscar foto de perfil de qualquer corretor (cache API > localStorage)
 function getFotoPerfil(nome) {
-  const key = 'alicerce-foto-' + (nome || '').replace(/\s+/g, '_');
+  if (!nome) return '';
+  // Primeiro tenta cache da API
+  const cached = FOTOS_PERFIL_CACHE[nome.toLowerCase()];
+  if (cached) return cached;
+  // Fallback localStorage
+  const key = 'alicerce-foto-' + nome.replace(/\s+/g, '_');
   return localStorage.getItem(key) || '';
 }
 
@@ -4681,6 +4727,8 @@ function parseVgvInput(str) {
   return parseFloat(String(str).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
 }
 
+var REAL_SELECIONADOS = [];
+
 function renderReal() {
   loadReal();
   // Filtrar: corretor so ve ACIONADO=S (esconde desativados e vendidos)
@@ -4699,12 +4747,26 @@ function renderReal() {
   let lista = visiveis;
   if (REAL_FILTRO !== 'todos') lista = lista.filter(c => c.status === REAL_FILTRO);
 
+  // Pesquisa
+  const searchEl = document.getElementById('real-search');
+  const searchTerm = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  if (searchTerm) lista = lista.filter(c => (c.nome || '').toLowerCase().includes(searchTerm) || (c.telefone || '').includes(searchTerm) || (c.empreendimento || '').toLowerCase().includes(searchTerm));
+
   // Ordenar: N GERADO primeiro, depois GERANDO, depois GERADO
   const ordem = { 'N GERADO': 0, 'GERANDO': 1, 'GERADO': 2 };
   lista.sort((a, b) => (ordem[a.status] || 1) - (ordem[b.status] || 1));
 
+  // Mostrar/esconder barra de lote (so gestor)
+  const isMaster = USUARIO && (USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente');
+  const loteBar = document.getElementById('real-lote-bar');
+  if (loteBar) loteBar.style.display = isMaster ? 'flex' : 'none';
+
+  // Limpar selecionados que nao estao mais na lista
+  REAL_SELECIONADOS = REAL_SELECIONADOS.filter(id => lista.some(c => c.id === id));
+  realUpdateSelCount();
+
   if (lista.length === 0) {
-    document.getElementById('real-list').innerHTML = '<div class="m-empty">Nenhum cliente ' + (REAL_FILTRO !== 'todos' ? 'com status ' + REAL_FILTRO : 'quente cadastrado') + '</div>';
+    document.getElementById('real-list').innerHTML = '<div class="m-empty">Nenhum cliente ' + (searchTerm ? 'encontrado para "' + searchTerm + '"' : REAL_FILTRO !== 'todos' ? 'com status ' + REAL_FILTRO : 'quente cadastrado') + '</div>';
     return;
   }
 
@@ -4718,12 +4780,16 @@ function renderReal() {
     const acionado = (c.acionado || c.ACIONADO || 'S').toUpperCase();
     const vendidoBadge = acionado === 'VENDIDO' ? '<span style="background:var(--success);color:#000;padding:2px 8px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;">VENDIDO</span>' : '';
     const idSafe = (c.id || '').replace(/'/g, "\\'");
+    const checked = REAL_SELECIONADOS.includes(c.id) ? 'checked' : '';
 
     html += `<div class="m-client" style="border-left:4px solid ${statusColor};${opacity}">
       <div style="display:flex;justify-content:space-between;align-items:start;">
-        <div>
-          <div class="m-client-name">${c.nome || '-'}${vendidoBadge}</div>
-          <div class="m-client-cpf">${c.telefone || 'Sem telefone'}</div>
+        <div style="display:flex;align-items:start;gap:8px;">
+          ${isMaster ? '<input type="checkbox" ' + checked + ' onchange="realToggleSelect(\'' + idSafe + '\', this.checked)" style="margin-top:3px;cursor:pointer;accent-color:var(--accent);">' : ''}
+          <div>
+            <div class="m-client-name">${c.nome || '-'}${vendidoBadge}</div>
+            <div class="m-client-cpf">${c.telefone || 'Sem telefone'}</div>
+          </div>
         </div>
         <div style="background:${diasColor};color:#000;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:800;">${dias}d</div>
       </div>
@@ -4804,6 +4870,57 @@ async function desativarRealCorretor(id) {
   renderReal();
   renderInicio();
   mostrarConfirmacao('Cliente desativado');
+}
+
+function realToggleSelect(id, checked) {
+  if (checked && !REAL_SELECIONADOS.includes(id)) REAL_SELECIONADOS.push(id);
+  if (!checked) REAL_SELECIONADOS = REAL_SELECIONADOS.filter(x => x !== id);
+  realUpdateSelCount();
+}
+
+function realToggleSelectAll(checked) {
+  const visiveis = REAL_CLIENTS.filter(c => (c.acionado || c.ACIONADO || 'S').toUpperCase() === 'S');
+  let lista = visiveis;
+  if (REAL_FILTRO !== 'todos') lista = lista.filter(c => c.status === REAL_FILTRO);
+  const searchEl = document.getElementById('real-search');
+  const searchTerm = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  if (searchTerm) lista = lista.filter(c => (c.nome || '').toLowerCase().includes(searchTerm));
+  if (checked) {
+    REAL_SELECIONADOS = lista.map(c => c.id);
+  } else {
+    REAL_SELECIONADOS = [];
+  }
+  renderReal();
+}
+
+function realUpdateSelCount() {
+  const el = document.getElementById('real-sel-count');
+  if (el) el.textContent = REAL_SELECIONADOS.length + ' selecionado' + (REAL_SELECIONADOS.length !== 1 ? 's' : '');
+}
+
+async function realLoteAcao(acao) {
+  if (REAL_SELECIONADOS.length === 0) { alert('Selecione pelo menos 1 cliente.'); return; }
+  const label = acao === 'desativar' ? 'Desativar' : 'Ativar';
+  if (!confirm(label + ' ' + REAL_SELECIONADOS.length + ' cliente(s)?')) return;
+  for (const id of REAL_SELECIONADOS) {
+    const c = REAL_CLIENTS.find(x => x.id === id);
+    if (!c) continue;
+    const novoStatus = acao === 'desativar' ? 'N' : 'S';
+    const endpoint = acao === 'desativar' ? 'desativar_real' : 'reativar_real';
+    const dados = JSON.stringify({ corretor: c.corretor || USUARIO.NOME, cliente: c.nome });
+    try { await fetch(API_URL + '?acao=' + endpoint + '&dados=' + encodeURIComponent(dados)); } catch(e) {}
+    c.acionado = novoStatus; c.ACIONADO = novoStatus;
+    if (typeof ALL_REAL_DATA !== 'undefined') {
+      const item = ALL_REAL_DATA.find(x => x.id === id);
+      if (item) { item.acionado = novoStatus; item.ACIONADO = novoStatus; }
+    }
+  }
+  REAL_SELECIONADOS = [];
+  const chkAll = document.getElementById('real-select-all');
+  if (chkAll) chkAll.checked = false;
+  renderReal();
+  renderInicio();
+  mostrarConfirmacao(REAL_SELECIONADOS.length === 0 ? label.replace('ar', 'ados') + ' com sucesso!' : 'Concluido!');
 }
 
 function setRealFiltro(f) {
@@ -6734,10 +6851,49 @@ function crmToggleColMenu(colId, btn, headerWrap) {
     crmCloseActiveMenu();
     crmDeleteColumn(colId);
   });
+  // Mover para esquerda
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var sorted = crmSortedColumns(columns);
+  var colIdx = sorted.findIndex(function(c) { return c.id === colId; });
+  var moveLeft = document.createElement('button');
+  moveLeft.className = 'crm-col-menu-item';
+  moveLeft.textContent = '← Mover esquerda';
+  moveLeft.style.opacity = colIdx <= 0 ? '.35' : '1';
+  moveLeft.disabled = colIdx <= 0;
+  moveLeft.addEventListener('click', function() {
+    crmCloseActiveMenu();
+    crmMoveColumn(colId, -1);
+  });
+  var moveRight = document.createElement('button');
+  moveRight.className = 'crm-col-menu-item';
+  moveRight.textContent = 'Mover direita →';
+  moveRight.style.opacity = colIdx >= sorted.length - 1 ? '.35' : '1';
+  moveRight.disabled = colIdx >= sorted.length - 1;
+  moveRight.addEventListener('click', function() {
+    crmCloseActiveMenu();
+    crmMoveColumn(colId, 1);
+  });
+  menu.appendChild(moveLeft);
+  menu.appendChild(moveRight);
   menu.appendChild(rename);
   menu.appendChild(del);
   headerWrap.appendChild(menu);
   crmActiveMenu = menu;
+}
+
+function crmMoveColumn(colId, direction) {
+  var columns = crmGetPersonColumns(CRM_ACTIVE_PERSON);
+  var sorted = crmSortedColumns(columns);
+  var idx = sorted.findIndex(function(c) { return c.id === colId; });
+  var targetIdx = idx + direction;
+  if (targetIdx < 0 || targetIdx >= sorted.length) return;
+  // Swap orders
+  var tempOrder = sorted[idx].order;
+  sorted[idx].order = sorted[targetIdx].order;
+  sorted[targetIdx].order = tempOrder;
+  crmSaveColumns(CRM_ACTIVE_PERSON, columns);
+  crmRenderBoard();
+  crmShowToast('Coluna movida.');
 }
 
 // ---- ADD/DELETE COLUMN ----
