@@ -4457,6 +4457,8 @@ function getFotoPerfil(nome) {
   return localStorage.getItem(key) || '';
 }
 
+var GESTOR_RANKING_TIPO = 'vendas';
+
 function renderInicioGestor() {
   // Restaurar blocos desktop (caso corretor tenha escondido antes)
   const dw = document.getElementById('desk-welcome');
@@ -4484,48 +4486,103 @@ function renderInicioGestor() {
   const agHojeCount = agHoje.length;
   const agAtendidos = agHoje.filter(a => (a.ATENDIDO || '').toUpperCase() === 'SIM').length;
 
-  // Semana quarta-terça
-  const agora = new Date();
-  const diaSemana = agora.getDay();
-  const diasDesdeQua = (diaSemana + 4) % 7;
-  const inicioSemana = new Date(agora);
-  inicioSemana.setDate(agora.getDate() - diasDesdeQua);
-  const inicioSemStr = inicioSemana.toISOString().split('T')[0];
-  const fimSemStr = hoje;
-
-  // Ranking semanal top 5 por VGV vendido
-  const vendasSemana = vendasAdmin.filter(v => {
-    const d = String(v.DATA_VENDA || v.DATA || '').substring(0, 10);
-    return d >= inicioSemStr && d <= fimSemStr && !(v.STATUS_VENDA || '').includes('Distrato');
-  });
-  const vgvPorCorr = {};
-  vendasSemana.forEach(v => {
-    const corr = (v.CORRETOR || '').trim();
-    if (!corr) return;
-    vgvPorCorr[corr] = (vgvPorCorr[corr] || 0) + (parseFloat(v.VGV) || 0);
-  });
-  const rankingSem = Object.entries(vgvPorCorr)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-
   // Alertas: pipeline parado 15+ dias
   const paradosAlerta = teamReal.filter(c => {
     const dias = calcDiasReal(c.dataEntrada || c.DATA_ENTRADA || c.DATA || '');
     return dias >= 15 && ((c.status || c.STATUS || '') === 'GERANDO' || (c.status || c.STATUS || '') === 'N GERADO');
   });
-
-  // Alertas: agendamentos de hoje não atendidos
   const agNaoAtendidos = agHoje.filter(a => !(a.ATENDIDO || '').toUpperCase().includes('SIM'));
 
-  // Lista de clientes agendados hoje
+  // ---- RANKINGS ----
+  // Filtrar corretores ativos (excluir coords e gerente)
+  const corrsAtivos = CORRETORES.filter(c => c.STATUS === 'Ativo' && c.CARGO === 'Corretor');
+  const nomesCorrs = corrsAtivos.map(c => c.NOME);
+
+  // VENDAS: por corretor no mês
+  const vendasPorCorr = {};
+  vendasMes.forEach(v => {
+    const corr = (v.CORRETOR || '').trim();
+    if (!corr || !nomesCorrs.some(n => n.toUpperCase() === corr.toUpperCase())) return;
+    if (!vendasPorCorr[corr]) vendasPorCorr[corr] = { qtd: 0, vgv: 0 };
+    vendasPorCorr[corr].qtd++;
+    vendasPorCorr[corr].vgv += (parseFloat(v.VGV) || 0);
+  });
+  const rankVendas = Object.entries(vendasPorCorr).map(([n, d]) => ({ nome: n, valor: d.qtd, detalhe: fmtMoney(d.vgv) })).sort((a, b) => b.valor - a.valor);
+
+  // AGENDAMENTOS: mês comercial
+  const inicioMC = mesAtual + '-01';
+  const agMes = AGENDA.filter(a => {
+    const d = String(a.DATA || '').substring(0, 10);
+    return d >= inicioMC && nomesCorrs.some(n => n.toUpperCase() === (a.CORRETOR || '').toUpperCase());
+  });
+  const agPorCorr = {};
+  agMes.forEach(a => {
+    const corr = (a.CORRETOR || '').trim();
+    agPorCorr[corr] = (agPorCorr[corr] || 0) + 1;
+  });
+  const rankAgendamentos = Object.entries(agPorCorr).map(([n, v]) => ({ nome: n, valor: v, detalhe: v + ' agendamento' + (v !== 1 ? 's' : '') })).sort((a, b) => b.valor - a.valor);
+
+  // ATENDIMENTOS: mês comercial
+  const atMes = AGENDA.filter(a => {
+    const d = String(a.DATA || '').substring(0, 10);
+    return d >= inicioMC && (a.ATENDIDO || '').toUpperCase() === 'SIM' && nomesCorrs.some(n => n.toUpperCase() === (a.CORRETOR || '').toUpperCase());
+  });
+  const atPorCorr = {};
+  atMes.forEach(a => {
+    const corr = (a.CORRETOR || '').trim();
+    atPorCorr[corr] = (atPorCorr[corr] || 0) + 1;
+  });
+  const rankAtendimentos = Object.entries(atPorCorr).map(([n, v]) => ({ nome: n, valor: v, detalhe: v + ' atendimento' + (v !== 1 ? 's' : '') })).sort((a, b) => b.valor - a.valor);
+
+  // PASTAS: clientes com CPF no mês
+  const pastaPorCorr = {};
+  CLIENTES.filter(c => {
+    if (!c.CPF || String(c.CPF).trim().length < 6) return false;
+    const d = String(c['DATA CRIAÇÃO'] || c.DATA_CRIACAO || c['DATA CRIACAO'] || '').substring(0, 10);
+    return d >= inicioMC && nomesCorrs.some(n => n.toUpperCase() === (c.CORRETOR || '').toUpperCase());
+  }).forEach(c => {
+    const corr = (c.CORRETOR || '').trim();
+    pastaPorCorr[corr] = (pastaPorCorr[corr] || 0) + 1;
+  });
+  const rankPastas = Object.entries(pastaPorCorr).map(([n, v]) => ({ nome: n, valor: v, detalhe: v + ' pasta' + (v !== 1 ? 's' : '') })).sort((a, b) => b.valor - a.valor);
+
+  // Selecionar ranking ativo
+  const rankings = { vendas: rankVendas, agendamentos: rankAgendamentos, atendimentos: rankAtendimentos, pastas: rankPastas };
+  const titulos = { vendas: 'Vendas', agendamentos: 'Agendamentos', atendimentos: 'Atendimentos', pastas: 'Pastas' };
+  const rankAtivo = rankings[GESTOR_RANKING_TIPO] || rankVendas;
+
+  // Montar HTML do ranking com fotos
+  function buildRankingHtml(items, tipo) {
+    if (items.length === 0) return '<div style="text-align:center;padding:20px;color:var(--textL);font-size:.78rem;">Nenhum dado no mês.</div>';
+    return items.slice(0, 10).map(function(item, i) {
+      const foto = getFotoPerfil(item.nome);
+      const avatarHtml = foto
+        ? '<img src="' + foto + '" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">'
+        : '<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:var(--textL);flex-shrink:0;">' + (item.nome || '?').charAt(0) + '</div>';
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+      const bg = i === 0 ? 'rgba(255,215,0,.1)' : i === 1 ? 'rgba(192,192,192,.06)' : i === 2 ? 'rgba(205,127,50,.06)' : 'transparent';
+      const scale = i === 0 ? 'transform:scale(1.02);' : '';
+      const border = i === 0 ? 'border:1px solid rgba(255,215,0,.3);' : 'border:1px solid transparent;';
+      const valorColor = tipo === 'vendas' ? 'var(--gold)' : 'var(--accent)';
+      const valorDisplay = tipo === 'vendas' ? item.detalhe : item.valor;
+      const subDisplay = tipo === 'vendas' ? item.valor + ' venda' + (item.valor !== 1 ? 's' : '') : item.detalhe;
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:' + bg + ';margin-bottom:6px;' + scale + border + '">' +
+        '<span style="font-size:.72rem;color:var(--textL);min-width:20px;text-align:center;font-weight:700;">' + (medal || (i + 1)) + '</span>' +
+        avatarHtml +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:.82rem;font-weight:' + (i < 3 ? '800' : '600') + ';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + item.nome + '</div>' +
+          '<div style="font-size:.62rem;color:var(--textL);">' + subDisplay + '</div>' +
+        '</div>' +
+        '<div style="font-size:.88rem;font-weight:900;color:' + valorColor + ';">' + valorDisplay + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Agenda hoje HTML
   let agendaHojeHtml = '';
   if (agHoje.length > 0) {
-    const agOrdenada = [...agHoje].sort((a, b) => {
-      const ha = String(a.HORA || '00:00').substring(0,5);
-      const hb = String(b.HORA || '00:00').substring(0,5);
-      return ha.localeCompare(hb);
-    });
-    agendaHojeHtml = agOrdenada.map(a => {
+    const agOrdenada = [...agHoje].sort((a, b) => String(a.HORA || '00:00').substring(0,5).localeCompare(String(b.HORA || '00:00').substring(0,5)));
+    agendaHojeHtml = agOrdenada.slice(0, 8).map(a => {
       let hora = String(a.HORA || '');
       if (hora.includes('T')) { const m = hora.match(/T(\d{2}):(\d{2})/); if (m) { let h = parseInt(m[1])-3; if(h<0)h+=24; hora = String(h).padStart(2,'0')+':'+m[2]; } }
       else hora = hora.substring(0,5);
@@ -4541,6 +4598,7 @@ function renderInicioGestor() {
         </div>
       </div>`;
     }).join('');
+    if (agHoje.length > 8) agendaHojeHtml += `<div style="text-align:center;padding:6px;font-size:.68rem;color:var(--textL);">+${agHoje.length - 8} mais</div>`;
   } else {
     agendaHojeHtml = '<div style="text-align:center;padding:16px;color:var(--textL);font-size:.78rem;">Nenhum agendamento hoje.</div>';
   }
@@ -4576,6 +4634,20 @@ function renderInicioGestor() {
     </div>
     <div style="text-align:right;margin:-10px 0 12px;font-size:.55rem;color:var(--textL);">Swell · ${SWELL_DATA.atualizado_em || ''}</div>` : ''}
 
+    <!-- RANKING com filtro -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:.85rem;font-weight:800;color:var(--gold);">Ranking — ${titulos[GESTOR_RANKING_TIPO]}</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;">
+        <button onclick="GESTOR_RANKING_TIPO='vendas';renderInicioGestor();" style="flex:0 0 auto;padding:6px 14px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer;border:1px solid ${GESTOR_RANKING_TIPO==='vendas'?'var(--gold)':'var(--border)'};background:${GESTOR_RANKING_TIPO==='vendas'?'rgba(255,215,0,.12)':'transparent'};color:${GESTOR_RANKING_TIPO==='vendas'?'var(--gold)':'var(--textL)'};touch-action:manipulation;">Vendas</button>
+        <button onclick="GESTOR_RANKING_TIPO='agendamentos';renderInicioGestor();" style="flex:0 0 auto;padding:6px 14px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer;border:1px solid ${GESTOR_RANKING_TIPO==='agendamentos'?'var(--gold)':'var(--border)'};background:${GESTOR_RANKING_TIPO==='agendamentos'?'rgba(255,215,0,.12)':'transparent'};color:${GESTOR_RANKING_TIPO==='agendamentos'?'var(--gold)':'var(--textL)'};touch-action:manipulation;">Agendamentos</button>
+        <button onclick="GESTOR_RANKING_TIPO='atendimentos';renderInicioGestor();" style="flex:0 0 auto;padding:6px 14px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer;border:1px solid ${GESTOR_RANKING_TIPO==='atendimentos'?'var(--gold)':'var(--border)'};background:${GESTOR_RANKING_TIPO==='atendimentos'?'rgba(255,215,0,.12)':'transparent'};color:${GESTOR_RANKING_TIPO==='atendimentos'?'var(--gold)':'var(--textL)'};touch-action:manipulation;">Atendimentos</button>
+        <button onclick="GESTOR_RANKING_TIPO='pastas';renderInicioGestor();" style="flex:0 0 auto;padding:6px 14px;border-radius:8px;font-size:.68rem;font-weight:700;cursor:pointer;border:1px solid ${GESTOR_RANKING_TIPO==='pastas'?'var(--gold)':'var(--border)'};background:${GESTOR_RANKING_TIPO==='pastas'?'rgba(255,215,0,.12)':'transparent'};color:${GESTOR_RANKING_TIPO==='pastas'?'var(--gold)':'var(--textL)'};touch-action:manipulation;">Pastas</button>
+      </div>
+      ${buildRankingHtml(rankAtivo, GESTOR_RANKING_TIPO)}
+    </div>
+
     <!-- Agendamentos hoje -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -4601,20 +4673,6 @@ function renderInicioGestor() {
       ${agNaoAtendidos.length > 0 ? `<div style="font-size:.75rem;color:var(--text);line-height:1.4;">
         <strong>${agNaoAtendidos.length}</strong> agendamento${agNaoAtendidos.length > 1 ? 's' : ''} de hoje ainda não atendido${agNaoAtendidos.length > 1 ? 's' : ''}
       </div>` : ''}
-    </div>` : ''}
-
-    ${rankingSem.length > 0 ? `
-    <!-- Ranking Semanal -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:.82rem;font-weight:800;color:var(--gold);margin-bottom:12px;">Ranking Semanal — Top 5</div>
-      ${rankingSem.map(([nome, vgv], i) => {
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="color:var(--textL);font-size:.72rem;min-width:22px;display:inline-block;">${i+1}.</span>`;
-        const bg = i === 0 ? 'rgba(255,215,0,.08)' : i === 1 ? 'rgba(192,192,192,.06)' : i === 2 ? 'rgba(205,127,50,.06)' : 'transparent';
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:${bg};margin-bottom:4px;">
-          <span style="font-size:.82rem;color:#fff;font-weight:${i<3?'800':'600'};">${medal} ${nome}</span>
-          <span style="font-size:.82rem;color:var(--gold);font-weight:800;">${fmtMoney(vgv)}</span>
-        </div>`;
-      }).join('')}
     </div>` : ''}
 
     <!-- Atalhos -->
@@ -6313,8 +6371,7 @@ async function salvarNovoCorretor() {
   const equipe = document.getElementById('ncorr-equipe').value;
   if (!nome) { alert('Preencha o nome do corretor.'); return; }
 
-  const payload = {
-    acao: 'adicionar_corretor',
+  const corretor = {
     NOME: nome,
     'NOME COMPLETO': document.getElementById('ncorr-nome-completo').value.trim(),
     EQUIPE: equipe,
@@ -6327,14 +6384,13 @@ async function salvarNovoCorretor() {
   };
 
   try {
-    await fetch(API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
+    // Usar GET com dados codificados (POST com Apps Script perde body no redirect)
+    const dados = JSON.stringify({ corretor: corretor });
+    const resp = await fetch(API_URL + '?acao=adicionar_corretor_get&dados=' + encodeURIComponent(dados));
+    const result = await resp.json();
+    if (result.erro) { alert('Erro: ' + result.erro); return; }
     // Adicionar localmente
-    CORRETORES.push(payload);
+    CORRETORES.push(corretor);
     document.getElementById('ncorr-msg').style.display = 'block';
     setTimeout(() => {
       fecharModalNovoCorretor();
