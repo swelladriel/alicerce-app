@@ -6445,14 +6445,38 @@ var crmInitialized = false;
 var crmSaving = false;
 
 // ---- API HELPERS ----
-async function crmApiFetch(acao) {
+async function crmApiFetch(acao, corretor) {
   try {
-    var res = await fetch(API_URL + '?acao=' + acao);
+    var url = API_URL + '?acao=' + acao;
+    if (corretor) url += '&corretor=' + encodeURIComponent(corretor);
+    var res = await fetch(url);
     return await res.json();
   } catch(e) {
     console.error('CRM fetch error (' + acao + '):', e);
     return null;
   }
+}
+
+// ---- CRM CACHE ----
+var CRM_CACHE_KEY = 'alicerce-crm-cache';
+
+function crmSaveCache() {
+  try {
+    var obj = { cards: CRM_ALL_CARDS, colunas: CRM_ALL_COLUNAS, ts: Date.now() };
+    localStorage.setItem(CRM_CACHE_KEY, JSON.stringify(obj));
+  } catch(e) {}
+}
+
+function crmLoadCache() {
+  try {
+    var raw = localStorage.getItem(CRM_CACHE_KEY);
+    if (!raw) return false;
+    var obj = JSON.parse(raw);
+    if (!obj || !Array.isArray(obj.cards)) return false;
+    CRM_ALL_CARDS = obj.cards;
+    CRM_ALL_COLUNAS = obj.colunas || {};
+    return true;
+  } catch(e) { return false; }
 }
 
 async function crmApiSave(action, data) {
@@ -6461,7 +6485,9 @@ async function crmApiSave(action, data) {
     params.set('acao', action);
     params.set('dados', JSON.stringify(data));
     var resp = await fetch(API_URL + '?' + params.toString());
-    return await resp.json();
+    var result = await resp.json();
+    crmSaveCache(); // Atualizar cache local apos salvar
+    return result;
   } catch(e) {
     console.error('CRM save error:', e);
     return {erro: e.message};
@@ -6471,20 +6497,36 @@ async function crmApiSave(action, data) {
 // ---- DATA LOADING ----
 async function crmLoadData() {
   try {
+    // Corretor: puxa so os dele. Gestor: puxa so do corretor ativo (ou todos se precisa)
+    var isMasterCrm = USUARIO && (USUARIO.CARGO === 'Coordenador' || USUARIO.CARGO === 'Gerente');
+    var filtroNome = null;
+    if (!isMasterCrm) {
+      // Corretor: sempre filtra por ele
+      filtroNome = USUARIO.NOME;
+    } else if (CRM_ACTIVE_PERSON && CRM_ACTIVE_PERSON !== USUARIO.NOME) {
+      // Gestor vendo outro corretor: filtra por aquele
+      filtroNome = CRM_ACTIVE_PERSON;
+    }
+    // Se gestor sem filtro especifico, pega tudo (pra montar avatares)
     var results = await Promise.all([
-      crmApiFetch('crm_cards'),
-      crmApiFetch('crm_colunas')
+      crmApiFetch('crm_cards', filtroNome),
+      crmApiFetch('crm_colunas', filtroNome)
     ]);
     var cardsData = results[0];
     var colunasData = results[1];
     if (Array.isArray(cardsData)) {
-      CRM_ALL_CARDS = cardsData;
+      var newCards = cardsData;
     } else if (cardsData && Array.isArray(cardsData.dados)) {
-      CRM_ALL_CARDS = cardsData.dados;
+      var newCards = cardsData.dados;
     } else {
-      CRM_ALL_CARDS = [];
+      var newCards = [];
     }
-    CRM_ALL_COLUNAS = {};
+    // Merge: se filtrou por 1 corretor, substituir so os cards dele (manter os outros no cache)
+    if (filtroNome) {
+      CRM_ALL_CARDS = CRM_ALL_CARDS.filter(function(c) { return c.CORRETOR !== filtroNome; }).concat(newCards);
+    } else {
+      CRM_ALL_CARDS = newCards;
+    }
     var colArr = Array.isArray(colunasData) ? colunasData : (colunasData && Array.isArray(colunasData.dados) ? colunasData.dados : []);
     for (var i = 0; i < colArr.length; i++) {
       var row = colArr[i];
@@ -6497,10 +6539,11 @@ async function crmLoadData() {
       }
     }
     CRM_LOADED = true;
+    crmSaveCache(); // Salvar no cache local
   } catch(e) {
     console.error('CRM load error:', e);
-    CRM_ALL_CARDS = [];
-    CRM_ALL_COLUNAS = {};
+    // Se falhou, tentar usar cache
+    if (!CRM_LOADED) crmLoadCache();
   }
 }
 
@@ -6573,16 +6616,21 @@ async function crmInit() {
   var personKey = (USUARIO && USUARIO.NOME) ? USUARIO.NOME : '';
   if (!personKey) return;
 
-  // Show loading
-  var boardEl = document.getElementById('crm-board');
-  if (boardEl) boardEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--textL);font-size:.85rem;">Carregando CRM...</div>';
-
-  // Load data from API
-  await crmLoadData();
-
   // Set active person
   if (!CRM_ACTIVE_PERSON) CRM_ACTIVE_PERSON = personKey;
   if (USUARIO.CARGO === 'Corretor') CRM_ACTIVE_PERSON = personKey;
+
+  // Mostrar cache imediatamente (se tiver)
+  var hasCache = crmLoadCache();
+  if (hasCache && CRM_ALL_CARDS.length > 0) {
+    crmRenderAll();
+  } else {
+    var boardEl = document.getElementById('crm-board');
+    if (boardEl) boardEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--textL);font-size:.85rem;">Carregando CRM...</div>';
+  }
+
+  // Buscar dados frescos da API (em paralelo)
+  await crmLoadData();
 
   crmRenderAll();
 
